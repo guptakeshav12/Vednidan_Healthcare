@@ -1,0 +1,403 @@
+/* AI Doctor Chat Interface CSS */
+
+.doctor-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 30px;
+  height: calc(100vh - 220px);
+  min-height: 550px;
+  animation: fadeIn var(--transition-normal);
+}
+
+/* Sidebar Profile */
+.doctor-sidebar {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+
+.doctor-profile-card {
+  text-align: center;
+  border-bottom: 1px solid var(--accent);
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+}
+
+.doctor-avatar-wrapper {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--secondary);
+  overflow: hidden;
+  margin: 0 auto 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.doctor-avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.doctor-name-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.doctor-specialty {
+  font-size: 13px;
+  color: var(--secondary-dark);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.doctor-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--accent);
+  color: var(--success);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--success);
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.doctor-guide-box h4 {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.doctor-guide-box p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.doctor-tips-list {
+  list-style: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doctor-tips-list li {
+  display: flex;
+  gap: 8px;
+}
+
+.doctor-tips-list li::before {
+  content: '✦';
+  color: var(--secondary);
+}
+
+/* Chat Terminal */
+.chat-container {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.chat-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chat-header-info h3 {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.chat-header-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.chat-clear-btn {
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.chat-clear-btn:hover {
+  background: var(--accent);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Messages Area */
+.chat-messages {
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #FAF9F6;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.5;
+  animation: messageIn 0.3s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes messageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-bubble.user {
+  align-self: flex-end;
+  background-color: var(--primary);
+  color: var(--surface);
+  border-bottom-right-radius: 2px;
+}
+
+.message-bubble.doctor {
+  align-self: flex-start;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+  border-bottom-left-radius: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.message-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-align: right;
+}
+
+.message-bubble.doctor .message-meta {
+  text-align: left;
+}
+
+/* Suggested Products embedded in doctor messages */
+.chat-products-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
+  border-top: 1px dashed var(--accent);
+  padding-top: 14px;
+}
+
+.chat-product-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--background);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  border: 1px solid var(--accent);
+  transition: var(--transition-fast);
+}
+
+.chat-product-card:hover {
+  border-color: var(--secondary);
+  background: var(--surface);
+}
+
+.chat-product-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  background: #FFF;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.chat-product-details {
+  flex-grow: 1;
+}
+
+.chat-product-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--primary-dark);
+}
+
+.chat-product-price {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.chat-product-add {
+  background-color: var(--primary);
+  color: var(--surface);
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.chat-product-add:hover {
+  background-color: var(--secondary);
+  color: var(--primary-dark);
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 12px 18px;
+  background-color: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  align-self: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--text-muted);
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0.6); }
+  40% { transform: scale(1.1) translateY(-6px); }
+}
+
+/* Quick Suggestion Chips */
+.chat-suggestions {
+  padding: 12px 24px;
+  border-top: 1px solid var(--accent);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background-color: var(--surface);
+}
+
+.suggestion-chip {
+  background: var(--background);
+  border: 1px solid var(--accent);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.suggestion-chip:hover {
+  background-color: var(--accent);
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Chat Input Bar */
+.chat-input-bar {
+  padding: 16px 24px;
+  border-top: 1px solid var(--accent);
+  display: flex;
+  gap: 12px;
+  background-color: var(--surface);
+}
+
+.chat-input {
+  flex-grow: 1;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  outline: none;
+  background: var(--background);
+  transition: var(--transition-fast);
+}
+
+.chat-input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(10, 77, 60, 0.06);
+}
+
+.chat-send-btn {
+  background-color: var(--primary);
+  color: var(--surface);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.chat-send-btn:hover {
+  background-color: var(--primary-light);
+}
+
+/* Responsive Doctor Layout */
+@media (max-width: 850px) {
+  .doctor-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .doctor-sidebar {
+    display: none;
+  }
+  .chat-messages {
+    height: 400px;
+  }
+}

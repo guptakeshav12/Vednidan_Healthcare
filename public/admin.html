@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VedNidan Healthcare — Admin Panel</title>
+  <!-- Outfit & Inter Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Remix Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ===== SIDEBAR NAVIGATION ===== -->
+  <aside class="admin-sidebar">
+    <div class="admin-logo">
+      <i class="ri-heart-pulse-fill"></i>
+      <span>VedNidan Control</span>
+    </div>
+    
+    <ul class="admin-menu">
+      <li class="admin-menu-item active" data-tab="dashboard">
+        <a href="#dashboard"><i class="ri-dashboard-3-line"></i> Dashboard</a>
+      </li>
+      <li class="admin-menu-item" data-tab="products">
+        <a href="#products"><i class="ri-bubble-chart-line"></i> Products</a>
+      </li>
+      <li class="admin-menu-item" data-tab="orders">
+        <a href="#orders"><i class="ri-shopping-bag-3-line"></i> Orders</a>
+      </li>
+      <li class="admin-menu-item" data-tab="bookings">
+        <a href="#bookings"><i class="ri-calendar-todo-line"></i> Doctor Bookings</a>
+      </li>
+      <li class="admin-menu-item" data-tab="therapist-bookings">
+        <a href="#therapist-bookings"><i class="ri-hand-heart-line"></i> Therapist Bookings</a>
+      </li>
+    </ul>
+
+    <div class="admin-sidebar-footer">
+      <a href="/index.html" class="btn-admin-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:12px;">
+        <i class="ri-external-link-line"></i> View Main Website
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT CONTAINER ===== -->
+  <main class="admin-main">
+    
+    <!-- Top Header -->
+    <header class="admin-header">
+      <div class="admin-title-desc">
+        <h1 id="admin-current-view-title">Dashboard Overview</h1>
+        <p id="admin-current-view-desc">Monitor sales, orders, and customer appointments in real time.</p>
+      </div>
+      
+      <div class="admin-header-actions" id="admin-header-actions-container">
+        <!-- Contextual action button rendered dynamically -->
+      </div>
+    </header>
+
+    <!-- ===== VIEW 1: DASHBOARD TAB ===== -->
+    <section id="view-dashboard" class="admin-view active">
+      <!-- Stats Cards -->
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <div class="stat-details">
+            <span class="stat-title">Total Revenue</span>
+            <span class="stat-val" id="stat-revenue">₹0</span>
+          </div>
+          <div class="stat-icon-box"><i class="ri-money-rupee-circle-line"></i></div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-details">
+            <span class="stat-title">Total Orders</span>
+            <span class="stat-val" id="stat-orders">0</span>
+          </div>
+          <div class="stat-icon-box"><i class="ri-shopping-cart-2-line"></i></div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-details">
+            <span class="stat-title">Doctor Bookings</span>
+            <span class="stat-val" id="stat-bookings">0</span>
+          </div>
+          <div class="stat-icon-box"><i class="ri-calendar-check-line"></i></div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-details">
+            <span class="stat-title">Therapist Bookings</span>
+            <span class="stat-val" id="stat-therapist-bookings">0</span>
+          </div>
+          <div class="stat-icon-box"><i class="ri-nurse-line"></i></div>
+        </div>
+      </div>
+
+      <!-- Recent Orders & Recent Bookings -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title"><i class="ri-time-line"></i> Recent Pending Orders</h3>
+          <a href="#orders" onclick="switchTab('orders')" style="color:var(--admin-accent-gold);text-decoration:none;font-size:13px;font-weight:700;">View All Orders</a>
+        </div>
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total Price</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-recent-orders">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 2: PRODUCTS TAB ===== -->
+    <section id="view-products" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 3: ORDERS TAB ===== -->
+    <section id="view-orders" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Email</th>
+                <th>Purchased Items</th>
+                <th>Grand Total</th>
+                <th>Status</th>
+                <th>Date/Time</th>
+                <th>Update Status</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 4: DOCTOR BOOKINGS TAB ===== -->
+    <section id="view-bookings" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Patient Name</th>
+                <th>Email</th>
+                <th>Ayurvedic Doctor</th>
+                <th>Date</th>
+                <th>Time Slot</th>
+                <th>Reason / Symptom</th>
+                <th>Booked At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 5: THERAPIST BOOKINGS TAB ===== -->
+    <section id="view-therapist-bookings" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Patient Name</th>
+                <th>Email</th>
+                <th>Therapist Name</th>
+                <th>Therapy Type</th>
+                <th>Date</th>
+                <th>Time Slot</th>
+                <th>Booked At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="therapist-bookings-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== PRODUCT ADD/EDIT MODAL OVERLAY ===== -->
+  <div class="admin-modal-backdrop" id="product-modal-backdrop">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="product-modal-title">Add New Product</h3>
+        <button class="btn-modal-close" onclick="closeProductModal()"><i class="ri-close-line"></i></button>
+      </div>
+
+      <form id="product-form" onsubmit="handleProductFormSubmit(event)">
+        <input type="hidden" id="product-form-id">
+        
+        <div class="admin-form-group">
+          <label class="admin-form-label">Product Name</label>
+          <input type="text" class="admin-form-input" id="product-name" required placeholder="e.g. Organic Chyawanprash Rasayana">
+        </div>
+
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Category</label>
+            <select class="admin-form-select" id="product-category" required>
+              <option value="vitality">Vitality & Energy</option>
+              <option value="digestion">Gut & Digestion</option>
+              <option value="skincare">Skincare</option>
+              <option value="haircare">Haircare</option>
+              <option value="immunity">Immunity Boosters</option>
+              <option value="brain">Brain & Memory</option>
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Price (₹)</label>
+            <input type="number" class="admin-form-input" id="product-price" required min="1" placeholder="e.g. 350">
+          </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Image URL</label>
+          <input type="url" class="admin-form-input" id="product-image" placeholder="Leave empty for generic Ayurvedic placeholder">
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Short Summary Description</label>
+          <input type="text" class="admin-form-input" id="product-short-desc" placeholder="1 sentence summary description for product cards">
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Detailed Long Description</label>
+          <textarea class="admin-form-textarea" id="product-long-desc" rows="4" placeholder="Detailed product descriptions, text formulas, background..."></textarea>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-checkbox">
+            <input type="checkbox" id="product-bestseller">
+            <span>Mark as Best Seller</span>
+          </label>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Product Benefits (1 per line)</label>
+          <textarea class="admin-form-textarea" id="product-benefits" rows="3" placeholder="e.g. Promotes metabolic heat&#10;Strengthens bone marrow tissue"></textarea>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Usage Directions</label>
+          <input type="text" class="admin-form-input" id="product-usage" placeholder="e.g. Take 1 tablet twice daily after meals with warm water">
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Key Active Ingredients (Comma separated)</label>
+          <input type="text" class="admin-form-input" id="product-ingredients" placeholder="e.g. Amla, Giloy, Ashwagandha, Tulsi">
+        </div>
+
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin-secondary" onclick="closeProductModal()">Cancel</button>
+          <button type="submit" class="btn-admin-primary" id="product-form-submit-btn">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Javascript Modules -->
+  <script src="/js/admin-app.js"></script>
+</body>
+</html>

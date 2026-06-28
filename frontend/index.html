@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VedNidan Healthcare | Premium Ayurvedic Store & AI Consultation</title>
+  
+  <!-- Meta Tags for SEO -->
+  <meta name="description" content="VedNidan Healthcare brings premium 100% organic Ayurvedic herbs and medicines. Chat with our smart AI Doctor for personalized treatments or upload prescriptions to order instantly.">
+  <meta name="keywords" content="Ayurveda, herbal medicine, Ayurvedic Doctor AI, Prescription Reader, organic wellness, Ashwagandha, Triphala">
+  
+  <!-- Remix Icons (Premium Modern Icon Library) -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <!-- Modular Stylesheets -->
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/shop.css">
+  <link rel="stylesheet" href="/css/doctor.css">
+  <link rel="stylesheet" href="/css/reader.css">
+  <link rel="stylesheet" href="/css/cart.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="/css/booking.css">
+  <link rel="stylesheet" href="/css/therapist-booking.css">
+</head>
+<body>
+
+  <!-- Promo Ticker Bar -->
+  <div class="promo-ticker">
+    <span>🌿 FREE Shipping on orders above ₹500! Use code <strong>VEDNIDAN10</strong> to get 10% OFF! 🌿</span>
+  </div>
+
+  <!-- App Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <a href="#" class="logo" id="logo-btn">
+        <div class="logo-icon"><i class="ri-leaf-line"></i></div>
+        <div>
+          <h1 class="logo-text">VedNidan</h1>
+          <div class="logo-tagline">Healthcare & Ayurveda</div>
+        </div>
+      </a>
+      
+      <!-- Nav Menu -->
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="#" class="nav-link active" data-target="shop-page" id="nav-shop">Shop Remedies</a></li>
+          <li><a href="#" class="nav-link" data-target="doctor-page" id="nav-doctor"><i class="ri-robot-2-line"></i> AI Doctor</a></li>
+          <li><a href="#" class="nav-link" data-target="reader-page" id="nav-reader"><i class="ri-file-list-3-line"></i> Upload Prescription</a></li>
+          <li><a href="#" class="nav-link" data-target="booking-page" id="nav-booking"><i class="ri-calendar-todo-line"></i> Book Doctor</a></li>
+          <li><a href="#" class="nav-link" data-target="therapist-page" id="nav-therapist"><i class="ri-hand-heart-line"></i> Book Therapist</a></li>
+        </ul>
+      </nav>
+      
+      <!-- Actions -->
+      <div class="header-actions">
+        <div class="search-bar-container">
+          <i class="ri-search-line search-icon"></i>
+          <input type="text" placeholder="Search medicines..." class="search-input" id="search-bar">
+        </div>
+        
+        <!-- Auth Header Button / Profile display -->
+        <div id="auth-header-wrapper">
+          <button class="auth-header-btn" id="header-login-btn">Log In / Sign Up</button>
+        </div>
+
+        <button class="cart-icon-btn" id="open-cart-btn" aria-label="Open Cart">
+          <i class="ri-shopping-bag-3-line"></i>
+          <span class="cart-badge" id="cart-badge-count">0</span>
+        </button>
+        <button class="mobile-menu-toggle" id="mobile-toggle" aria-label="Toggle Menu">
+          <i class="ri-menu-line"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-content">
+    
+    <!-- 1. SHOP PAGE (HOME) -->
+    <section id="shop-page" class="page-section active fade-in">
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-text">
+          <div class="hero-badge">Authentic Ayurveda for Modern Life</div>
+          <h2 class="hero-title">Your Path to <span>Holistic Healing</span> & Vitality</h2>
+          <p class="hero-desc">Experience 100% natural, scientifically validated Ayurvedic formulations. Buy products directly, consult our AI Ayurvedic doctor, or upload your prescription to shop instantly.</p>
+          <div class="hero-ctas">
+            <button class="btn-primary" id="hero-consult-btn">Consult AI Doctor <i class="ri-arrow-right-line"></i></button>
+            <button class="btn-secondary" id="hero-upload-btn">Upload Prescription</button>
+          </div>
+        </div>
+        <div class="hero-image-panel">
+          <div class="hero-floating-card">
+            <!-- Floating item -->
+            <img src="/assets/doctor_avatar.png" alt="Ayurvedic Treatment Icon">
+            <h4>Charaka AI</h4>
+            <p>Ready to diagnose symptoms</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Navigation -->
+      <div class="section-header">
+        <h3 class="section-title">Shop by Category</h3>
+      </div>
+      
+      <div class="category-slider" id="category-list">
+        <div class="category-pill active" data-category="all">All Remedies</div>
+        <div class="category-pill" data-category="vitality">Vitality & Energy</div>
+        <div class="category-pill" data-category="digestion">Gut & Digestion</div>
+        <div class="category-pill" data-category="skincare">Skincare</div>
+        <div class="category-pill" data-category="haircare">Haircare</div>
+        <div class="category-pill" data-category="immunity">Immunity Boosters</div>
+        <div class="category-pill" data-category="brain">Brain & Memory</div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="products-grid">
+        <!-- Rendered dynamically by shop.js -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">
+          <i class="ri-loader-4-line ri-spin" style="font-size: 32px;"></i>
+          <p style="margin-top: 10px;">Loading Ayurvedic remedies...</p>
+        </div>
+      </div>
+
+      <!-- Why Ayurveda Section -->
+      <div class="why-ayurveda-section">
+        <h3>The Promise of VedNidan</h3>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 10px auto 40px;">Rooted in 5000 years of ancient science, blended with modern testing to guarantee safety, potency, and purity.</p>
+        
+        <div class="why-grid">
+          <div class="why-card">
+            <div class="why-card-icon"><i class="ri-shield-check-line"></i></div>
+            <h4>100% Organic & Pure</h4>
+            <p>Harvested ethically from the pristine valleys of the Himalayas without harsh pesticides or chemicals.</p>
+          </div>
+          <div class="why-card">
+            <div class="why-card-icon"><i class="ri-flask-line"></i></div>
+            <h4>Lab-Tested Batches</h4>
+            <p>Every single batch undergoes rigorous heavy metal, micro-bacterial, and potency standardization testing.</p>
+          </div>
+          <div class="why-card">
+            <div class="why-card-icon"><i class="ri-heart-pulse-line"></i></div>
+            <h4>Doctor Approved</h4>
+            <p>Formulated by veteran Ayurvedic practitioners and research scientists for guaranteed biological efficacy.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. AI DOCTOR PAGE -->
+    <section id="doctor-page" class="page-section fade-in">
+      <div class="doctor-layout">
+        <!-- Sidebar profile -->
+        <aside class="doctor-sidebar">
+          <div class="doctor-profile-card">
+            <div class="doctor-avatar-wrapper">
+              <img src="/assets/doctor_avatar.png" alt="Charaka AI Doctor">
+            </div>
+            <h3 class="doctor-name-title">Charaka AI</h3>
+            <p class="doctor-specialty">Ayurvedic Specialist</p>
+            <div class="doctor-status">
+              <span class="status-dot"></span> Online & Consulting
+            </div>
+          </div>
+          
+          <div class="doctor-guide-box">
+            <h4>How it works</h4>
+            <p>Charaka AI uses classic Ayurvedic logic to analyze symptom patterns, detect primary Dosha imbalances (Vata, Pitta, Kapha), and recommend dietary plans and targeted herbal remedies.</p>
+            <ul class="doctor-tips-list">
+              <li>Mention physical & mental issues</li>
+              <li>Ask for specific dietary dos & don'ts</li>
+              <li>Add recommended herbs directly to cart</li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="chat-header-info">
+              <h3>Ayurvedic Wellness Consultation</h3>
+              <p>Consultation session with Charaka AI. Chat logs are completely private.</p>
+            </div>
+            <button class="chat-clear-btn" id="clear-chat-btn">Restart Chat</button>
+          </div>
+          
+          <!-- Message history log -->
+          <div class="chat-messages" id="chat-messages-log">
+            <!-- Doctor welcome message will load here dynamically -->
+          </div>
+
+          <!-- Suggested query chips -->
+          <div class="chat-suggestions" id="chat-suggestions-chips">
+            <!-- Chips load dynamically -->
+          </div>
+
+          <!-- Input bar -->
+          <div class="chat-input-bar">
+            <input type="text" placeholder="Explain your symptom (e.g. 'I feel stressed and cannot sleep' or 'acne breakouts')..." class="chat-input" id="chat-user-input">
+            <button class="btn-primary chat-send-btn" id="chat-send-btn">
+              <span>Send</span> <i class="ri-send-plane-2-line"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PRESCRIPTION READER PAGE -->
+    <section id="reader-page" class="page-section fade-in">
+      <div class="reader-layout">
+        
+        <!-- Upload Form Panel -->
+        <div class="reader-panel">
+          <div class="reader-header">
+            <h2 class="reader-title">Prescription Reader</h2>
+            <p class="reader-subtitle">Upload a photo of your doctor's slip or handwritten prescription. Our AI OCR engine will identify the medicines and add them to your cart instantly.</p>
+          </div>
+          
+          <!-- Upload Zone -->
+          <div class="upload-zone" id="drop-upload-zone">
+            <div class="upload-icon"><i class="ri-file-upload-line"></i></div>
+            <div class="upload-text">Drag & Drop prescription image here</div>
+            <div class="upload-subtext">Supports JPG, PNG, WEBP (Max 5MB)</div>
+            <p style="color: var(--text-muted);">or</p>
+            <button class="btn-primary">Browse Files</button>
+            <input type="file" class="file-input" id="file-uploader-input" accept="image/*">
+          </div>
+
+          <!-- Test Sample Prescription -->
+          <div class="sample-rx-container">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">Don't have a prescription handy? Test it with our pre-made template:</p>
+            <span class="sample-rx-link" id="load-sample-rx-btn">
+              <i class="ri-image-line"></i> Load Sample Prescription Slip
+            </span>
+          </div>
+        </div>
+
+        <!-- Scanning Progress & Results Panel -->
+        <div class="scanner-panel" id="scanner-visualizer-panel">
+          <!-- Empty State (default) -->
+          <div class="empty-scanner-state" id="scanner-empty-state">
+            <div class="empty-scanner-icon"><i class="ri-scanner-line"></i></div>
+            <h3>Awaiting Document</h3>
+            <p style="margin-top: 8px; max-width: 300px; margin-left: auto; margin-right: auto;">Upload an image on the left to activate the real-time Ayurvedic OCR scanner.</p>
+          </div>
+
+          <!-- Active OCR Scanning Screen (Hidden by default) -->
+          <div class="scan-visualizer" id="scanner-active-state" style="display: none;">
+            <div class="prescription-preview-box">
+              <img id="prescription-preview-img" src="" alt="Prescription preview">
+              <div class="scan-laser" id="scan-laser-line"></div>
+            </div>
+
+            <!-- Steps -->
+            <div class="scan-steps">
+              <div class="scan-step" id="step-upload">
+                <div class="scan-step-dot">1</div>
+                <span>Uploading file to secure server...</span>
+              </div>
+              <div class="scan-step" id="step-ocr">
+                <div class="scan-step-dot">2</div>
+                <span>Analyzing handwriting & extracting text (Tesseract OCR)...</span>
+              </div>
+              <div class="scan-step" id="step-match">
+                <div class="scan-step-dot">3</div>
+                <span>Matching characters with Ayurvedic catalog...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scanning Results Grid (Hidden by default) -->
+          <div class="scan-results-box" id="scanner-results-state" style="display: none;">
+            <h3 class="scan-results-header"><i class="ri-check-double-line" style="color: var(--success);"></i> Extracted Ayurvedic Items</h3>
+            
+            <p style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Raw Extracted Text Snippets:</p>
+            <div class="ocr-raw-text-details" id="ocr-raw-text">
+              <!-- Raw OCR results text -->
+            </div>
+
+            <div class="scan-results-list" id="ocr-matched-list">
+              <!-- Matched product rows render here -->
+            </div>
+
+            <button class="btn-primary add-selected-btn" id="ocr-add-selected-btn">
+              Add Selected Items to Cart <i class="ri-shopping-cart-2-line"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. ONLINE DOCTOR BOOKING PAGE -->
+    <section id="booking-page" class="page-section fade-in">
+      <div class="booking-layout">
+        <!-- Card 1: Select Doctor -->
+        <div class="booking-section-card">
+          <h3 class="booking-card-title"><i class="ri-nurse-line"></i> 1. Select Ayurvedic Doctor</h3>
+          <div class="doctor-booking-list" id="doctor-booking-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Card 2: Select Date & Time Slot -->
+        <div class="booking-section-card" id="booking-datetime-section" style="opacity: 0.5; pointer-events: none;">
+          <h3 class="booking-card-title"><i class="ri-time-line"></i> 2. Choose Date & Available Slot</h3>
+          
+          <p style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px;">Select Consultation Date:</p>
+          <div class="calendar-picker-row" id="calendar-days-row">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <p style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; margin-top: 20px;">Select Available Time Slot:</p>
+          <div class="slots-grid" id="booking-slots-grid">
+            <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 13px;">Please select a doctor first</div>
+          </div>
+        </div>
+
+        <!-- Card 3: Patient Information -->
+        <div class="booking-section-card" id="booking-patient-section" style="opacity: 0.5; pointer-events: none;">
+          <h3 class="booking-card-title"><i class="ri-user-follow-line"></i> 3. Patient Details & Reason</h3>
+          
+          <form class="booking-form" id="booking-details-form" onsubmit="return false;">
+            <div class="booking-input-row">
+              <div class="booking-input-group">
+                <label class="auth-label">Full Name</label>
+                <input type="text" placeholder="Enter patient name" class="booking-input" id="booking-patient-name" required>
+              </div>
+              <div class="booking-input-group">
+                <label class="auth-label">Email Address</label>
+                <input type="email" placeholder="patient@email.com" class="booking-input" id="booking-patient-email" required>
+              </div>
+            </div>
+            
+            <div class="booking-input-group">
+              <label class="auth-label">Reason for Consultation / Symptoms</label>
+              <textarea placeholder="Describe symptoms or reasons (e.g. hair loss, acidity, chronic joint pain)..." class="booking-input" id="booking-patient-symptoms" rows="3" style="font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Visual summary -->
+            <div class="booking-summary-box" id="booking-summary-box" style="display: none;">
+              <!-- Summary details calculations -->
+            </div>
+
+            <button type="submit" class="btn-primary booking-btn" id="confirm-booking-btn">Confirm Appointment & Generate Slot Receipt</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== THERAPIST BOOKING PAGE ===== -->
+    <section id="therapist-page" class="page-section fade-in">
+
+      <!-- Page Header -->
+      <div class="therapist-page-header">
+        <div class="therapist-page-badge"><i class="ri-hand-heart-line"></i> Ayurvedic Therapy Centre</div>
+        <h2 class="therapist-page-title">Book a Therapy Session</h2>
+        <p class="therapist-page-subtitle">Choose from 8 certified Ayurvedic therapists and schedule an in-clinic Panchakarma, Shirodhara, Yoga or any classical therapy session.</p>
+      </div>
+
+      <div class="therapist-booking-layout">
+
+        <!-- STEP 1 — Select Therapist -->
+        <div class="therapist-section-card">
+          <h3 class="therapist-card-title"><i class="ri-user-star-line"></i> 1. Select Your Ayurvedic Therapist</h3>
+          <div class="therapist-list" id="therapist-booking-list">
+            <!-- Rendered dynamically by therapist-booking.js -->
+          </div>
+        </div>
+
+        <!-- STEP 2 — Select Date & Time Slot -->
+        <div class="therapist-section-card" id="therapy-datetime-section" style="opacity:0.5;pointer-events:none;">
+          <h3 class="therapist-card-title"><i class="ri-calendar-event-line"></i> 2. Choose Date &amp; Available Time Slot</h3>
+
+          <p style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">Select Session Date:</p>
+          <div class="therapy-calendar-picker" id="therapy-calendar-days-row">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <p style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;margin-top:22px;">Select Available Time Slot:</p>
+          <div class="therapy-slots-grid" id="therapy-slots-grid">
+            <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:13px;">Please select a therapist first</div>
+          </div>
+        </div>
+
+        <!-- STEP 3 — Patient Details -->
+        <div class="therapist-section-card" id="therapy-patient-section" style="opacity:0.5;pointer-events:none;">
+          <h3 class="therapist-card-title"><i class="ri-user-follow-line"></i> 3. Patient Details &amp; Therapy Preferences</h3>
+
+          <form class="therapy-booking-form" id="therapy-details-form" onsubmit="return false;">
+
+            <!-- Name & Email row -->
+            <div class="therapy-input-row">
+              <div class="therapy-input-group">
+                <label class="auth-label">Full Name</label>
+                <input type="text" placeholder="Enter patient name" class="therapy-input" id="therapy-patient-name" required>
+              </div>
+              <div class="therapy-input-group">
+                <label class="auth-label">Email Address</label>
+                <input type="email" placeholder="patient@email.com" class="therapy-input" id="therapy-patient-email" required>
+              </div>
+            </div>
+
+            <!-- Therapy Type Dropdown -->
+            <div class="therapy-input-group">
+              <label class="auth-label">Select Therapy Type</label>
+              <select class="therapy-type-select" id="therapy-type-select">
+                <option value="">— Select a therapist first —</option>
+              </select>
+            </div>
+
+            <!-- Health Concern -->
+            <div class="therapy-input-group">
+              <label class="auth-label">Health Concern / Reason for Therapy</label>
+              <textarea placeholder="e.g. chronic back pain, stress, skin issues, detox, fertility..." class="therapy-input" id="therapy-patient-concern" rows="3" style="font-family:inherit;resize:vertical;"></textarea>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="therapy-summary-box" id="therapy-summary-box" style="display:none;">
+              <!-- Populated dynamically -->
+            </div>
+
+            <button type="submit" class="therapy-booking-btn" id="confirm-therapy-btn">
+              <i class="ri-calendar-check-line"></i> Confirm Therapy Session
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sliding Cart Drawer (Hidden by default) -->
+  <div class="cart-backdrop" id="cart-drawer-backdrop">
+    <div class="cart-drawer" id="cart-drawer-panel">
+      <div class="cart-drawer-header">
+        <h3 class="cart-drawer-title"><i class="ri-shopping-bag-3-line" style="color: var(--primary);"></i> Your Cart</h3>
+        <button class="cart-close-btn" id="close-cart-btn" aria-label="Close Cart">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+
+      <!-- Free Shipping Progress Tracker -->
+      <div class="free-shipping-container" id="shipping-tracker-box">
+        <div class="free-shipping-text" id="shipping-progress-text">Add items worth ₹500 more to get FREE Shipping!</div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="shipping-progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Scrollable Cart Item list -->
+      <div class="cart-items-list" id="cart-items-container">
+        <!-- Rendered dynamically -->
+        <div class="cart-empty-state">
+          <div class="cart-empty-icon"><i class="ri-shopping-basket-line"></i></div>
+          <h3>Your cart is empty</h3>
+          <p>Add remedies from our store or consult the AI Doctor to receive health recommendations.</p>
+        </div>
+      </div>
+
+      <!-- Math invoice checkout footer -->
+      <div class="cart-drawer-footer">
+        <!-- Promo Coupon Row -->
+        <div class="cart-coupon-row">
+          <input type="text" placeholder="Promo Code (e.g. VEDNIDAN10)" class="coupon-input" id="coupon-field">
+          <button class="coupon-btn" id="coupon-apply-btn">Apply</button>
+        </div>
+        <div class="coupon-alert" id="coupon-message-box"></div>
+
+        <!-- Math details -->
+        <div class="cart-math-breakdown">
+          <div class="math-row">
+            <span>Subtotal</span>
+            <span id="cart-math-subtotal">₹0</span>
+          </div>
+          <div class="math-row discount-row" id="cart-math-discount-container" style="display: none;">
+            <span>Discount (10%)</span>
+            <span id="cart-math-discount">-₹0</span>
+          </div>
+          <div class="math-row">
+            <span>Shipping & Handling</span>
+            <span id="cart-math-shipping">₹0</span>
+          </div>
+          <div class="math-row total-row">
+            <span>Grand Total</span>
+            <span id="cart-math-total">₹0</span>
+          </div>
+        </div>
+
+        <button class="btn-primary checkout-btn" id="checkout-pay-btn">Proceed to Secure Checkout <i class="ri-lock-line"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal Popup -->
+  <div class="modal-backdrop" id="product-modal-backdrop">
+    <div class="modal-container">
+      <button class="modal-close" id="modal-close-btn"><i class="ri-close-line"></i></button>
+      <div class="modal-content-grid" id="modal-content-details">
+        <!-- Rendered dynamically by shop.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Success Modal Overlay -->
+  <div class="success-overlay" id="checkout-success-overlay">
+    <div class="success-card">
+      <div class="success-circle-icon"><i class="ri-checkbox-circle-line"></i></div>
+      <h3 class="success-title">Order Placed Successfully!</h3>
+      <p class="success-desc" id="success-invoice-summary">Thank you for choosing VedNidan Healthcare. Your Ayurvedic medicines will arrive in 2-3 business days. A tracking link has been sent to your details.</p>
+      <button class="btn-primary success-ok-btn" id="success-close-btn">Continue Shopping</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-wrapper"></div>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>VedNidan Healthcare</h3>
+        <p>Combining the purity of ancient Himalayan Ayurveda with the precision of modern clinical testing.</p>
+        <p>© 2026 VedNidan Healthcare Inc. All rights reserved.</p>
+      </div>
+      <div class="footer-links-col">
+        <h4>Explore</h4>
+        <ul class="footer-links">
+          <li><a href="#" onclick="document.getElementById('nav-shop').click(); return false;">Shop Remedies</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-doctor').click(); return false;">AI doctor Consult</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-reader').click(); return false;">Upload Prescription</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-booking').click(); return false;">Book Doctor</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-therapist').click(); return false;">Book Therapist</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-col">
+        <h4>Support</h4>
+        <ul class="footer-links">
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms & Conditions</a></li>
+          <li><a href="#">Shipping & Returns</a></li>
+        </ul>
+      </div>
+      <div class="footer-newsletter">
+        <h4>Subscribe & Save</h4>
+        <p>Subscribe to receive Ayurvedic wellness newsletters and get 15% off your next purchase.</p>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Your Email Address" class="newsletter-input" required>
+          <button class="newsletter-btn">Join</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>ISO 9001:2015 Certified | WHO-GMP Compliant Manufacturing Facility</div>
+      <div>Designed for Holistic Vitality</div>
+    </div>
+  </footer>
+
+  <!-- Floating AI Doctor Chat Widget Bubble -->
+  <button class="floating-chat-btn" id="floating-chat-btn" aria-label="Consult AI Doctor">
+    <i class="ri-robot-2-line"></i>
+    <span class="floating-chat-tooltip">Consult AI Doctor</span>
+  </button>
+
+  <!-- USER AUTH MODAL OVERLAY (Login & Signup) -->
+  <div class="auth-modal-backdrop" id="auth-modal-backdrop">
+    <!-- Card 1: Login Form -->
+    <div class="auth-modal-container" id="login-modal-panel">
+      <button class="auth-close-btn" id="login-close-btn"><i class="ri-close-line"></i></button>
+      <div class="auth-modal-header">
+        <h3 class="auth-modal-title">Welcome Back</h3>
+        <p class="auth-modal-subtitle">Log in to your VedNidan Healthcare account</p>
+      </div>
+      <form class="auth-form" id="login-submit-form" onsubmit="return false;">
+        <div class="auth-input-group">
+          <label class="auth-label">Email Address</label>
+          <div class="auth-input-wrapper">
+            <i class="ri-mail-line auth-input-icon"></i>
+            <input type="email" placeholder="name@email.com" class="auth-input" id="login-email" required>
+          </div>
+        </div>
+        <div class="auth-input-group">
+          <label class="auth-label">Password</label>
+          <div class="auth-input-wrapper">
+            <i class="ri-lock-line auth-input-icon"></i>
+            <input type="password" placeholder="••••••••" class="auth-input" id="login-password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn">Log In</button>
+      </form>
+      <div class="auth-switch-text">
+        Don't have an account? <span class="auth-switch-link" id="goto-signup-btn">Sign Up Free</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Signup Form (Hidden by default) -->
+    <div class="auth-modal-container" id="signup-modal-panel" style="display: none;">
+      <button class="auth-close-btn" id="signup-close-btn"><i class="ri-close-line"></i></button>
+      <div class="auth-modal-header">
+        <h3 class="auth-modal-title">Create Account</h3>
+        <p class="auth-modal-subtitle">Register to manage orders and schedule consultations</p>
+      </div>
+      <form class="auth-form" id="signup-submit-form" onsubmit="return false;">
+        <div class="auth-input-group">
+          <label class="auth-label">Full Name</label>
+          <div class="auth-input-wrapper">
+            <i class="ri-user-line auth-input-icon"></i>
+            <input type="text" placeholder="John Doe" class="auth-input" id="signup-name" required>
+          </div>
+        </div>
+        <div class="auth-input-group">
+          <label class="auth-label">Email Address</label>
+          <div class="auth-input-wrapper">
+            <i class="ri-mail-line auth-input-icon"></i>
+            <input type="email" placeholder="name@email.com" class="auth-input" id="signup-email" required>
+          </div>
+        </div>
+        <div class="auth-input-group">
+          <label class="auth-label">Password</label>
+          <div class="auth-input-wrapper">
+            <i class="ri-lock-line auth-input-icon"></i>
+            <input type="password" placeholder="Choose a strong password" class="auth-input" id="signup-password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary auth-submit-btn">Create Account</button>
+      </form>
+      <div class="auth-switch-text">
+        Already have an account? <span class="auth-switch-link" id="goto-login-btn">Log In</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modular Frontend Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/shop.js"></script>
+  <script src="/js/cart.js"></script>
+  <script src="/js/doctor.js"></script>
+  <script src="/js/reader.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/booking.js"></script>
+  <script src="/js/therapist-booking.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

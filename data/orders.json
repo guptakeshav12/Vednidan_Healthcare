@@ -1,0 +1,103 @@
+[
+  {
+    "id": 1780000000001,
+    "customerName": "Amit Kumar",
+    "customerEmail": "amit.kumar@gmail.com",
+    "items": [
+      {
+        "id": 1,
+        "name": "Chyawanprash Rejuvenative Rasayana",
+        "price": 380,
+        "quantity": 1
+      },
+      {
+        "id": 2,
+        "name": "Mahamanjishthadi Kadha",
+        "price": 240,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 860,
+    "discount": 86,
+    "shipping": 0,
+    "total": 774,
+    "status": "Pending",
+    "orderedAt": "2026-06-25T10:15:30.000Z"
+  },
+  {
+    "id": 1780000000002,
+    "customerName": "Priyanka Sharma",
+    "customerEmail": "priyanka.s@yahoo.com",
+    "items": [
+      {
+        "id": 4,
+        "name": "Ashwagandha Vitality Capsule",
+        "price": 290,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 580,
+    "discount": 0,
+    "shipping": 0,
+    "total": 580,
+    "status": "Delivered",
+    "orderedAt": "2026-06-26T14:22:15.000Z"
+  },
+  {
+    "id": 1780000000003,
+    "customerName": "Rahul Verma",
+    "customerEmail": "rahul.v@gmail.com",
+    "items": [
+      {
+        "id": 3,
+        "name": "Triphala Digestive Tablets",
+        "price": 180,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 180,
+    "discount": 0,
+    "shipping": 40,
+    "total": 220,
+    "status": "Shipped",
+    "orderedAt": "2026-06-27T08:45:00.000Z"
+  },
+  {
+    "id": 1782569711306,
+    "customerName": "Guest User",
+    "customerEmail": "guest@vednidan.com",
+    "items": [
+      {
+        "id": 10201,
+        "name": "Mashroom Powder",
+        "price": 480,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 480,
+    "discount": 0,
+    "shipping": 40,
+    "total": 520,
+    "status": "Pending",
+    "orderedAt": "2026-06-27T14:15:11.306Z"
+  },
+  {
+    "id": 1782580930980,
+    "customerName": "Guest User",
+    "customerEmail": "guest@vednidan.com",
+    "items": [
+      {
+        "id": 1,
+        "name": "Ashwagandha KSM-66 Capsules",
+        "price": 499,
+        "quantity": 2
+      }
+    ],
+    "subtotal": 998,
+    "discount": 0,
+    "shipping": 0,
+    "total": 998,
+    "status": "Pending",
+    "orderedAt": "2026-06-27T17:22:10.980Z"
+  }
+]

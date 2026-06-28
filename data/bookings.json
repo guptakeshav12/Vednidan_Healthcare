@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1780224941781,
+    "doctorId": 102,
+    "doctorName": "Dr. Ananya Mishra",
+    "date": "2026-06-06",
+    "timeSlot": "11:00 AM",
+    "patientName": "KESHA",
+    "patientEmail": "KESHAV@GMAIL.COM",
+    "symptom": "BACK Pain",
+    "bookedAt": "2026-05-31T10:55:41.781Z"
+  }
+]

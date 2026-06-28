@@ -1,0 +1,319 @@
+/* Prescription Reader Interface CSS */
+
+.reader-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  animation: fadeIn var(--transition-normal);
+}
+
+.reader-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.reader-header {
+  margin-bottom: 24px;
+}
+
+.reader-title {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.reader-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Drag Drop Zone */
+.upload-zone {
+  border: 2px dashed var(--text-muted);
+  border-radius: var(--radius-md);
+  padding: 40px 20px;
+  text-align: center;
+  background-color: var(--background);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary);
+  background-color: var(--accent);
+}
+
+.upload-icon {
+  font-size: 48px;
+  color: var(--primary);
+}
+
+.upload-text {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--primary-dark);
+}
+
+.upload-subtext {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.file-input {
+  display: none;
+}
+
+.sample-rx-container {
+  margin-top: 24px;
+  border-top: 1px solid var(--accent);
+  padding-top: 20px;
+  text-align: center;
+}
+
+.sample-rx-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-light);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+.sample-rx-link:hover {
+  color: var(--secondary-dark);
+  text-decoration: underline;
+}
+
+/* Scanning Progress Visualization */
+.scanner-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 400px;
+  position: relative;
+}
+
+.empty-scanner-state {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-scanner-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+/* Scan Visualization Active */
+.scan-visualizer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.prescription-preview-box {
+  width: 100%;
+  max-width: 320px;
+  height: 220px;
+  background-color: var(--background);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.prescription-preview-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Scanning Laser Line */
+.scan-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, transparent, var(--secondary), transparent);
+  box-shadow: 0 0 12px 2px var(--secondary);
+  animation: scanning 2.5s infinite linear;
+  z-index: 5;
+}
+
+/* Steps Timeline */
+.scan-steps {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.scan-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.scan-step-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+
+.scan-step.active {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.scan-step.active .scan-step-dot {
+  border-color: var(--secondary);
+  background-color: var(--secondary);
+  color: var(--primary-dark);
+}
+
+.scan-step.done {
+  color: var(--success);
+}
+
+.scan-step.done .scan-step-dot {
+  border-color: var(--success);
+  background-color: var(--success);
+  color: var(--surface);
+}
+
+/* Matched Products Result */
+.scan-results-box {
+  width: 100%;
+  animation: fadeIn var(--transition-normal);
+}
+
+.scan-results-header {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--accent);
+}
+
+.ocr-raw-text-details {
+  background: var(--background);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-secondary);
+  max-height: 80px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  border: 1px solid var(--accent);
+}
+
+.scan-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.scan-result-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--background);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+}
+
+.scan-result-item:hover {
+  border-color: var(--primary-light);
+  background-color: var(--surface);
+}
+
+.scan-result-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.scan-result-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background: #FFF;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.scan-result-info {
+  flex-grow: 1;
+}
+
+.scan-result-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--primary-dark);
+}
+
+.scan-result-qty-badge {
+  background-color: var(--accent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.scan-result-price {
+  font-weight: 800;
+  color: var(--primary-dark);
+  font-size: 15px;
+}
+
+/* Mass Actions button */
+.add-selected-btn {
+  width: 100%;
+}
+
+/* Responsive Rules */
+@media (max-width: 850px) {
+  .reader-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
