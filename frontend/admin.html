@@ -11,7 +11,7 @@
   <!-- Remix Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
   <!-- Custom Stylesheets -->
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="admin-body">
 
@@ -37,6 +37,18 @@
       </li>
       <li class="admin-menu-item" data-tab="therapist-bookings">
         <a href="#therapist-bookings"><i class="ri-hand-heart-line"></i> Therapist Bookings</a>
+      </li>
+      <li class="admin-menu-item" data-tab="analytics">
+        <a href="#analytics"><i class="ri-bar-chart-box-line"></i> Analytics</a>
+      </li>
+      <li class="admin-menu-item" data-tab="users">
+        <a href="#users"><i class="ri-user-group-line"></i> Customers</a>
+      </li>
+      <li class="admin-menu-item" data-tab="doctors">
+        <a href="#doctors"><i class="ri-nurse-line"></i> Doctors Catalog</a>
+      </li>
+      <li class="admin-menu-item" data-tab="therapists">
+        <a href="#therapists"><i class="ri-user-star-line"></i> Therapists Catalog</a>
       </li>
     </ul>
 
@@ -222,6 +234,117 @@
       </div>
     </section>
 
+    <!-- ===== VIEW 6: ANALYTICS TAB ===== -->
+    <section id="view-analytics" class="admin-view">
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
+        <!-- Monthly Revenue -->
+        <div class="admin-card">
+          <h3 class="admin-card-title"><i class="ri-money-rupee-circle-line"></i> Monthly Revenue Report</h3>
+          <div class="table-responsive" style="margin-top: 15px;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Revenue Sum (₹)</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-revenue-table-body">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Best Sellers -->
+        <div class="admin-card">
+          <h3 class="admin-card-title"><i class="ri-medal-line"></i> Best Selling Items</h3>
+          <div class="table-responsive" style="margin-top: 15px;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Ayurvedic remedy</th>
+                  <th>Quantity Sold</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-bestsellers-table-body">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 7: CUSTOMERS TAB ===== -->
+    <section id="view-users" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>Email Address</th>
+                <th>Registration Date</th>
+                <th>Orders count</th>
+                <th>Total Purchases</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 8: DOCTORS MANAGEMENT TAB ===== -->
+    <section id="view-doctors" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Doctor ID</th>
+                <th>Name</th>
+                <th>Specialty</th>
+                <th>Rating</th>
+                <th>Experience</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="doctors-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 9: THERAPISTS MANAGEMENT TAB ===== -->
+    <section id="view-therapists" class="admin-view">
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Therapist ID</th>
+                <th>Name</th>
+                <th>Specialty</th>
+                <th>Rating</th>
+                <th>Experience</th>
+                <th>Therapies Offered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="therapists-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ===== PRODUCT ADD/EDIT MODAL OVERLAY ===== -->
@@ -303,7 +426,102 @@
     </div>
   </div>
 
+  <!-- ===== DOCTOR ADD/EDIT MODAL OVERLAY ===== -->
+  <div class="admin-modal-backdrop" id="doctor-modal-backdrop">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="doctor-modal-title">Add New Doctor</h3>
+        <button class="btn-modal-close" onclick="closeDoctorModal()"><i class="ri-close-line"></i></button>
+      </div>
+
+      <form id="doctor-form" onsubmit="handleDoctorFormSubmit(event)">
+        <div class="admin-form-group">
+          <label class="admin-form-label">Doctor ID (Numeric)</label>
+          <input type="number" class="admin-form-input" id="doctor-id" required placeholder="e.g. 104">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Doctor Name</label>
+          <input type="text" class="admin-form-input" id="doctor-name-input" required placeholder="Dr. FirstName LastName">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Specialty</label>
+          <input type="text" class="admin-form-input" id="doctor-specialty" required placeholder="e.g. Ayurvedic Skincare Expert">
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Rating</label>
+            <input type="number" step="0.1" max="5.0" class="admin-form-input" id="doctor-rating" placeholder="4.8">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Experience</label>
+            <input type="text" class="admin-form-input" id="doctor-experience" placeholder="e.g. 10 years">
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin-secondary" onclick="closeDoctorModal()">Cancel</button>
+          <button type="submit" class="btn-admin-primary">Save Doctor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== THERAPIST ADD/EDIT MODAL OVERLAY ===== -->
+  <div class="admin-modal-backdrop" id="therapist-modal-backdrop">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="therapist-modal-title">Add New Therapist</h3>
+        <button class="btn-modal-close" onclick="closeTherapistModal()"><i class="ri-close-line"></i></button>
+      </div>
+
+      <form id="therapist-form" onsubmit="handleTherapistFormSubmit(event)">
+        <div class="admin-form-group">
+          <label class="admin-form-label">Therapist ID (Numeric)</label>
+          <input type="number" class="admin-form-input" id="therapist-id" required placeholder="e.g. 209">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Therapist Name</label>
+          <input type="text" class="admin-form-input" id="therapist-name-input" required placeholder="Vaidya FirstName LastName">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Specialty</label>
+          <input type="text" class="admin-form-input" id="therapist-specialty" required placeholder="e.g. Panchakarma Detoxification">
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Rating</label>
+            <input type="number" step="0.1" max="5.0" class="admin-form-input" id="therapist-rating" placeholder="4.9">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Experience</label>
+            <input type="text" class="admin-form-input" id="therapist-experience" placeholder="e.g. 15 years">
+          </div>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Therapies Offered (Comma separated)</label>
+          <input type="text" class="admin-form-input" id="therapist-therapies" placeholder="e.g. Shirodhara, Abhyanga, Basti">
+        </div>
+        <div class="admin-modal-footer">
+          <button type="button" class="btn-admin-secondary" onclick="closeTherapistModal()">Cancel</button>
+          <button type="submit" class="btn-admin-primary">Save Therapist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOMER ORDERS MODAL OVERLAY ===== -->
+  <div class="admin-modal-backdrop" id="user-orders-modal-backdrop">
+    <div class="admin-modal" style="width: 700px;">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title">Customer Purchase History</h3>
+        <button class="btn-modal-close" onclick="closeUserOrdersModal()"><i class="ri-close-line"></i></button>
+      </div>
+      <div id="user-orders-modal-content">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
   <!-- Javascript Modules -->
-  <script src="/js/admin-app.js"></script>
+  <script src="js/admin-app.js"></script>
 </body>
 </html>

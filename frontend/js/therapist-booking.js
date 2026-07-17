@@ -180,7 +180,7 @@ const TherapistBooking = {
     }
 
     try {
-      const res = await fetch(`/api/therapist-booking/slots?therapistId=${this.selectedTherapistId}&date=${this.selectedDateString}`);
+      const res = await fetch(`${window.API_BASE || '/api'}/therapist-booking/slots?therapistId=${this.selectedTherapistId}&date=${this.selectedDateString}`);
       if (!res.ok) throw new Error('Failed to retrieve slots');
       const data = await res.json();
       this.renderSlots(data.slots);
@@ -283,7 +283,7 @@ const TherapistBooking = {
     btn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Processing session booking...`;
 
     try {
-      const res = await fetch('/api/therapist-booking/book', {
+      const res = await fetch((window.API_BASE || '/api') + '/therapist-booking/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

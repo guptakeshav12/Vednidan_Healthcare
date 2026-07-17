@@ -37,10 +37,25 @@ const Cart = {
       applyCouponBtn.addEventListener('click', () => this.applyPromoCode());
     }
 
-    // Checkout Button
+    // Checkout Button (Redirects to custom Checkout Page)
     const checkoutBtn = document.getElementById('checkout-pay-btn');
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', () => this.checkout());
+      checkoutBtn.addEventListener('click', () => {
+        this.toggleCart(false);
+        if (typeof App !== 'undefined' && App.navigateTo) {
+          App.navigateTo('checkout-page');
+          this.renderCheckout();
+        }
+      });
+    }
+
+    // Checkout Form Place Order Button
+    const checkoutForm = document.getElementById('checkout-shipping-form');
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.placeOrder();
+      });
     }
 
     // OK success checkout button
@@ -49,6 +64,9 @@ const Cart = {
       successBtn.addEventListener('click', () => {
         document.getElementById('checkout-success-overlay').classList.remove('active');
         this.clearCart();
+        if (typeof App !== 'undefined' && App.navigateTo) {
+          App.navigateTo('shop-page');
+        }
       });
     }
   },
@@ -170,75 +188,120 @@ const Cart = {
     }
   },
 
-  async checkout() {
+  renderCheckout() {
+    const summaryItems = document.getElementById('checkout-summary-items');
+    if (!summaryItems) return;
+
     if (this.items.length === 0) {
-      showToast('Cannot checkout with an empty cart!', 'warning');
+      summaryItems.innerHTML = `<p style="color:var(--text-muted);">Your checkout cart is empty.</p>`;
       return;
     }
 
-    let customerName = Auth && Auth.currentUser ? Auth.currentUser.name : null;
-    let customerEmail = Auth && Auth.currentUser ? Auth.currentUser.email : null;
+    summaryItems.innerHTML = this.items.map(item => `
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:14px; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:8px;">
+        <div>
+          <strong style="color:var(--text-main);">${item.product.name}</strong>
+          <div style="color:var(--text-muted); font-size:12px;">Qty: ${item.quantity} × ₹${item.product.price}</div>
+        </div>
+        <span style="font-weight:700; color:var(--primary);">₹${item.product.price * item.quantity}</span>
+      </div>
+    `).join('');
 
-    if (!customerName) {
-      customerName = prompt("Please enter your name for delivery:", "Guest User");
-      if (!customerName) return;
+    // Set totals on checkout page
+    const invoice = this.calculateInvoice();
+    document.getElementById('checkout-subtotal').textContent = `₹${invoice.subtotal}`;
+    
+    const discountRow = document.getElementById('checkout-discount-row');
+    const discountVal = document.getElementById('checkout-discount');
+    if (discountRow && discountVal) {
+      if (invoice.discountAmount > 0) {
+        discountRow.style.display = 'flex';
+        discountVal.textContent = `-₹${invoice.discountAmount}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
     }
 
-    if (!customerEmail) {
-      customerEmail = prompt("Please enter your email address for order updates:", "guest@vednidan.com");
-      if (!customerEmail) return;
+    document.getElementById('checkout-shipping').textContent = invoice.shipping === 0 ? 'FREE' : `₹${invoice.shipping}`;
+    document.getElementById('checkout-total').textContent = `₹${invoice.total}`;
+
+    // Prefill user details if logged in
+    if (typeof Auth !== 'undefined' && Auth.currentUser) {
+      const nameInput = document.getElementById('checkout-name');
+      const emailInput = document.getElementById('checkout-email');
+      if (nameInput) nameInput.value = Auth.currentUser.name;
+      if (emailInput) emailInput.value = Auth.currentUser.email;
+    }
+  },
+
+  async placeOrder() {
+    const name = document.getElementById('checkout-name').value;
+    const email = document.getElementById('checkout-email').value;
+    const address = document.getElementById('checkout-address').value;
+    const city = document.getElementById('checkout-city').value;
+    const state = document.getElementById('checkout-state').value;
+    const zip = document.getElementById('checkout-zip').value;
+    const phone = document.getElementById('checkout-phone').value;
+
+    if (this.items.length === 0) {
+      showToast('Cannot place order with an empty cart!', 'warning');
+      return;
     }
 
-    const checkoutBtn = document.getElementById('checkout-pay-btn');
-    checkoutBtn.disabled = true;
-    checkoutBtn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Processing payment...`;
+    const placeBtn = document.getElementById('checkout-submit-order-btn');
+    placeBtn.disabled = true;
+    placeBtn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Placing order...`;
 
     try {
-      const calculations = this.calculateInvoice();
+      const invoice = this.calculateInvoice();
       const orderData = {
-        customerName,
-        customerEmail,
+        customerName: name,
+        customerEmail: email,
+        shippingAddress: address,
+        shippingCity: city,
+        shippingState: state,
+        shippingZip: zip,
+        shippingPhone: phone,
         items: this.items.map(item => ({
           id: item.product.id,
           name: item.product.name,
           price: item.product.price,
           quantity: item.quantity
         })),
-        subtotal: calculations.subtotal,
-        discount: calculations.discountAmount,
-        shipping: calculations.shipping,
-        total: calculations.total
+        subtotal: invoice.subtotal,
+        discount: invoice.discountAmount,
+        shipping: invoice.shipping,
+        total: invoice.total
       };
 
-      const response = await fetch('/api/admin/orders', {
+      const response = await fetch((window.API_BASE || '/api') + '/admin/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
       });
 
-      if (!response.ok) throw new Error('Failed to create order on server');
+      if (!response.ok) throw new Error('Order submission failed');
       const data = await response.json();
 
-      checkoutBtn.disabled = false;
-      checkoutBtn.innerHTML = `Proceed to Secure Checkout <i class="ri-lock-line"></i>`;
+      placeBtn.disabled = false;
+      placeBtn.innerHTML = `<i class="ri-checkbox-circle-line"></i> Confirm & Place Order`;
 
+      // Trigger success overlay
       const summaryText = document.getElementById('success-invoice-summary');
       if (summaryText) {
         summaryText.innerHTML = `
           Thank you for choosing VedNidan Healthcare. 
-          Your order has been placed successfully under Order ID: <strong>#${data.order.id}</strong> for a grand total of <strong>₹${calculations.total}</strong>. 
-          A secure tracking link and SMS confirmation have been sent to your registered contact details.
+          Your order has been placed successfully under Order ID: <strong style="color:var(--primary);">#${data.order.id}</strong> for a grand total of <strong>₹${invoice.total}</strong>. 
+          You can track your package details using our new Order Tracking page using this ID!
         `;
       }
-
-      this.toggleCart(false);
       document.getElementById('checkout-success-overlay').classList.add('active');
 
-    } catch (error) {
-      console.error('Checkout error:', error);
-      checkoutBtn.disabled = false;
-      checkoutBtn.innerHTML = `Proceed to Secure Checkout <i class="ri-lock-line"></i>`;
-      showToast('Error processing checkout. Please try again.', 'error');
+    } catch (err) {
+      console.error(err);
+      placeBtn.disabled = false;
+      placeBtn.innerHTML = `<i class="ri-checkbox-circle-line"></i> Confirm & Place Order`;
+      showToast('Error placing order. Please try again.', 'error');
     }
   },
 

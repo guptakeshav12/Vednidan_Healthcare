@@ -1,20 +1,32 @@
 const fs = require('fs');
 const path = require('path');
+const { supabase, isConfigured } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 const bookingsFilePath = path.join(__dirname, '../data/bookings.json');
 const therapistBookingsFilePath = path.join(__dirname, '../data/therapist_bookings.json');
 const ordersFilePath = path.join(__dirname, '../data/orders.json');
+const usersFilePath = path.join(__dirname, '../data/users.json');
 
-// Helper functions for reading and writing files safely
+// Standard fallback doctor/therapist lists
+const localDoctors = [
+  { id: 101, name: "Dr. Vasudev Shashtri", specialty: "Nadi Pariksha & Pulse Diagnosis", rating: 4.9, experience: "22 years" },
+  { id: 102, name: "Dr. Ananya Mishra", specialty: "Ayurvedic Skincare & Hair Care Expert", rating: 4.8, experience: "14 years" },
+  { id: 103, name: "Dr. Raghavan Nair", specialty: "Panchakarma & Chronic Pain Specialist", rating: 4.9, experience: "18 years" }
+];
+
+const localTherapists = [
+  { id: 201, name: "Vaidya Pradeep Sharma", specialty: "Panchakarma & Detox Specialist", rating: 4.9, experience: "25 years", therapies: ["Panchakarma", "Vamana", "Virechana", "Basti"] },
+  { id: 202, name: "Vaidya Meera Kulkarni", specialty: "Abhyanga & Oil Therapy Expert", rating: 4.8, experience: "18 years", therapies: ["Abhyanga", "Shirodhara", "Pizhichil", "Elakizhi"] }
+];
+
 const readFileHelper = (filePath, defaultData = []) => {
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2));
     return defaultData;
   }
-  const data = fs.readFileSync(filePath, 'utf-8');
   try {
-    return JSON.parse(data);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch (e) {
     return defaultData;
   }
@@ -25,25 +37,49 @@ const writeFileHelper = (filePath, data) => {
 };
 
 // 1. GET /api/admin/stats
-exports.getStats = (req, res) => {
+exports.getStats = async (req, res) => {
   try {
-    const products = readFileHelper(productsFilePath);
-    const bookings = readFileHelper(bookingsFilePath);
-    const therapistBookings = readFileHelper(therapistBookingsFilePath);
-    const orders = readFileHelper(ordersFilePath);
+    if (!isConfigured) {
+      const products = readFileHelper(productsFilePath);
+      const bookings = readFileHelper(bookingsFilePath);
+      const therapistBookings = readFileHelper(therapistBookingsFilePath);
+      const orders = readFileHelper(ordersFilePath);
 
-    // Calculate revenue from Delivered or Shipped orders
-    const totalRevenue = orders
-      .filter(o => o.status === 'Delivered' || o.status === 'Shipped')
-      .reduce((sum, o) => sum + (o.total || 0), 0);
+      const totalRevenue = orders
+        .filter(o => o.status === 'Delivered' || o.status === 'Shipped')
+        .reduce((sum, o) => sum + (o.total || 0), 0);
+
+      return res.json({
+        revenue: totalRevenue,
+        ordersCount: orders.length,
+        bookingsCount: bookings.length,
+        therapistBookingsCount: therapistBookings.length,
+        productsCount: products.length
+      });
+    }
+
+    // Connect to Supabase
+    const { count: pCount } = await supabase.from('products').select('*', { head: true, count: 'exact' });
+    const { count: oCount } = await supabase.from('orders').select('*', { head: true, count: 'exact' });
+    const { count: bCount } = await supabase.from('bookings').select('*', { head: true, count: 'exact' });
+    const { count: tbCount } = await supabase.from('therapist_bookings').select('*', { head: true, count: 'exact' });
+
+    // Fetch total revenue sum from Delivered/Shipped
+    const { data: revData } = await supabase
+      .from('orders')
+      .select('total')
+      .in('status', ['Delivered', 'Shipped']);
+
+    const totalRevenue = (revData || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
     res.json({
       revenue: totalRevenue,
-      ordersCount: orders.length,
-      bookingsCount: bookings.length,
-      therapistBookingsCount: therapistBookings.length,
-      productsCount: products.length
+      ordersCount: oCount || 0,
+      bookingsCount: bCount || 0,
+      therapistBookingsCount: tbCount || 0,
+      productsCount: pCount || 0
     });
+
   } catch (error) {
     console.error('Error fetching admin stats:', error);
     res.status(500).json({ message: 'Error retrieving admin statistics' });
@@ -51,10 +87,28 @@ exports.getStats = (req, res) => {
 };
 
 // 2. GET /api/admin/bookings
-exports.getBookings = (req, res) => {
+exports.getBookings = async (req, res) => {
   try {
-    const bookings = readFileHelper(bookingsFilePath);
-    res.json(bookings);
+    if (!isConfigured) {
+      return res.json(readFileHelper(bookingsFilePath));
+    }
+    const { data, error } = await supabase.from('bookings').select('*').order('id', { ascending: false });
+    if (error) throw error;
+    
+    // Map database snake_case keys back to camelCase frontend keys
+    const formatted = data.map(b => ({
+      id: b.id,
+      doctorId: b.doctor_id,
+      doctorName: b.doctor_name,
+      date: b.date,
+      timeSlot: b.time_slot,
+      patientName: b.patient_name,
+      patientEmail: b.patient_email,
+      symptom: b.symptom,
+      bookedAt: b.booked_at
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error('Error fetching doctor bookings:', error);
     res.status(500).json({ message: 'Error retrieving doctor bookings' });
@@ -62,18 +116,21 @@ exports.getBookings = (req, res) => {
 };
 
 // 3. DELETE /api/admin/bookings/:id
-exports.deleteBooking = (req, res) => {
+exports.deleteBooking = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    let bookings = readFileHelper(bookingsFilePath);
-    const initialLen = bookings.length;
-    bookings = bookings.filter(b => b.id !== id);
 
-    if (bookings.length === initialLen) {
-      return res.status(404).json({ message: 'Booking not found' });
+    if (!isConfigured) {
+      let bookings = readFileHelper(bookingsFilePath);
+      const initialLen = bookings.length;
+      bookings = bookings.filter(b => b.id !== id);
+      if (bookings.length === initialLen) return res.status(404).json({ message: 'Booking not found' });
+      writeFileHelper(bookingsFilePath, bookings);
+      return res.json({ success: true, message: 'Booking cancelled' });
     }
 
-    writeFileHelper(bookingsFilePath, bookings);
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (error) throw error;
     res.json({ success: true, message: 'Booking cancelled successfully' });
   } catch (error) {
     console.error('Error deleting booking:', error);
@@ -82,10 +139,27 @@ exports.deleteBooking = (req, res) => {
 };
 
 // 4. GET /api/admin/therapist-bookings
-exports.getTherapistBookings = (req, res) => {
+exports.getTherapistBookings = async (req, res) => {
   try {
-    const therapistBookings = readFileHelper(therapistBookingsFilePath);
-    res.json(therapistBookings);
+    if (!isConfigured) {
+      return res.json(readFileHelper(therapistBookingsFilePath));
+    }
+    const { data, error } = await supabase.from('therapist_bookings').select('*').order('id', { ascending: false });
+    if (error) throw error;
+
+    const formatted = data.map(b => ({
+      id: b.id,
+      therapistId: b.therapist_id,
+      therapistName: b.therapist_name,
+      date: b.date,
+      timeSlot: b.time_slot,
+      patientName: b.patient_name,
+      patientEmail: b.patient_email,
+      therapyType: b.therapy_type,
+      bookedAt: b.booked_at
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error('Error fetching therapist bookings:', error);
     res.status(500).json({ message: 'Error retrieving therapist bookings' });
@@ -93,18 +167,21 @@ exports.getTherapistBookings = (req, res) => {
 };
 
 // 5. DELETE /api/admin/therapist-bookings/:id
-exports.deleteTherapistBooking = (req, res) => {
+exports.deleteTherapistBooking = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    let therapistBookings = readFileHelper(therapistBookingsFilePath);
-    const initialLen = therapistBookings.length;
-    therapistBookings = therapistBookings.filter(b => b.id !== id);
 
-    if (therapistBookings.length === initialLen) {
-      return res.status(404).json({ message: 'Therapist booking not found' });
+    if (!isConfigured) {
+      let bookings = readFileHelper(therapistBookingsFilePath);
+      const initialLen = bookings.length;
+      bookings = bookings.filter(b => b.id !== id);
+      if (bookings.length === initialLen) return res.status(404).json({ message: 'Booking not found' });
+      writeFileHelper(therapistBookingsFilePath, bookings);
+      return res.json({ success: true, message: 'Therapist booking cancelled' });
     }
 
-    writeFileHelper(therapistBookingsFilePath, therapistBookings);
+    const { error } = await supabase.from('therapist_bookings').delete().eq('id', id);
+    if (error) throw error;
     res.json({ success: true, message: 'Therapist booking cancelled successfully' });
   } catch (error) {
     console.error('Error deleting therapist booking:', error);
@@ -113,45 +190,137 @@ exports.deleteTherapistBooking = (req, res) => {
 };
 
 // 6. GET /api/admin/orders
-exports.getOrders = (req, res) => {
+exports.getOrders = async (req, res) => {
   try {
-    const orders = readFileHelper(ordersFilePath);
-    // Sort by orderedAt descending
-    orders.sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
-    res.json(orders);
+    if (!isConfigured) {
+      const orders = readFileHelper(ordersFilePath);
+      orders.sort((a, b) => new Date(b.orderedAt) - new Date(a.orderedAt));
+      return res.json(orders);
+    }
+
+    const { data: dbOrders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('ordered_at', { ascending: false });
+
+    if (error) throw error;
+
+    const formatted = dbOrders.map(o => ({
+      id: o.id,
+      customerName: o.customer_name,
+      customerEmail: o.customer_email,
+      items: o.items,
+      subtotal: parseFloat(o.subtotal),
+      discount: parseFloat(o.discount),
+      shipping: parseFloat(o.shipping),
+      total: parseFloat(o.total),
+      status: o.status,
+      orderedAt: o.ordered_at,
+      shippingAddress: o.shipping_address,
+      shippingCity: o.shipping_city,
+      shippingState: o.shipping_state,
+      shippingZip: o.shipping_zip,
+      shippingPhone: o.shipping_phone
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ message: 'Error retrieving orders list' });
   }
 };
 
-// 7. POST /api/admin/orders (User checkout API)
-exports.createOrder = (req, res) => {
+// 7. POST /api/admin/orders (Real checkout API)
+exports.createOrder = async (req, res) => {
   try {
-    const { customerName, customerEmail, items, subtotal, discount, shipping, total } = req.body;
-    if (!customerName || !customerEmail || !items || items.length === 0) {
-      return res.status(400).json({ message: 'Missing customer details or cart items' });
+    const { 
+      customerName, 
+      customerEmail, 
+      items, 
+      subtotal, 
+      discount, 
+      shipping, 
+      total,
+      shippingAddress,
+      shippingCity,
+      shippingState,
+      shippingZip,
+      shippingPhone 
+    } = req.body;
+
+    if (!customerName || !customerEmail || !items || items.length === 0 || !shippingAddress || !shippingCity || !shippingState || !shippingZip || !shippingPhone) {
+      return res.status(400).json({ message: 'Missing shipping details or cart items' });
     }
 
-    const orders = readFileHelper(ordersFilePath);
+    const orderId = Date.now();
 
+    if (!isConfigured) {
+      // Fallback
+      const orders = readFileHelper(ordersFilePath);
+      const newOrder = {
+        id: orderId,
+        customerName,
+        customerEmail,
+        items,
+        subtotal: parseFloat(subtotal),
+        discount: parseFloat(discount || 0),
+        shipping: parseFloat(shipping || 0),
+        total: parseFloat(total),
+        status: "Pending",
+        orderedAt: new Date().toISOString(),
+        shippingAddress,
+        shippingCity,
+        shippingState,
+        shippingZip,
+        shippingPhone
+      };
+      orders.push(newOrder);
+      writeFileHelper(ordersFilePath, orders);
+      return res.status(201).json({ success: true, order: newOrder });
+    }
+
+    // Connect to Supabase
     const newOrder = {
-      id: Date.now(),
-      customerName,
-      customerEmail,
-      items,
+      id: orderId,
+      customer_name: customerName,
+      customer_email: customerEmail,
+      items: items,
       subtotal: parseFloat(subtotal),
       discount: parseFloat(discount || 0),
       shipping: parseFloat(shipping || 0),
       total: parseFloat(total),
-      status: "Pending",
-      orderedAt: new Date().toISOString()
+      status: 'Pending',
+      shipping_address: shippingAddress,
+      shipping_city: shippingCity,
+      shipping_state: shippingState,
+      shipping_zip: shippingZip,
+      shipping_phone: shippingPhone
     };
 
-    orders.push(newOrder);
-    writeFileHelper(ordersFilePath, orders);
+    const { data: dbOrder, error } = await supabase
+      .from('orders')
+      .insert(newOrder)
+      .select('*')
+      .single();
 
-    res.status(201).json({ success: true, message: 'Order created successfully', order: newOrder });
+    if (error) throw error;
+
+    // Format for return
+    const formatted = {
+      id: dbOrder.id,
+      customerName: dbOrder.customer_name,
+      customerEmail: dbOrder.customer_email,
+      items: dbOrder.items,
+      subtotal: parseFloat(dbOrder.subtotal),
+      discount: parseFloat(dbOrder.discount),
+      shipping: parseFloat(dbOrder.shipping),
+      total: parseFloat(dbOrder.total),
+      status: dbOrder.status,
+      orderedAt: dbOrder.ordered_at
+    };
+
+    res.status(201).json({ success: true, message: 'Order created successfully', order: formatted });
+
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ message: 'Error saving checkout order' });
@@ -159,7 +328,7 @@ exports.createOrder = (req, res) => {
 };
 
 // 8. PUT /api/admin/orders/:id/status
-exports.updateOrderStatus = (req, res) => {
+exports.updateOrderStatus = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { status } = req.body;
@@ -167,108 +336,403 @@ exports.updateOrderStatus = (req, res) => {
       return res.status(400).json({ message: 'Status is required' });
     }
 
-    const orders = readFileHelper(ordersFilePath);
-    const order = orders.find(o => o.id === id);
-
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!isConfigured) {
+      const orders = readFileHelper(ordersFilePath);
+      const order = orders.find(o => o.id === id);
+      if (!order) return res.status(404).json({ message: 'Order not found' });
+      order.status = status;
+      writeFileHelper(ordersFilePath, orders);
+      return res.json({ success: true, order });
     }
 
-    order.status = status;
-    writeFileHelper(ordersFilePath, orders);
+    const { data: dbOrder, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select('*')
+      .single();
 
-    res.json({ success: true, message: 'Order status updated successfully', order });
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Order status updated', order: dbOrder });
   } catch (error) {
     console.error('Error updating order status:', error);
     res.status(500).json({ message: 'Error updating order status' });
   }
 };
 
-// 9. POST /api/admin/products
-exports.createProduct = (req, res) => {
+// 9. Products CRUD
+exports.createProduct = async (req, res) => {
   try {
     const { name, category, price, image, rating, reviewsCount, shortDescription, longDescription, isBestSeller, benefits, usageDirections, ingredients } = req.body;
+    
     if (!name || !category || !price) {
       return res.status(400).json({ message: 'Product name, category, and price are required' });
     }
 
-    const products = readFileHelper(productsFilePath);
+    if (!isConfigured) {
+      const products = readFileHelper(productsFilePath);
+      const newProduct = {
+        id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
+        name, category, price: parseFloat(price), image, rating: parseFloat(rating || 4.5), reviewsCount: parseInt(reviewsCount || 10),
+        shortDescription, longDescription, isBestSeller: !!isBestSeller, benefits: benefits || [], usageDirections, ingredients: ingredients || []
+      };
+      products.push(newProduct);
+      writeFileHelper(productsFilePath, products);
+      return res.status(201).json({ success: true, product: newProduct });
+    }
+
+    const { data: maxIdData } = await supabase.from('products').select('id').order('id', { ascending: false }).limit(1);
+    const nextId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id + 1 : 1;
 
     const newProduct = {
-      id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
-      name,
-      category,
+      id: nextId,
+      name, category,
       price: parseFloat(price),
       image: image || "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&q=80&w=300",
       rating: parseFloat(rating || 4.5),
-      reviewsCount: parseInt(reviewsCount || 10),
-      shortDescription: shortDescription || "",
-      longDescription: longDescription || "",
-      isBestSeller: !!isBestSeller,
+      reviews_count: parseInt(reviewsCount || 10),
+      short_description: shortDescription || "",
+      long_description: longDescription || "",
+      is_bestseller: !!isBestSeller,
       benefits: benefits || [],
-      usageDirections: usageDirections || "",
+      usage_directions: usageDirections || "",
       ingredients: ingredients || []
     };
 
-    products.push(newProduct);
-    writeFileHelper(productsFilePath, products);
+    const { data: dbProduct, error } = await supabase.from('products').insert(newProduct).select('*').single();
+    if (error) throw error;
 
-    res.status(201).json({ success: true, message: 'Product added successfully', product: newProduct });
+    res.status(201).json({ success: true, message: 'Product added successfully', product: dbProduct });
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: 'Error adding new product' });
   }
 };
 
-// 10. PUT /api/admin/products/:id
-exports.updateProduct = (req, res) => {
+exports.updateProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const updates = req.body;
 
-    const products = readFileHelper(productsFilePath);
-    const index = products.findIndex(p => p.id === id);
+    if (!isConfigured) {
+      const products = readFileHelper(productsFilePath);
+      const index = products.findIndex(p => p.id === id);
+      if (index === -1) return res.status(404).json({ message: 'Product not found' });
 
-    if (index === -1) {
-      return res.status(404).json({ message: 'Product not found' });
+      products[index] = {
+        ...products[index],
+        ...updates,
+        price: updates.price ? parseFloat(updates.price) : products[index].price,
+        isBestSeller: updates.isBestSeller !== undefined ? !!updates.isBestSeller : products[index].isBestSeller
+      };
+      writeFileHelper(productsFilePath, products);
+      return res.json({ success: true, product: products[index] });
     }
 
-    // Merge updates
-    products[index] = {
-      ...products[index],
-      ...updates,
-      price: updates.price ? parseFloat(updates.price) : products[index].price,
-      rating: updates.rating ? parseFloat(updates.rating) : products[index].rating,
-      reviewsCount: updates.reviewsCount ? parseInt(updates.reviewsCount) : products[index].reviewsCount,
-      isBestSeller: updates.isBestSeller !== undefined ? !!updates.isBestSeller : products[index].isBestSeller
-    };
+    // Map fields
+    const dbUpdates = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.category) dbUpdates.category = updates.category;
+    if (updates.price) dbUpdates.price = parseFloat(updates.price);
+    if (updates.image) dbUpdates.image = updates.image;
+    if (updates.rating) dbUpdates.rating = parseFloat(updates.rating);
+    if (updates.reviewsCount) dbUpdates.reviews_count = parseInt(updates.reviewsCount);
+    if (updates.shortDescription) dbUpdates.short_description = updates.shortDescription;
+    if (updates.longDescription) dbUpdates.long_description = updates.longDescription;
+    if (updates.isBestSeller !== undefined) dbUpdates.is_bestseller = !!updates.isBestSeller;
+    if (updates.benefits) dbUpdates.benefits = updates.benefits;
+    if (updates.usageDirections) dbUpdates.usage_directions = updates.usageDirections;
+    if (updates.ingredients) dbUpdates.ingredients = updates.ingredients;
 
-    writeFileHelper(productsFilePath, products);
+    const { data: dbProduct, error } = await supabase
+      .from('products')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select('*')
+      .single();
 
-    res.json({ success: true, message: 'Product updated successfully', product: products[index] });
+    if (error) throw error;
+    res.json({ success: true, message: 'Product updated', product: dbProduct });
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ message: 'Error updating product listing' });
+    res.status(500).json({ message: 'Error updating product' });
   }
 };
 
-// 11. DELETE /api/admin/products/:id
-exports.deleteProduct = (req, res) => {
+exports.deleteProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    let products = readFileHelper(productsFilePath);
-    const initialLen = products.length;
-    products = products.filter(p => p.id !== id);
 
-    if (products.length === initialLen) {
-      return res.status(404).json({ message: 'Product not found' });
+    if (!isConfigured) {
+      let products = readFileHelper(productsFilePath);
+      const prev = products.length;
+      products = products.filter(p => p.id !== id);
+      if (products.length === prev) return res.status(404).json({ message: 'Product not found' });
+      writeFileHelper(productsFilePath, products);
+      return res.json({ success: true, message: 'Product deleted' });
     }
 
-    writeFileHelper(productsFilePath, products);
-
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw error;
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);
-    res.status(500).json({ message: 'Error removing product listing' });
+    res.status(500).json({ message: 'Error removing product' });
+  }
+};
+
+// 10. NEW: GET /api/admin/users (Registered Customers list & Order aggregations)
+exports.getUsersList = async (req, res) => {
+  try {
+    let users = [];
+    let orders = [];
+
+    if (!isConfigured) {
+      users = readFileHelper(usersFilePath);
+      orders = readFileHelper(ordersFilePath);
+    } else {
+      const { data: dbUsers, error: uError } = await supabase.from('users').select('id, name, email, registered_at');
+      if (uError) throw uError;
+      
+      const { data: dbOrders, error: oError } = await supabase.from('orders').select('customer_email, total');
+      if (oError) throw oError;
+
+      users = (dbUsers || []).map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        registeredAt: u.registered_at
+      }));
+      orders = dbOrders || [];
+    }
+
+    // Aggregate statistics
+    const userStats = users.map(user => {
+      const userOrders = orders.filter(o => 
+        (o.customerEmail || '').toLowerCase() === user.email.toLowerCase()
+      );
+      
+      const totalSpend = userOrders.reduce((sum, o) => sum + parseFloat(o.total || o.total || 0), 0);
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        registeredAt: user.registeredAt,
+        ordersCount: userOrders.length,
+        totalSpend: Math.round(totalSpend * 100) / 100
+      };
+    });
+
+    // Sort users by spend descending
+    userStats.sort((a, b) => b.totalSpend - a.totalSpend);
+    res.json(userStats);
+
+  } catch (error) {
+    console.error('Error fetching admin users:', error);
+    res.status(500).json({ message: 'Error loading user directories' });
+  }
+};
+
+// 11. NEW: GET /api/admin/analytics (Monthly revenue and best sellers summary)
+exports.getAnalytics = async (req, res) => {
+  try {
+    let orders = [];
+    if (!isConfigured) {
+      orders = readFileHelper(ordersFilePath);
+    } else {
+      const { data, error } = await supabase.from('orders').select('total, status, ordered_at, items');
+      if (error) throw error;
+      orders = data.map(o => ({
+        total: parseFloat(o.total),
+        status: o.status,
+        orderedAt: o.ordered_at,
+        items: o.items
+      }));
+    }
+
+    const monthlyRevenue = {};
+    const productSalesCount = {};
+
+    orders.forEach(o => {
+      const dateObj = new Date(o.orderedAt || o.ordered_at);
+      if (isNaN(dateObj.getTime())) return;
+      
+      // Group by YYYY-MM
+      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Sum revenue if Shipped or Delivered
+      if (o.status === 'Delivered' || o.status === 'Shipped' || o.status === 'Pending') {
+        monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + o.total;
+      }
+
+      // Count quantities of each item
+      const itemsList = o.items || [];
+      itemsList.forEach(item => {
+        const name = item.name;
+        const qty = parseInt(item.quantity || 1) || 1;
+        productSalesCount[name] = (productSalesCount[name] || 0) + qty;
+      });
+    });
+
+    // Format Monthly Revenue object to sorted list
+    const revenueList = Object.keys(monthlyRevenue).map(month => ({
+      month,
+      revenue: Math.round(monthlyRevenue[month])
+    })).sort((a, b) => b.month.localeCompare(a.month)); // Newest months first
+
+    // Format Product Sales object to sorted list
+    const salesList = Object.keys(productSalesCount).map(name => ({
+      name,
+      unitsSold: productSalesCount[name]
+    })).sort((a, b) => b.unitsSold - a.unitsSold);
+
+    res.json({
+      revenueByMonth: revenueList,
+      bestSellers: salesList
+    });
+
+  } catch (error) {
+    console.error('Error fetching revenue analytics:', error);
+    res.status(500).json({ message: 'Error retrieving analytics data' });
+  }
+};
+
+// 12. Doctors CRUD
+exports.getDoctors = async (req, res) => {
+  try {
+    if (!isConfigured) return res.json(localDoctors);
+    const { data, error } = await supabase.from('doctors').select('*').order('id', { ascending: true });
+    if (error) throw error;
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ message: 'Error fetching doctors' });
+  }
+};
+
+exports.addDoctor = async (req, res) => {
+  try {
+    const { id, name, specialty, rating, experience } = req.body;
+    if (!id || !name || !specialty) return res.status(400).json({ message: 'Missing doctor data' });
+
+    if (!isConfigured) {
+      localDoctors.push({ id, name, specialty, rating: rating || 4.5, experience });
+      return res.status(201).json({ success: true, doctor: { id, name } });
+    }
+
+    const { data, error } = await supabase.from('doctors').insert({ id, name, specialty, rating, experience }).select('*').single();
+    if (error) throw error;
+    res.status(201).json({ success: true, doctor: data });
+  } catch (e) {
+    res.status(500).json({ message: 'Error saving doctor details' });
+  }
+};
+
+exports.updateDoctor = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, specialty, rating, experience } = req.body;
+
+    if (!isConfigured) {
+      const idx = localDoctors.findIndex(d => d.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
+      localDoctors[idx] = { ...localDoctors[idx], name, specialty, rating, experience };
+      return res.json({ success: true });
+    }
+
+    const { data, error } = await supabase.from('doctors').update({ name, specialty, rating, experience }).eq('id', id).select('*').single();
+    if (error) throw error;
+    res.json({ success: true, doctor: data });
+  } catch (e) {
+    res.status(500).json({ message: 'Error updating doctor details' });
+  }
+};
+
+exports.deleteDoctor = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (!isConfigured) {
+      const idx = localDoctors.findIndex(d => d.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
+      localDoctors.splice(idx, 1);
+      return res.json({ success: true });
+    }
+
+    const { error } = await supabase.from('doctors').delete().eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ message: 'Error deleting doctor details' });
+  }
+};
+
+// 13. Therapists CRUD
+exports.getTherapists = async (req, res) => {
+  try {
+    if (!isConfigured) return res.json(localTherapists);
+    const { data, error } = await supabase.from('therapists').select('*').order('id', { ascending: true });
+    if (error) throw error;
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ message: 'Error fetching therapists' });
+  }
+};
+
+exports.addTherapist = async (req, res) => {
+  try {
+    const { id, name, specialty, rating, experience, therapies } = req.body;
+    if (!id || !name || !specialty) return res.status(400).json({ message: 'Missing therapist data' });
+
+    if (!isConfigured) {
+      localTherapists.push({ id, name, specialty, rating: rating || 4.5, experience, therapies: therapies || [] });
+      return res.status(201).json({ success: true, therapist: { id, name } });
+    }
+
+    const { data, error } = await supabase.from('therapists').insert({ id, name, specialty, rating, experience, therapies }).select('*').single();
+    if (error) throw error;
+    res.status(201).json({ success: true, therapist: data });
+  } catch (e) {
+    res.status(500).json({ message: 'Error saving therapist details' });
+  }
+};
+
+exports.updateTherapist = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, specialty, rating, experience, therapies } = req.body;
+
+    if (!isConfigured) {
+      const idx = localTherapists.findIndex(t => t.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
+      localTherapists[idx] = { ...localTherapists[idx], name, specialty, rating, experience, therapies: therapies || [] };
+      return res.json({ success: true });
+    }
+
+    const { data, error } = await supabase.from('therapists').update({ name, specialty, rating, experience, therapies }).eq('id', id).select('*').single();
+    if (error) throw error;
+    res.json({ success: true, therapist: data });
+  } catch (e) {
+    res.status(500).json({ message: 'Error updating therapist details' });
+  }
+};
+
+exports.deleteTherapist = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (!isConfigured) {
+      const idx = localTherapists.findIndex(t => t.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
+      localTherapists.splice(idx, 1);
+      return res.json({ success: true });
+    }
+
+    const { error } = await supabase.from('therapists').delete().eq('id', id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ message: 'Error deleting therapist details' });
   }
 };

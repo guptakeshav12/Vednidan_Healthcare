@@ -13,15 +13,15 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
   
   <!-- Modular Stylesheets -->
-  <link rel="stylesheet" href="/css/variables.css">
-  <link rel="stylesheet" href="/css/layout.css">
-  <link rel="stylesheet" href="/css/shop.css">
-  <link rel="stylesheet" href="/css/doctor.css">
-  <link rel="stylesheet" href="/css/reader.css">
-  <link rel="stylesheet" href="/css/cart.css">
-  <link rel="stylesheet" href="/css/auth.css">
-  <link rel="stylesheet" href="/css/booking.css">
-  <link rel="stylesheet" href="/css/therapist-booking.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/shop.css">
+  <link rel="stylesheet" href="css/doctor.css">
+  <link rel="stylesheet" href="css/reader.css">
+  <link rel="stylesheet" href="css/cart.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/booking.css">
+  <link rel="stylesheet" href="css/therapist-booking.css">
 </head>
 <body>
 
@@ -49,6 +49,7 @@
           <li><a href="#" class="nav-link" data-target="reader-page" id="nav-reader"><i class="ri-file-list-3-line"></i> Upload Prescription</a></li>
           <li><a href="#" class="nav-link" data-target="booking-page" id="nav-booking"><i class="ri-calendar-todo-line"></i> Book Doctor</a></li>
           <li><a href="#" class="nav-link" data-target="therapist-page" id="nav-therapist"><i class="ri-hand-heart-line"></i> Book Therapist</a></li>
+          <li><a href="#" class="nav-link" data-target="track-page" id="nav-track"><i class="ri-map-pin-line"></i> Track Order</a></li>
         </ul>
       </nav>
       
@@ -94,7 +95,7 @@
         <div class="hero-image-panel">
           <div class="hero-floating-card">
             <!-- Floating item -->
-            <img src="/assets/doctor_avatar.png" alt="Ayurvedic Treatment Icon">
+            <img src="assets/doctor_avatar.png" alt="Ayurvedic Treatment Icon">
             <h4>Charaka AI</h4>
             <p>Ready to diagnose symptoms</p>
           </div>
@@ -157,7 +158,7 @@
         <aside class="doctor-sidebar">
           <div class="doctor-profile-card">
             <div class="doctor-avatar-wrapper">
-              <img src="/assets/doctor_avatar.png" alt="Charaka AI Doctor">
+              <img src="assets/doctor_avatar.png" alt="Charaka AI Doctor">
             </div>
             <h3 class="doctor-name-title">Charaka AI</h3>
             <p class="doctor-specialty">Ayurvedic Specialist</p>
@@ -432,6 +433,153 @@
       </div>
     </section>
 
+    <!-- 5. CHECKOUT PAGE -->
+    <section id="checkout-page" class="page-section fade-in">
+      <div class="checkout-layout">
+        
+        <!-- Address Form -->
+        <div class="checkout-form-card">
+          <h3 class="checkout-title"><i class="ri-truck-line"></i> Shipping & Delivery Details</h3>
+          <form class="checkout-form-fields" id="checkout-shipping-form" onsubmit="return false;">
+            
+            <div class="checkout-input-row">
+              <div class="checkout-input-group">
+                <label class="checkout-label">Customer Name</label>
+                <input type="text" id="checkout-name" placeholder="Full Name" required class="checkout-input-element">
+              </div>
+              <div class="checkout-input-group">
+                <label class="checkout-label">Email Address</label>
+                <input type="email" id="checkout-email" placeholder="customer@email.com" required class="checkout-input-element">
+              </div>
+            </div>
+            
+            <div class="checkout-input-group">
+              <label class="checkout-label">Street Address</label>
+              <input type="text" id="checkout-address" placeholder="Flat, House no., Street address, landmark" required class="checkout-input-element">
+            </div>
+            
+            <div class="checkout-input-row">
+              <div class="checkout-input-group">
+                <label class="checkout-label">City</label>
+                <input type="text" id="checkout-city" placeholder="City" required class="checkout-input-element">
+              </div>
+              <div class="checkout-input-group">
+                <label class="checkout-label">State</label>
+                <input type="text" id="checkout-state" placeholder="State" required class="checkout-input-element">
+              </div>
+            </div>
+
+            <div class="checkout-input-row">
+              <div class="checkout-input-group">
+                <label class="checkout-label">ZIP / Postal Code</label>
+                <input type="text" id="checkout-zip" placeholder="110001" required class="checkout-input-element">
+              </div>
+              <div class="checkout-input-group">
+                <label class="checkout-label">Phone Number</label>
+                <input type="tel" id="checkout-phone" placeholder="10-digit mobile number" required class="checkout-input-element">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary checkout-place-btn" id="checkout-submit-order-btn">
+              <i class="ri-checkbox-circle-line"></i> Confirm & Place Order
+            </button>
+          </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="checkout-summary-card">
+          <h3 class="checkout-title"><i class="ri-shopping-basket-line"></i> Order Summary</h3>
+          <div class="checkout-items-list" id="checkout-summary-items">
+            <!-- Loaded dynamically -->
+          </div>
+          <div class="checkout-totals">
+            <div class="checkout-total-row">
+              <span>Subtotal</span>
+              <span id="checkout-subtotal">₹0</span>
+            </div>
+            <div class="checkout-total-row" id="checkout-discount-row" style="display:none;">
+              <span>Discount</span>
+              <span id="checkout-discount">-₹0</span>
+            </div>
+            <div class="checkout-total-row">
+              <span>Shipping</span>
+              <span id="checkout-shipping">₹0</span>
+            </div>
+            <div class="checkout-total-row final-row">
+              <span>Grand Total</span>
+              <span id="checkout-total">₹0</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 6. TRACK ORDER PAGE -->
+    <section id="track-page" class="page-section fade-in">
+      <div class="tracking-container-box">
+        
+        <div class="tracking-search-card">
+          <h3 class="tracking-search-title"><i class="ri-map-pin-line"></i> Track Your Order</h3>
+          <p class="tracking-search-subtitle">Enter your Order ID to check live status and shipping timeline.</p>
+          <div class="tracking-search-bar">
+            <input type="text" placeholder="Enter Order ID (e.g. 1780000000001)..." id="tracking-input-id" class="tracking-search-input">
+            <button class="btn-primary" id="tracking-search-btn">Track Order</button>
+          </div>
+        </div>
+
+        <div class="tracking-details-card" id="tracking-results-card" style="display: none;">
+          <div class="tracking-header-info">
+            <div>
+              <span class="tracking-id-badge">Order ID: #<span id="track-order-id-label"></span></span>
+              <span class="tracking-date-label">Placed on: <span id="track-order-date"></span></span>
+            </div>
+            <div>
+              <span class="badge" id="track-status-badge">Pending</span>
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="tracking-progress-timeline">
+            <div class="progress-bar-line">
+              <div class="progress-bar-inner-fill" id="track-progress-fill-line"></div>
+            </div>
+            <div class="timeline-step active" id="step-track-placed">
+              <div class="timeline-dot"><i class="ri-bill-line"></i></div>
+              <span class="timeline-text">Placed</span>
+            </div>
+            <div class="timeline-step" id="step-track-shipped">
+              <div class="timeline-dot"><i class="ri-truck-line"></i></div>
+              <span class="timeline-text">Shipped</span>
+            </div>
+            <div class="timeline-step" id="step-track-delivered">
+              <div class="timeline-dot"><i class="ri-home-heart-line"></i></div>
+              <span class="timeline-text">Delivered</span>
+            </div>
+          </div>
+
+          <!-- Summary info -->
+          <div class="tracking-info-grid">
+            <div class="tracking-info-col">
+              <h4>Shipping Details</h4>
+              <p id="track-shipping-name"><strong>Name:</strong> -</p>
+              <p id="track-shipping-address"><strong>Address:</strong> -</p>
+              <p id="track-shipping-phone"><strong>Phone:</strong> -</p>
+            </div>
+            <div class="tracking-info-col">
+              <h4>Order Items</h4>
+              <ul class="order-items-list" id="track-order-items-list" style="padding-left:0;">
+                <!-- Loaded dynamically -->
+              </ul>
+              <hr style="border:none; border-top:1px solid rgba(255,255,255,0.05); margin: 12px 0;">
+              <p><strong>Grand Total:</strong> ₹<span id="track-order-total-price">0</span></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <!-- Sliding Cart Drawer (Hidden by default) -->
@@ -635,14 +783,15 @@
   </div>
 
   <!-- Modular Frontend Scripts -->
-  <script src="/js/api.js"></script>
-  <script src="/js/shop.js"></script>
-  <script src="/js/cart.js"></script>
-  <script src="/js/doctor.js"></script>
-  <script src="/js/reader.js"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/booking.js"></script>
-  <script src="/js/therapist-booking.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/doctor.js"></script>
+  <script src="js/reader.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/booking.js"></script>
+  <script src="js/therapist-booking.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

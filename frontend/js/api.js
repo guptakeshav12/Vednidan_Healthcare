@@ -1,17 +1,36 @@
 // Frontend API Client
+// Auto-detects whether running via Express server or VS Code Live Server
 
-const API_BASE = '/api';
+(function() {
+  // If running through our Express server (port 5000), use relative /api
+  // If running via VS Code Live Server (port 5500) or opened as file, point directly to Express
+  const BACKEND_PORT = 5000;
+  const currentPort = window.location.port;
+  const currentProtocol = window.location.protocol;
+
+  // Use relative path when served by Express (same server), otherwise use full URL
+  let API_BASE;
+  if (currentPort == BACKEND_PORT || (!currentPort && currentProtocol === 'https:')) {
+    API_BASE = '/api';
+  } else {
+    // Running via Live Server or file:// — point to Express backend
+    API_BASE = `http://localhost:${BACKEND_PORT}/api`;
+  }
+
+  window.API_BASE = API_BASE;
+  console.log(`[VedNidan] API Base: ${API_BASE}`);
+})();
 
 const Api = {
   // Fetch products with pagination parameters
   async getProducts(page = 1, limit = 12, category = 'all', search = '') {
     try {
-      const response = await fetch(`${API_BASE}/products?page=${page}&limit=${limit}&category=${category}&search=${encodeURIComponent(search)}`);
+      const response = await fetch(`${window.API_BASE}/products?page=${page}&limit=${limit}&category=${category}&search=${encodeURIComponent(search)}`);
       if (!response.ok) throw new Error('Failed to fetch products catalog');
       return await response.json();
     } catch (error) {
       console.error('API Error (getProducts):', error);
-      showToast('Error loading products from server', 'error');
+      showToast('Error loading products. Is the server running?', 'error');
       return { products: [], page: 1, limit: 12, totalProducts: 0, totalPages: 1 };
     }
   },
@@ -19,7 +38,7 @@ const Api = {
   // Fetch single product details
   async getProductById(id) {
     try {
-      const response = await fetch(`${API_BASE}/products/${id}`);
+      const response = await fetch(`${window.API_BASE}/products/${id}`);
       if (!response.ok) throw new Error(`Failed to fetch product details for ID ${id}`);
       return await response.json();
     } catch (error) {
@@ -32,7 +51,7 @@ const Api = {
   // Talk to AI doctor chatbot
   async consultDoctor(message) {
     try {
-      const response = await fetch(`${API_BASE}/doctor/chat`, {
+      const response = await fetch(`${window.API_BASE}/doctor/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -44,7 +63,7 @@ const Api = {
     } catch (error) {
       console.error('API Error (consultDoctor):', error);
       return {
-        reply: "I'm having trouble connecting to my diagnostic center. Please check your network connection and try again.",
+        reply: "I'm having trouble connecting to my diagnostic center. Please make sure the server is running on port 5000.",
         diagnosis: "System connection failure.",
         recommendedProducts: [],
         suggestedQuestions: ["Try asking again", "What products do you have?"]
@@ -58,8 +77,7 @@ const Api = {
       const formData = new FormData();
       formData.append('prescription', fileObject);
 
-      // We'll perform a standard fetch upload
-      const response = await fetch(`${API_BASE}/prescription/upload`, {
+      const response = await fetch(`${window.API_BASE}/prescription/upload`, {
         method: 'POST',
         body: formData
       });

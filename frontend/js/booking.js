@@ -6,9 +6,9 @@ const Booking = {
   selectedTimeSlot: null,
   
   doctors: [
-    { id: 101, name: "Dr. Vasudev Shashtri", specialty: "Nadi Pariksha & Pulse Diagnosis", rating: 4.9, experience: "22 yrs exp", avatar: "/assets/doctor_avatar.png" },
-    { id: 102, name: "Dr. Ananya Mishra", specialty: "Ayurvedic Skincare & Hair Expert", rating: 4.8, experience: "14 yrs exp", avatar: "/assets/doctor_avatar.png" },
-    { id: 103, name: "Dr. Raghavan Nair", specialty: "Panchakarma & Pain Specialist", rating: 4.9, experience: "18 yrs exp", avatar: "/assets/doctor_avatar.png" }
+    { id: 101, name: "Dr. Vasudev Shashtri", specialty: "Nadi Pariksha & Pulse Diagnosis", rating: 4.9, experience: "22 yrs exp", avatar: "assets/doctor_avatar.png" },
+    { id: 102, name: "Dr. Ananya Mishra", specialty: "Ayurvedic Skincare & Hair Expert", rating: 4.8, experience: "14 yrs exp", avatar: "assets/doctor_avatar.png" },
+    { id: 103, name: "Dr. Raghavan Nair", specialty: "Panchakarma & Pain Specialist", rating: 4.9, experience: "18 yrs exp", avatar: "assets/doctor_avatar.png" }
   ],
 
   init() {
@@ -170,7 +170,7 @@ const Booking = {
     }
 
     try {
-      const response = await fetch(`/api/booking/slots?doctorId=${this.selectedDoctorId}&date=${this.selectedDateString}`);
+      const response = await fetch(`${window.API_BASE || '/api'}/booking/slots?doctorId=${this.selectedDoctorId}&date=${this.selectedDateString}`);
       if (!response.ok) throw new Error('Failed to retrieve slots');
       const data = await response.json();
 
@@ -250,7 +250,7 @@ const Booking = {
     confirmBtn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Processing slot allocation...`;
 
     try {
-      const response = await fetch('/api/booking/book', {
+      const response = await fetch((window.API_BASE || '/api') + '/booking/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

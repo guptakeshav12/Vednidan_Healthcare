@@ -97,7 +97,80 @@
     "discount": 0,
     "shipping": 0,
     "total": 998,
-    "status": "Pending",
+    "status": "Shipped",
     "orderedAt": "2026-06-27T17:22:10.980Z"
+  },
+  {
+    "id": 1782635560984,
+    "customerName": "amit sharma",
+    "customerEmail": "amitsharma101@gmail.com",
+    "items": [
+      {
+        "id": 1,
+        "name": "Ashwagandha KSM-66 Capsules",
+        "price": 499,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 499,
+    "discount": 0,
+    "shipping": 40,
+    "total": 539,
+    "status": "Pending",
+    "orderedAt": "2026-06-28T08:32:40.984Z"
+  },
+  {
+    "id": 1783390417382,
+    "customerName": "amit sharma",
+    "customerEmail": "amitsharma101@gmail.com",
+    "items": [
+      {
+        "id": 10,
+        "name": "Amrit Kalash Herbal Ghee",
+        "price": 899,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 899,
+    "discount": 0,
+    "shipping": 0,
+    "total": 899,
+    "status": "Pending",
+    "orderedAt": "2026-07-07T02:13:37.385Z",
+    "shippingAddress": "123 A KOTARI RAJASTHA",
+    "shippingCity": "RAJASTHAN",
+    "shippingState": "RAJASTHAN",
+    "shippingZip": "323232",
+    "shippingPhone": "8552144779"
+  },
+  {
+    "id": 1783616252498,
+    "customerName": "amit sharma",
+    "customerEmail": "amitsharma101@gmail.com",
+    "items": [
+      {
+        "id": 2,
+        "name": "Triphala Digestive Detox Juice",
+        "price": 349,
+        "quantity": 1
+      },
+      {
+        "id": 8,
+        "name": "Neem & Turmeric Cleansing Wash",
+        "price": 249,
+        "quantity": 1
+      }
+    ],
+    "subtotal": 598,
+    "discount": 0,
+    "shipping": 0,
+    "total": 598,
+    "status": "Shipped",
+    "orderedAt": "2026-07-09T16:57:32.501Z",
+    "shippingAddress": "285-A Shri Nath puram near ahinsa circle Kota (Raj) , 324010",
+    "shippingCity": "Kota",
+    "shippingState": "Rajasthan",
+    "shippingZip": "324005",
+    "shippingPhone": "08094509460"
   }
 ]

@@ -13,11 +13,39 @@ const App = {
     Cart.init();
     Doctor.init();
     Reader.init();
+    if (typeof Tracking !== 'undefined') {
+      Tracking.init();
+    }
 
     this.setupRouter();
     this.setupSearch();
     this.setupMobileMenu();
     this.setupHeroActions();
+  },
+
+  navigateTo(targetId) {
+    const sections = document.querySelectorAll('.page-section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    sections.forEach(section => {
+      if (section.id === targetId) {
+        section.classList.add('active');
+        section.style.display = 'block';
+      } else {
+        section.classList.remove('active');
+        section.style.display = 'none';
+      }
+    });
+
+    navLinks.forEach(link => {
+      if (link.getAttribute('data-target') === targetId) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
   setupRouter() {

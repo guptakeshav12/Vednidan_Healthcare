@@ -23,4 +23,22 @@ router.delete('/bookings/:id', adminController.deleteBooking);
 router.get('/therapist-bookings', adminController.getTherapistBookings);
 router.delete('/therapist-bookings/:id', adminController.deleteTherapistBooking);
 
+// NEW: Customers list & Order histories
+router.get('/users', adminController.getUsersList);
+
+// NEW: Monthly revenue & bestseller analytics
+router.get('/analytics', adminController.getAnalytics);
+
+// NEW: Doctors CRUD management
+router.get('/doctors', adminController.getDoctors);
+router.post('/doctors', adminController.addDoctor);
+router.put('/doctors/:id', adminController.updateDoctor);
+router.delete('/doctors/:id', adminController.deleteDoctor);
+
+// NEW: Therapists CRUD management
+router.get('/therapists', adminController.getTherapists);
+router.post('/therapists', adminController.addTherapist);
+router.put('/therapists/:id', adminController.updateTherapist);
+router.delete('/therapists/:id', adminController.deleteTherapist);
+
 module.exports = router;

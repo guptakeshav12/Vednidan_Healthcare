@@ -98,7 +98,7 @@ const Doctor = {
 
     try {
       // Call backend API passing the current state
-      const response = await fetch('/api/doctor/chat', {
+      const response = await fetch((window.API_BASE || '/api') + '/doctor/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

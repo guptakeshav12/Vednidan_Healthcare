@@ -1,21 +1,24 @@
 [
   {
     "id": 1,
-    "name": "Ashwagandha KSM-66 Capsules",
-    "category": "vitality",
-    "price": 499,
+    "name": "VEDNIDAN ASHWAGANDHA CHURNA",
+    "category": "immunity",
+    "price": 180,
     "originalPrice": 599,
     "rating": 4.8,
     "reviewsCount": 124,
-    "image": "/assets/ashwagandha.png",
+    "image": "",
     "badge": "Best Seller",
     "shortDescription": "Clinically proven stress relief, stamina, and mental calm support.",
     "longDescription": "VedNidan Ashwagandha KSM-66 represents the peak of adaptogenic technology...",
     "ingredients": [
-      "Ashwagandha extract"
+      "Ashwagandha Churna"
     ],
     "usage": "1 cap daily",
-    "dosha": "Balances Vata and Kapha"
+    "dosha": "Balances Vata and Kapha",
+    "isBestSeller": false,
+    "benefits": [],
+    "usageDirections": "TDS"
   },
   {
     "id": 2,
