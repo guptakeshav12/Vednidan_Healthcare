@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌿 VedNidan Healthcare
 
 Premium Ayurvedic e-commerce store with AI Doctor consultation, Prescription OCR Reader, Therapist Booking System, and Admin Dashboard.
@@ -78,3 +79,6 @@ npm run dev
 - **Storage**: JSON file-based database
 - **OCR**: Tesseract.js
 - **Frontend**: Vanilla HTML, CSS, JavaScript
+=======
+# Vednidan_Healthcare
+>>>>>>> 7315546ba7815ef90f88a5e0eb7f9d657059af84
