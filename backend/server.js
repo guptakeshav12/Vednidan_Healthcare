@@ -3,7 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const net = require('net');
 
+// ============================
+// Route imports
+// ============================
 const productRoutes = require('./routes/productRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
@@ -12,32 +16,25 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const therapyRoutes = require('./routes/therapyRoutes');
 const therapistBookingRoutes = require('./routes/therapistBookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const providerRoutes = require('./routes/providerRoutes');
 
+// ============================
+// App setup
+// ============================
 const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_DIR = path.join(__dirname, '../frontend');
 
-// Enable CORS for all origins (needed if frontend is on different port)
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Enable CORS for all origins (needed when frontend runs on a different port)
+app.use(cors());
 
 // Body parser middlewares
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Ensure required directories exist
-const dirsToCreate = [
-  path.join(FRONTEND_DIR, 'assets'),
-  path.join(__dirname, 'uploads'),
-  path.join(__dirname, 'data')
-];
-dirsToCreate.forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+[path.join(FRONTEND_DIR, 'assets'), path.join(__dirname, 'uploads'), path.join(__dirname, 'data')].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
 // ============================
@@ -51,6 +48,7 @@ app.use('/api/booking', bookingRoutes);
 app.use('/api/therapies', therapyRoutes);
 app.use('/api/therapist-booking', therapistBookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/provider', providerRoutes);
 
 // ============================
 // Serve static frontend files
@@ -62,28 +60,47 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'admin.html'));
 });
 
-// Catch-all route to serve index.html for SPA routing (must be LAST)
+// Catch-all: serve index.html for SPA routing (must be LAST route)
 app.get('*', (req, res, next) => {
-  // Skip API routes
   if (req.url.startsWith('/api')) return next();
   res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Express server error:', err.stack || err);
-  res.status(500).json({
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.stack : {}
-  });
+  console.error('Server Error:', err.message || err);
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`\n==================================================`);
-  console.log(` VedNidan Healthcare Server Running Successfully`);
-  console.log(` Local Server:   http://localhost:${PORT}`);
-  console.log(` Admin Panel:    http://localhost:${PORT}/admin`);
-  console.log(` Current Time:   ${new Date().toLocaleString('en-IN')}`);
-  console.log(`==================================================\n`);
-});
+// ============================
+// Smart Server Startup
+// Handles EADDRINUSE gracefully
+// ============================
+function startServer(port) {
+  const numPort = parseInt(port, 10); // Always ensure numeric
+  const server = app.listen(numPort, () => {
+    console.log('');
+    console.log('==================================================');
+    console.log(' VedNidan Healthcare Server Running Successfully');
+    console.log(` Local Server:   http://localhost:${numPort}`);
+    console.log(` Admin Panel:    http://localhost:${numPort}/admin`);
+    console.log(` Provider App:   http://localhost:${numPort}/provider.html`);
+    console.log(` Current Time:   ${new Date().toLocaleString('en-IN')}`);
+    console.log('==================================================');
+    console.log('');
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      const nextPort = numPort + 1;
+      console.log(`\n⚠️  Port ${numPort} is already in use.`);
+      console.log(`   Trying port ${nextPort} instead...\n`);
+      startServer(nextPort);
+    } else {
+      console.error('Server startup error:', err);
+      process.exit(1);
+    }
+  });
+}
+
+startServer(PORT);

@@ -1,1 +1,66 @@
-[]
+[
+  {
+    "id": 1787636271160,
+    "therapistId": 206,
+    "therapistName": "Vaidya Lakshmi Nair",
+    "date": "2026-08-27",
+    "timeSlot": "03:00 PM",
+    "patientName": "keshav",
+    "patientEmail": "amitsharma101@gmail.com",
+    "therapyType": "Shirovasti",
+    "address": "285-A Shri Nath puram near ahinsa circle Kota (Raj) , 324010",
+    "status": "Pending",
+    "otpCode": "4266",
+    "feedback": "",
+    "rating": 5,
+    "bookedAt": "2026-08-25T05:37:51.160Z"
+  },
+  {
+    "id": 1787735219262,
+    "therapistId": 202,
+    "therapistName": "Vaidya Meera Kulkarni",
+    "date": "2026-08-27",
+    "timeSlot": "03:00 PM",
+    "patientName": "keshav",
+    "patientEmail": "amitsharma101@gmail.com",
+    "therapyType": "Abhyanga",
+    "address": "285-A Shri Nath puram near ahinsa circle Kota (Raj) , 324010",
+    "status": "Completed",
+    "otpCode": "1706",
+    "feedback": "best therapy",
+    "rating": 4,
+    "bookedAt": "2026-08-26T09:06:59.262Z"
+  },
+  {
+    "id": 1788444358603,
+    "therapistId": 201,
+    "therapistName": "Vaidya Pradeep Sharma",
+    "date": "2026-09-07",
+    "timeSlot": "05:00 PM",
+    "patientName": "shubh sharma",
+    "patientEmail": "shubh12@gmail.com",
+    "therapyType": "Basti",
+    "address": "77 vigyan nagar kota",
+    "status": "Completed",
+    "otpCode": "1096",
+    "feedback": "good",
+    "rating": 5,
+    "bookedAt": "2026-09-03T14:05:58.603Z"
+  },
+  {
+    "id": 1789548955013,
+    "therapistId": 1788519829378,
+    "therapistName": "vaidhya pradeep sharma",
+    "date": "2026-09-18",
+    "timeSlot": "04:00 PM",
+    "patientName": "peeyush gupta",
+    "patientEmail": "peeyushgupta@gmail.com",
+    "therapyType": "General Ayurvedic Session",
+    "address": "14/5 loknayak nagar indore",
+    "status": "Pending",
+    "otpCode": "3896",
+    "feedback": "",
+    "rating": 5,
+    "bookedAt": "2026-09-16T08:55:55.013Z"
+  }
+]

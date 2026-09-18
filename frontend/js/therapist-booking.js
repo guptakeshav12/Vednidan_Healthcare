@@ -18,10 +18,36 @@ const TherapistBooking = {
   ],
 
   // ─── Initialization ───────────────────────────────────────────────────
-  init() {
-    this.renderTherapists();
+  async init() {
+    await this.fetchTherapists();
     this.renderCalendarDays();
     this.setupListeners();
+    if (typeof Auth !== 'undefined' && Auth.currentUser) {
+      const nameInput = document.getElementById('therapy-patient-name');
+      const emailInput = document.getElementById('therapy-patient-email');
+      if (nameInput && !nameInput.value) nameInput.value = Auth.currentUser.name;
+      if (emailInput && !emailInput.value) emailInput.value = Auth.currentUser.email;
+    }
+  },
+
+  async fetchTherapists() {
+    try {
+      const response = await fetch(`${window.API_BASE || '/api'}/therapist-booking/therapists`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.therapists && data.therapists.length > 0) {
+          this.therapists = data.therapists.map(t => ({
+            ...t,
+            avatar: t.avatar || '/assets/doctor_avatar.png',
+            experience: t.experience ? (t.experience.includes('exp') ? t.experience : `${t.experience} exp`) : '10 yrs exp',
+            therapies: t.therapies || ["General Consultation", "Panchakarma", "Abhyanga"]
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch dynamic therapists, using default list:', e);
+    }
+    this.renderTherapists();
   },
 
   // ─── Event Listeners ──────────────────────────────────────────────────
@@ -266,6 +292,7 @@ const TherapistBooking = {
   async submitBooking() {
     const patientName  = document.getElementById('therapy-patient-name')?.value.trim();
     const patientEmail = document.getElementById('therapy-patient-email')?.value.trim();
+    const address      = document.getElementById('therapy-patient-address')?.value.trim();
     const concern      = document.getElementById('therapy-patient-concern')?.value.trim();
     const therapyType  = document.getElementById('therapy-type-select')?.value;
 
@@ -275,6 +302,10 @@ const TherapistBooking = {
     }
     if (!patientName || !patientEmail) {
       showToast('Please fill in your name and email address.', 'warning');
+      return;
+    }
+    if (!address) {
+      showToast('Please enter your home address for the therapist visit.', 'warning');
       return;
     }
 
@@ -292,7 +323,8 @@ const TherapistBooking = {
           timeSlot: this.selectedTimeSlot,
           patientName,
           patientEmail,
-          therapyType: therapyType || "General Ayurvedic Session"
+          therapyType: therapyType || "General Ayurvedic Session",
+          address: address
         })
       });
 
@@ -310,19 +342,21 @@ const TherapistBooking = {
         const therapist = this.therapists.find(t => t.id === this.selectedTherapistId);
         const dateObj   = new Date(this.selectedDateString);
         const dateStr   = dateObj.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const otpVal    = data.booking.otp_code || data.booking.otpCode || 'N/A';
 
         summaryEl.innerHTML = `
-          Your Ayurvedic therapy session with <strong>${therapist.name}</strong> has been scheduled:
-          <div class="therapy-success-details">
-            <div><i class="ri-calendar-event-line" style="color:#14b8a6;"></i> <strong>Date:</strong> ${dateStr}</div>
-            <div><i class="ri-time-line" style="color:#14b8a6;"></i> <strong>Time:</strong> ${this.selectedTimeSlot}</div>
-            <div><i class="ri-leaf-line" style="color:#14b8a6;"></i> <strong>Therapy:</strong> ${therapyType || 'General Ayurvedic Session'}</div>
-            <div><i class="ri-user-line" style="color:#14b8a6;"></i> <strong>Patient:</strong> ${patientName}</div>
-            <div><i class="ri-mail-line" style="color:#14b8a6;"></i> <strong>Email:</strong> ${patientEmail}</div>
-            <div><i class="ri-money-rupee-circle-line" style="color:#14b8a6;"></i> <strong>Fee:</strong> ₹799 (In-clinic session)</div>
+          Your home therapy session with <strong>${therapist.name}</strong> has been scheduled successfully:
+          <div class="therapy-success-details" style="background-color: var(--background); border-radius: 8px; padding: 16px; margin: 15px 0; border: 1px solid var(--accent);">
+            <div style="margin-bottom: 8px;"><i class="ri-calendar-event-line" style="color: var(--primary);"></i> <strong>Date:</strong> ${dateStr}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-time-line" style="color: var(--primary);"></i> <strong>Time:</strong> ${this.selectedTimeSlot}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-leaf-line" style="color: var(--primary);"></i> <strong>Therapy:</strong> ${therapyType || 'General Ayurvedic Session'}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-map-pin-line" style="color: var(--primary);"></i> <strong>Visit Address:</strong> ${address}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-user-line" style="color: var(--primary);"></i> <strong>Patient:</strong> ${patientName}</div>
+            <div style="margin-bottom: 8px; font-size: 15px;"><i class="ri-shield-keyhole-line" style="color: var(--secondary-dark);"></i> <strong>Patient OTP Code:</strong> <strong style="font-size: 18px; color: var(--primary); font-family: monospace;">${otpVal}</strong></div>
+            <div><i class="ri-money-rupee-circle-line" style="color: var(--primary);"></i> <strong>Fee:</strong> ₹799 (Pay on service completion)</div>
           </div>
-          <p style="margin-top:16px;font-size:13px;color:var(--text-secondary);">
-            Please arrive 10 minutes early. A confirmation email has been sent with session details and preparation guidelines.
+          <p style="margin-top:16px;font-size:13px;color:var(--text-secondary); line-height: 1.5;">
+            ⚠️ <strong>Important:</strong> Please keep this OTP code safe. Share it with your therapist <strong>only when they arrive at your home</strong> to verify their identity and start the therapy session.
           </p>
         `;
       }

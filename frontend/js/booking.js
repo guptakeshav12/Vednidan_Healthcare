@@ -11,10 +11,29 @@ const Booking = {
     { id: 103, name: "Dr. Raghavan Nair", specialty: "Panchakarma & Pain Specialist", rating: 4.9, experience: "18 yrs exp", avatar: "assets/doctor_avatar.png" }
   ],
 
-  init() {
-    this.renderDoctors();
+  async init() {
+    await this.fetchDoctors();
     this.renderCalendarDays();
     this.setupListeners();
+  },
+
+  async fetchDoctors() {
+    try {
+      const response = await fetch(`${window.API_BASE || '/api'}/booking/doctors`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.doctors && data.doctors.length > 0) {
+          this.doctors = data.doctors.map(d => ({
+            ...d,
+            avatar: d.avatar || 'assets/doctor_avatar.png',
+            experience: d.experience ? (d.experience.includes('exp') ? d.experience : `${d.experience} exp`) : '10 yrs exp'
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch dynamic doctors, using default list:', e);
+    }
+    this.renderDoctors();
   },
 
   setupListeners() {

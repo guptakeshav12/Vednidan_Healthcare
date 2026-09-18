@@ -1,0 +1,68 @@
+[
+  {
+    "id": 101,
+    "name": "Dr. Vasudev Shashtri",
+    "email": "dr.vasudev@vednidan.com",
+    "phone": "9876543210",
+    "qualification": "BAMS, MD (Ayurveda), Ph.D (Dravyaguna)",
+    "specialty": "Nadi Pariksha & Pulse Diagnosis",
+    "rating": 4.9,
+    "experience": "20 years",
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 102,
+    "name": "Dr. Ananya Mishra",
+    "email": "dr.ananya@vednidan.com",
+    "phone": "9876543211",
+    "qualification": "BAMS, Fellowship in Ayurvedic Dermatology",
+    "specialty": "Ayurvedic Skincare & Hair Care Expert",
+    "rating": 4.8,
+    "experience": "14 years",
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 103,
+    "name": "Dr. Raghavan Nair",
+    "email": "dr.raghavan@vednidan.com",
+    "phone": "9876543215",
+    "qualification": "BAMS, Post Graduate Diploma in Panchakarma",
+    "specialty": "Panchakarma & Chronic Pain Specialist",
+    "rating": 4.9,
+    "experience": "18 years",
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 501,
+    "name": "Dr. Keshav Dev",
+    "email": "dr.keshav1788519488331@vednidan.com",
+    "phone": "+91 9988776655",
+    "qualification": "BAMS, MD (Ayurveda), Ph.D",
+    "specialty": "Kaya Chikitsa (Internal Medicine)",
+    "rating": 4.95,
+    "experience": "15 years",
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 1788519446821,
+    "name": "Dr. Siddharth Varma",
+    "email": "dr.siddharth1788519444910@vednidan.com",
+    "phone": "+91 9876001122",
+    "qualification": "BAMS, Fellowship in Panchakarma",
+    "specialty": "Panchakarma & Chronic Pain Specialist",
+    "rating": 4.5,
+    "experience": "8 years",
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 1788519491013,
+    "name": "Dr. Siddharth Varma",
+    "email": "dr.siddharth1788519488331@vednidan.com",
+    "phone": "+91 9876001122",
+    "qualification": "BAMS, Fellowship in Panchakarma",
+    "specialty": "Panchakarma & Chronic Pain Specialist",
+    "rating": 4.5,
+    "experience": "8 years",
+    "avatar": "assets/doctor_avatar.png"
+  }
+]

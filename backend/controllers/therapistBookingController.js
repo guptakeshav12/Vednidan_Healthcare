@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const { supabase, isConfigured } = require('../config/supabase');
+const { supabase, isConfigured, pool } = require('../config/supabase');
 
 const therapistBookingsPath = path.join(__dirname, '../data/therapist_bookings.json');
+const therapistsFilePath = path.join(__dirname, '../data/therapists.json');
 
 const getLocalBookings = () => {
   if (!fs.existsSync(therapistBookingsPath)) {
@@ -20,31 +21,59 @@ const saveLocalBookings = (bookings) => {
 // Hardcoded fallback list of therapists
 const localTherapists = [
   { id: 201, name: "Vaidya Pradeep Sharma", specialty: "Panchakarma & Detox Specialist", rating: 4.9, experience: "25 years", therapies: ["Panchakarma", "Vamana", "Virechana", "Basti"] },
-  { id: 202, name: "Vaidya Meera Kulkarni", specialty: "Abhyanga & Oil Therapy Expert", rating: 4.8, experience: "18 years", therapies: ["Abhyanga", "Shirodhara", "Pizhichil", "Elakizhi"] },
-  { id: 203, name: "Vaidya Ramesh Iyer", specialty: "Yoga & Pranayama Therapist", rating: 4.9, experience: "20 years", therapies: ["Yoga Therapy", "Pranayama", "Meditation", "Marma Chikitsa"] },
-  { id: 204, name: "Vaidya Sunita Deshpande", specialty: "Nadi Pariksha & Diagnosis", rating: 4.7, experience: "15 years", therapies: ["Nadi Pariksha", "Nasyam", "Raktamokshana", "Agni Karma"] },
-  { id: 205, name: "Vaidya Karthik Menon", specialty: "Kati Basti & Musculoskeletal Care", rating: 4.8, experience: "16 years", therapies: ["Kati Basti", "Janu Basti", "Greeva Basti", "Pinda Sweda"] },
-  { id: 206, name: "Vaidya Lakshmi Nair", specialty: "Shirodhara & Stress Relief", rating: 4.9, experience: "22 years", therapies: ["Shirodhara", "Takradhara", "Shirovasti", "Thalam"] },
-  { id: 207, name: "Vaidya Arjun Patel", specialty: "Netra Basti & Eye Care Specialist", rating: 4.7, experience: "12 years", therapies: ["Netra Basti", "Netra Tarpana", "Anjana", "Aschotana"] },
-  { id: 208, name: "Vaidya Revathi Krishnan", specialty: "Women's Wellness & Fertility", rating: 4.9, experience: "19 years", therapies: ["Uttara Basti", "Yoni Pichu", "Udvartana", "Sthanika Basti"] }
+  { id: 202, name: "Vaidya Meera Kulkarni", specialty: "Abhyanga & Oil Therapy Expert", rating: 4.8, experience: "18 years", therapies: ["Abhyanga", "Shirodhara", "Pizhichil", "Elakizhi"] }
 ];
+
+const accountsFilePath = path.join(__dirname, '../data/provider_accounts.json');
+
+const getLocalTherapists = () => {
+  let list = [];
+  if (fs.existsSync(therapistsFilePath)) {
+    try { list = JSON.parse(fs.readFileSync(therapistsFilePath, 'utf-8')); } catch (e) { list = [...localTherapists]; }
+  } else {
+    list = [...localTherapists];
+  }
+
+  // Cross-merge with any registered therapist accounts
+  if (fs.existsSync(accountsFilePath)) {
+    try {
+      const accounts = JSON.parse(fs.readFileSync(accountsFilePath, 'utf-8'));
+      accounts.filter(a => a.role === 'therapist').forEach(acc => {
+        if (!list.some(t => t.id === acc.id || (t.email && acc.email && t.email.toLowerCase() === acc.email.toLowerCase()))) {
+          list.push({
+            id: acc.id,
+            name: acc.name,
+            email: acc.email,
+            phone: acc.phone || '',
+            qualification: acc.qualification || 'Certified Panchakarma Vaidya',
+            specialty: acc.specialty || 'General Ayurvedic Therapist',
+            rating: acc.rating || 4.8,
+            experience: acc.experience || '5 years',
+            therapies: acc.therapies && acc.therapies.length ? acc.therapies : ["General Consultation", "Panchakarma", "Abhyanga"],
+            avatar: acc.avatar || 'assets/doctor_avatar.png'
+          });
+        }
+      });
+    } catch (e) {}
+  }
+  return list;
+};
 
 const timeSlots = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 
 exports.getTherapists = async (req, res) => {
   try {
-    if (!isConfigured) {
-      return res.json({ therapists: localTherapists });
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM therapists ORDER BY id ASC');
+        if (result.rowCount > 0) {
+          return res.json({ therapists: result.rows });
+        }
+      } catch (dbErr) {
+        console.warn('[Booking getTherapists DB fallback]', dbErr.message);
+      }
     }
-
-    const { data: dbTherapists, error } = await supabase
-      .from('therapists')
-      .select('*')
-      .order('id', { ascending: true });
-
-    if (error) throw error;
-
-    res.json({ therapists: dbTherapists });
+    res.json({ therapists: getLocalTherapists() });
   } catch (error) {
     console.error('Error fetching therapists:', error);
     res.status(500).json({ message: 'Error retrieving therapist list' });
@@ -76,7 +105,7 @@ exports.getAvailableSlots = async (req, res) => {
         date,
         therapistId: tIdInt,
         slots: slotsStatus,
-        therapists: localTherapists
+        therapists: getLocalTherapists()
       });
     }
 
@@ -126,10 +155,12 @@ exports.bookSession = async (req, res) => {
     }
 
     const tIdInt = parseInt(therapistId);
+    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const sessionAddress = req.body.address || "In-Clinic Session";
 
     if (!isConfigured) {
       // Fallback
-      const therapist = localTherapists.find(t => t.id === tIdInt);
+      const therapist = getLocalTherapists().find(t => t.id === tIdInt);
       if (!therapist) {
         return res.status(404).json({ message: 'Therapist not found' });
       }
@@ -154,6 +185,11 @@ exports.bookSession = async (req, res) => {
         patientName,
         patientEmail,
         therapyType: therapyType || "General Consultation",
+        address: sessionAddress,
+        status: "Pending",
+        otpCode: otpCode,
+        feedback: "",
+        rating: 5,
         bookedAt: new Date().toISOString()
       };
 
@@ -203,7 +239,12 @@ exports.bookSession = async (req, res) => {
       time_slot: timeSlot,
       patient_name: patientName,
       patient_email: patientEmail,
-      therapy_type: therapyType || "General Consultation"
+      therapy_type: therapyType || "General Consultation",
+      address: sessionAddress,
+      status: 'Pending',
+      otp_code: otpCode,
+      feedback: "",
+      rating: 5
     };
 
     const { data: dbBooking, error: insertError } = await supabase

@@ -1,0 +1,202 @@
+[
+  {
+    "id": 201,
+    "name": "Vaidya Pradeep Sharma",
+    "email": "therapist.pradeep@vednidan.com",
+    "phone": "9876543213",
+    "qualification": "Certified Panchakarma Acharya, BAMS",
+    "specialty": "Panchakarma & Detox Specialist",
+    "rating": 4.9,
+    "experience": "25 years",
+    "therapies": [
+      "Panchakarma",
+      "Vamana",
+      "Virechana",
+      "Basti"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 202,
+    "name": "Vaidya Meera Kulkarni",
+    "email": "therapist.meera@vednidan.com",
+    "phone": "9876543212",
+    "qualification": "Diploma in Ayurvedic Massage & Panchakarma",
+    "specialty": "Abhyanga & Oil Therapy Expert",
+    "rating": 4.8,
+    "experience": "18 years",
+    "therapies": [
+      "Abhyanga",
+      "Shirodhara",
+      "Pizhichil",
+      "Elakizhi"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 203,
+    "name": "Vaidya Ramesh Iyer",
+    "email": "therapist.ramesh@vednidan.com",
+    "phone": "9876543214",
+    "qualification": "M.Sc. Yoga & Naturopathy, Marma Specialist",
+    "specialty": "Yoga & Pranayama Therapist",
+    "rating": 4.9,
+    "experience": "20 years",
+    "therapies": [
+      "Yoga Therapy",
+      "Pranayama",
+      "Meditation",
+      "Marma Chikitsa"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 204,
+    "name": "Vaidya Sunita Deshpande",
+    "email": "therapist.sunita@vednidan.com",
+    "phone": "9876543216",
+    "qualification": "BAMS, Certified Nadi Pariksha Specialist",
+    "specialty": "Nadi Pariksha & Diagnosis",
+    "rating": 4.7,
+    "experience": "15 years",
+    "therapies": [
+      "Nadi Pariksha",
+      "Nasyam",
+      "Raktamokshana",
+      "Agni Karma"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 205,
+    "name": "Vaidya Karthik Menon",
+    "email": "therapist.karthik@vednidan.com",
+    "phone": "9876543217",
+    "qualification": "BAMS, Kerala Panchakarma Specialist",
+    "specialty": "Kati Basti & Musculoskeletal Care",
+    "rating": 4.8,
+    "experience": "16 years",
+    "therapies": [
+      "Kati Basti",
+      "Janu Basti",
+      "Greeva Basti",
+      "Pinda Sweda"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 206,
+    "name": "Vaidya Lakshmi Nair",
+    "email": "therapist.lakshmi@vednidan.com",
+    "phone": "9876543218",
+    "qualification": "BAMS, Shirodhara & Stress Therapy Expert",
+    "specialty": "Shirodhara & Stress Relief",
+    "rating": 4.9,
+    "experience": "22 years",
+    "therapies": [
+      "Shirodhara",
+      "Takradhara",
+      "Shirovasti",
+      "Thalam"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 207,
+    "name": "Vaidya Arjun Patel",
+    "email": "therapist.arjun@vednidan.com",
+    "phone": "9876543219",
+    "qualification": "BAMS, Netra Chikitsa Specialist",
+    "specialty": "Netra Basti & Eye Care Specialist",
+    "rating": 4.7,
+    "experience": "12 years",
+    "therapies": [
+      "Netra Basti",
+      "Netra Tarpana",
+      "Anjana",
+      "Aschotana"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 208,
+    "name": "Vaidya Revathi Krishnan",
+    "email": "therapist.revathi@vednidan.com",
+    "phone": "9876543220",
+    "qualification": "BAMS, Prasuti Tantra & Stri Roga Specialist",
+    "specialty": "Women's Wellness & Fertility",
+    "rating": 4.9,
+    "experience": "19 years",
+    "therapies": [
+      "Uttara Basti",
+      "Yoni Pichu",
+      "Udvartana",
+      "Sthanika Basti"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 601,
+    "name": "Vaidya Anjali Rao",
+    "email": "therapist.anjali1788519488331@vednidan.com",
+    "phone": "+91 9123456780",
+    "qualification": "Certified Panchakarma Acharya, BNYS",
+    "specialty": "Shirodhara & Stress Relief",
+    "rating": 4.9,
+    "experience": "12 years",
+    "therapies": [
+      "Shirodhara",
+      "Abhyanga",
+      "Takradhara"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 1788519506401,
+    "name": "Vaidya Priya Sharma",
+    "email": "therapist.priya1788519506296@vednidan.com",
+    "phone": "+91 9988112233",
+    "qualification": "Certified Panchakarma Acharya, BAMS",
+    "specialty": "Abhyanga & Oil Therapy Expert",
+    "rating": 4.5,
+    "experience": "7 years",
+    "therapies": [
+      "Abhyanga",
+      "Shirodhara",
+      "Kati Basti"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 1788519829378,
+    "name": "vaidhya pradeep sharma",
+    "email": "pradeepsharma12@gmail.com",
+    "phone": "8521470690",
+    "qualification": "CERTIFIED THERAPIST , DIPLOMA IN PANCHAKRMA THERAPY",
+    "specialty": "Panchakarma & Detox Specialist",
+    "rating": 4.5,
+    "experience": "6-10 years",
+    "therapies": [
+      "Abyanga",
+      "basti",
+      "panchkarma therapy"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  },
+  {
+    "id": 1789548466278,
+    "name": "VAIDHYA RANU KAWAR",
+    "email": "ranukawar1607@gmail.com",
+    "phone": "6362589210",
+    "qualification": "CERTIFIED PANCHAKARMA THEREPIST , NURSING",
+    "specialty": "Panchakarma & Detox Specialist",
+    "rating": 4.5,
+    "experience": "3-5 years",
+    "therapies": [
+      "PANCHKARMA",
+      "BASTI",
+      "SHIRODHARA"
+    ],
+    "avatar": "assets/doctor_avatar.png"
+  }
+]

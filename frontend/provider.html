@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VedNidan Provider Portal — Doctor & Therapist Login</title>
+  <meta name="description" content="Secure login and signup portal for VedNidan Healthcare doctors and therapists.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Remix Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/provider.css">
+
+  <!-- Jitsi Meet External API -->
+  <script src="https://meet.jit.si/external_api.js"></script>
+</head>
+<body class="provider-body">
+
+  <!-- ====================================================
+       AUTH PANEL — All 3 screens: Login / Signup / Forgot
+       ==================================================== -->
+  <div class="auth-fullscreen" id="auth-fullscreen">
+    
+    <!-- Left decorative panel -->
+    <div class="auth-brand-panel">
+      <div class="auth-brand-inner">
+        <div class="auth-logo">
+          <i class="ri-leaf-line"></i>
+        </div>
+        <h1>VedNidan Healthcare</h1>
+        <p>Practitioner & Therapist Portal</p>
+        <div class="auth-features">
+          <div class="auth-feature-item">
+            <i class="ri-video-chat-line"></i>
+            <span>Free Jitsi Video Consultations</span>
+          </div>
+          <div class="auth-feature-item">
+            <i class="ri-map-pin-user-line"></i>
+            <span>Rapido-Style Home Visit Dispatch</span>
+          </div>
+          <div class="auth-feature-item">
+            <i class="ri-shield-keyhole-line"></i>
+            <span>Secure OTP-Verified Sessions</span>
+          </div>
+          <div class="auth-feature-item">
+            <i class="ri-file-list-3-line"></i>
+            <span>Digital Prescription Pad</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right auth form panel -->
+    <div class="auth-form-panel">
+
+      <!-- ===== LOGIN SCREEN ===== -->
+      <div class="auth-screen active" id="screen-login">
+        <div class="auth-screen-inner">
+          <div class="auth-screen-header">
+            <div class="auth-role-icon" id="login-role-icon">
+              <i class="ri-nurse-line"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to your practitioner workspace</p>
+          </div>
+
+          <!-- Role Selector Tabs -->
+          <p class="auth-role-selector-label">I am a —</p>
+          <div class="auth-role-tabs" id="login-role-tabs">
+            <button class="role-tab active" data-role="doctor" id="login-tab-doctor">
+              <i class="ri-stethoscope-line"></i>
+              Doctor
+              <span class="role-tab-desc">Ayurvedic Physician &amp; Consultant</span>
+            </button>
+            <button class="role-tab" data-role="therapist" id="login-tab-therapist">
+              <i class="ri-hand-heart-line"></i>
+              Therapist
+              <span class="role-tab-desc">Panchakarma &amp; Wellness Expert</span>
+            </button>
+          </div>
+
+          <form id="login-form" autocomplete="on">
+            <div class="form-group">
+              <label>Email Address</label>
+              <div class="input-wrap">
+                <i class="ri-mail-line input-icon"></i>
+                <input type="email" id="login-email" placeholder="doctor@vednidan.in" required autocomplete="email">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <div class="input-wrap">
+                <i class="ri-lock-line input-icon"></i>
+                <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
+                <button type="button" class="toggle-password" onclick="togglePassword('login-password', this)">
+                  <i class="ri-eye-off-line"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-extras">
+              <label class="remember-me">
+                <input type="checkbox" id="login-remember"> Remember me
+              </label>
+              <button type="button" class="link-btn" onclick="switchScreen('forgot')">
+                Forgot Password?
+              </button>
+            </div>
+
+            <button type="submit" class="btn-auth-submit" id="btn-login">
+              <span>Sign In to Workspace</span>
+              <i class="ri-arrow-right-line"></i>
+            </button>
+          </form>
+
+          <div class="auth-divider"><span>Don't have an account?</span></div>
+
+          <button type="button" class="btn-auth-outline" onclick="switchScreen('signup')">
+            <i class="ri-user-add-line"></i> Create New Account
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== SIGNUP SCREEN ===== -->
+      <div class="auth-screen" id="screen-signup">
+        <div class="auth-screen-inner">
+          <div class="auth-screen-header">
+            <div class="auth-role-icon signup-icon">
+              <i class="ri-user-add-line"></i>
+            </div>
+            <h2>Create Account</h2>
+            <p>Register as a VedNidan Practitioner</p>
+          </div>
+
+          <!-- Role Selector -->
+          <p class="auth-role-selector-label">I am registering as —</p>
+          <div class="auth-role-tabs" id="signup-role-tabs">
+            <button class="role-tab active" data-role="doctor" id="signup-tab-doctor">
+              <i class="ri-stethoscope-line"></i>
+              Doctor
+              <span class="role-tab-desc">Ayurvedic Physician &amp; Consultant</span>
+            </button>
+            <button class="role-tab" data-role="therapist" id="signup-tab-therapist">
+              <i class="ri-hand-heart-line"></i>
+              Therapist
+              <span class="role-tab-desc">Panchakarma &amp; Wellness Expert</span>
+            </button>
+          </div>
+
+          <form id="signup-form" autocomplete="off">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Full Name <span class="req">*</span></label>
+                <div class="input-wrap">
+                  <i class="ri-user-line input-icon"></i>
+                  <input type="text" id="signup-name" placeholder="Dr. Your Full Name" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Phone Number</label>
+                <div class="input-wrap">
+                  <i class="ri-phone-line input-icon"></i>
+                  <input type="tel" id="signup-phone" placeholder="+91 98765 43210">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Email Address <span class="req">*</span></label>
+              <div class="input-wrap">
+                <i class="ri-mail-line input-icon"></i>
+                <input type="email" id="signup-email" placeholder="your.email@vednidan.in" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label id="signup-qualification-label">Qualifications / Degrees <span class="req">*</span></label>
+              <div class="input-wrap">
+                <i class="ri-graduation-cap-line input-icon"></i>
+                <input type="text" id="signup-qualification" placeholder="e.g. BAMS, MD (Ayurveda)" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label id="signup-specialty-label">Medical Specialty</label>
+              <div class="input-wrap">
+                <i class="ri-stethoscope-line input-icon"></i>
+                <select id="signup-specialty">
+                  <option value="">-- Select your specialty --</option>
+                  <!-- Options loaded dynamically by JS -->
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" id="signup-therapies-group" style="display:none;">
+              <label>Therapies Offered (Comma separated) <span class="req">*</span></label>
+              <div class="input-wrap">
+                <i class="ri-hand-heart-line input-icon"></i>
+                <input type="text" id="signup-therapies" placeholder="e.g. Abhyanga, Shirodhara, Basti, Panchakarma">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Years of Experience</label>
+                <div class="input-wrap">
+                  <i class="ri-award-line input-icon"></i>
+                  <select id="signup-experience">
+                    <option value="0-2 years">0–2 years</option>
+                    <option value="3-5 years">3–5 years</option>
+                    <option value="6-10 years" selected>6–10 years</option>
+                    <option value="11-15 years">11–15 years</option>
+                    <option value="16-20 years">16–20 years</option>
+                    <option value="20+ years">20+ years</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Password <span class="req">*</span></label>
+                <div class="input-wrap">
+                  <i class="ri-lock-line input-icon"></i>
+                  <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
+                  <button type="button" class="toggle-password" onclick="togglePassword('signup-password', this)">
+                    <i class="ri-eye-off-line"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Confirm Password <span class="req">*</span></label>
+              <div class="input-wrap">
+                <i class="ri-lock-2-line input-icon"></i>
+                <input type="password" id="signup-confirm-password" placeholder="Re-enter your password" required>
+              </div>
+            </div>
+
+            <div class="terms-check">
+              <label class="remember-me">
+                <input type="checkbox" id="signup-terms" required>
+                I agree to VedNidan's <a href="#" style="color:var(--primary);">Terms of Service</a> & <a href="#" style="color:var(--primary);">Privacy Policy</a>
+              </label>
+            </div>
+
+            <button type="submit" class="btn-auth-submit" id="btn-signup">
+              <span>Create My Account</span>
+              <i class="ri-arrow-right-line"></i>
+            </button>
+          </form>
+
+          <div class="auth-divider"><span>Already have an account?</span></div>
+
+          <button type="button" class="btn-auth-outline" onclick="switchScreen('login')">
+            <i class="ri-login-circle-line"></i> Sign In Instead
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== FORGOT PASSWORD SCREEN ===== -->
+      <div class="auth-screen" id="screen-forgot">
+        <div class="auth-screen-inner">
+          <button class="btn-back" onclick="switchScreen('login')">
+            <i class="ri-arrow-left-line"></i> Back to Login
+          </button>
+
+          <div class="auth-screen-header">
+            <div class="auth-role-icon forgot-icon">
+              <i class="ri-lock-unlock-line"></i>
+            </div>
+            <h2>Reset Password</h2>
+            <p>Enter your registered email to receive an OTP</p>
+          </div>
+
+          <!-- STEP 1: Enter Email -->
+          <div id="forgot-step-email">
+            <div class="auth-role-tabs" id="forgot-role-tabs">
+              <button class="role-tab active" data-role="doctor" id="forgot-tab-doctor">
+                <i class="ri-nurse-line"></i> Doctor
+              </button>
+              <button class="role-tab" data-role="therapist" id="forgot-tab-therapist">
+                <i class="ri-hand-heart-line"></i> Therapist
+              </button>
+            </div>
+
+            <form id="forgot-email-form">
+              <div class="form-group">
+                <label>Registered Email</label>
+                <div class="input-wrap">
+                  <i class="ri-mail-send-line input-icon"></i>
+                  <input type="email" id="forgot-email" placeholder="your.email@vednidan.in" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-auth-submit" id="btn-send-otp">
+                <span>Send OTP Code</span>
+                <i class="ri-send-plane-line"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- STEP 2: Enter OTP + New Password -->
+          <div id="forgot-step-reset" style="display:none;">
+            <div class="otp-sent-notice" id="otp-demo-notice">
+              <i class="ri-checkbox-circle-line"></i>
+              <span>OTP sent! <strong id="demo-otp-display"></strong></span>
+            </div>
+
+            <form id="forgot-reset-form">
+              <div class="form-group">
+                <label>Enter 6-Digit OTP</label>
+                <div class="otp-6-input-row">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c1" oninput="moveOtp(this,'otp-c2')" onkeydown="backOtp(event,this,null)">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c2" oninput="moveOtp(this,'otp-c3')" onkeydown="backOtp(event,this,'otp-c1')">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c3" oninput="moveOtp(this,'otp-c4')" onkeydown="backOtp(event,this,'otp-c2')">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c4" oninput="moveOtp(this,'otp-c5')" onkeydown="backOtp(event,this,'otp-c3')">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c5" oninput="moveOtp(this,'otp-c6')" onkeydown="backOtp(event,this,'otp-c4')">
+                  <input type="text" maxlength="1" class="otp-char-input" id="otp-c6" oninput="moveOtp(this,null)" onkeydown="backOtp(event,this,'otp-c5')">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>New Password</label>
+                <div class="input-wrap">
+                  <i class="ri-lock-line input-icon"></i>
+                  <input type="password" id="reset-new-password" placeholder="Min. 6 characters" required>
+                  <button type="button" class="toggle-password" onclick="togglePassword('reset-new-password', this)">
+                    <i class="ri-eye-off-line"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Confirm New Password</label>
+                <div class="input-wrap">
+                  <i class="ri-lock-2-line input-icon"></i>
+                  <input type="password" id="reset-confirm-password" placeholder="Re-enter your new password" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-auth-submit" id="btn-reset-password">
+                <span>Reset My Password</span>
+                <i class="ri-check-double-line"></i>
+              </button>
+            </form>
+
+            <button type="button" class="link-btn" style="display:block;margin-top:12px;text-align:center;" onclick="resendOtp()">
+              <i class="ri-refresh-line"></i> Resend OTP
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.auth-form-panel -->
+  </div><!-- /#auth-fullscreen -->
+
+  <!-- ====================================================
+       WORKSPACE PANEL (shown after successful login)
+       ==================================================== -->
+  <div class="workspace-panel" id="provider-workspace-view" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i class="ri-leaf-line"></i>
+        <span>VedNidan Partner</span>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-avatar"><i class="ri-shield-user-line" id="profile-role-icon"></i></div>
+        <h4 id="profile-name">-</h4>
+        <span id="profile-specialty">-</span>
+        <div class="profile-rating">
+          <i class="ri-star-fill"></i> <span id="profile-rating-label">4.9</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" id="menu-home"><i class="ri-home-4-line"></i> Dashboard</a>
+        <a href="#" class="menu-item" id="menu-history"><i class="ri-history-line"></i> Complete Sessions</a>
+        <a href="#" class="menu-item" id="menu-profile"><i class="ri-user-settings-line"></i> My Profile</a>
+      </nav>
+
+      <button class="btn-logout" id="btn-logout-partner">
+        <i class="ri-logout-box-r-line"></i> Logout Workspace
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content-panel">
+
+      <!-- DOCTOR HOME VIEW -->
+      <section class="workspace-section active" id="view-doctor-home" style="display: none;">
+        <div class="view-header">
+          <div>
+            <h3>Consultation Bookings</h3>
+            <p>Select a patient to begin your live Jitsi Meet video diagnostic session.</p>
+          </div>
+          <button class="btn-refresh" onclick="ProviderApp.loadBookings()"><i class="ri-refresh-line"></i> Refresh Slots</button>
+        </div>
+
+        <div class="doctor-grid">
+          <div class="card bookings-card">
+            <h4>Today's Sessions</h4>
+            <div class="bookings-list" id="doctor-slots-container"></div>
+          </div>
+
+          <div class="card session-workspace-card">
+            <div class="call-empty-state" id="consultation-empty-state">
+              <i class="ri-video-chat-line"></i>
+              <h4>No Active Consultation</h4>
+              <p>Select a patient from the list and click "Start Call" to open a Jitsi voice & video room.</p>
+            </div>
+
+            <div class="call-active-state" id="consultation-active-state" style="display: none;">
+              <div class="call-workspace-header">
+                <div>
+                  <span class="active-badge"><span class="pulse-dot"></span> Live consultation</span>
+                  <h4 id="active-call-patient-name">-</h4>
+                </div>
+                <button class="btn-danger" id="btn-end-consultation"><i class="ri-phone-fill"></i> Disconnect</button>
+              </div>
+
+              <div class="jitsi-meet-box" id="jitsi-iframe-container"></div>
+
+              <div class="prescription-pad-card">
+                <h4><i class="ri-file-edit-line"></i> Diagnostic Notes & Prescription Pad</h4>
+                <p class="pad-desc">Write diagnostic remarks, recommended herbs, and dietary guidelines below.</p>
+                <form id="prescription-form" onsubmit="return false;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Diagnosis / Dosha Imbalance</label>
+                      <input type="text" id="presc-diagnosis" placeholder="e.g. Pitta Aggravation, Insomnia" required>
+                    </div>
+                    <div class="form-group">
+                      <label>Recommended Herb</label>
+                      <select id="presc-product-select">
+                        <option value="">-- Choose Remedy from Catalog --</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Dosage & Instructions</label>
+                    <textarea id="presc-dosage" rows="3" placeholder="e.g. 1 tablet Ashwagandha twice daily with warm milk"></textarea>
+                  </div>
+                  <button type="submit" class="btn-primary" id="btn-save-prescription">
+                    <i class="ri-check-double-line"></i> Save Prescription & Complete Session
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- THERAPIST HOME VIEW -->
+      <section class="workspace-section" id="view-therapist-home" style="display: none;">
+        <div class="view-header">
+          <div>
+            <h3>Therapy Home Visits</h3>
+            <p>Manage home-visit therapy routes using secure OTP verification.</p>
+          </div>
+          <button class="btn-refresh" onclick="ProviderApp.loadBookings()"><i class="ri-refresh-line"></i> Refresh Visits</button>
+        </div>
+
+        <div class="therapist-grid">
+          <div class="card bookings-card">
+            <h4>Assigned Home Visits</h4>
+            <div class="bookings-list" id="therapist-slots-container"></div>
+          </div>
+
+          <div class="card tracking-dispatch-card">
+            <div class="call-empty-state" id="dispatch-empty-state">
+              <i class="ri-map-pin-user-line"></i>
+              <h4>Awaiting Dispatch Selection</h4>
+              <p>Select a home visit from the list to begin the routing tracker.</p>
+            </div>
+
+            <div class="dispatch-active-state" id="dispatch-active-state" style="display: none;">
+              <div class="dispatch-header">
+                <div>
+                  <span class="status-indicator-badge" id="dispatch-status-badge">Pending</span>
+                  <h4 id="dispatch-patient-name">-</h4>
+                  <p class="dispatch-therapy-type" id="dispatch-therapy-type-label">-</p>
+                </div>
+                <!-- OTP is shown to PATIENT only (on booking page). Therapist asks patient for it. -->
+                <!-- dispatch-otp-display intentionally removed from therapist view for security -->
+
+              </div>
+
+              <div class="mock-route-visualizer">
+                <svg width="100%" height="200" viewBox="0 0 400 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 100 C 120 40, 160 160, 240 100 C 320 40, 340 100, 360 100" stroke="#E8F0EC" stroke-width="8" stroke-linecap="round"/>
+                  <path id="route-progress-line" d="M40 100 C 120 40, 160 160, 240 100 C 320 40, 340 100, 360 100" stroke="var(--primary)" stroke-width="8" stroke-dasharray="400" stroke-dashoffset="400" stroke-linecap="round" style="transition: stroke-dashoffset 2s ease-in-out;"/>
+                  <circle cx="40" cy="100" r="10" fill="var(--primary-dark)"/>
+                  <text x="20" y="125" fill="var(--text-secondary)" font-size="10" font-weight="700">Clinic</text>
+                  <circle cx="360" cy="100" r="10" fill="var(--secondary)"/>
+                  <text x="320" y="125" fill="var(--text-secondary)" font-size="10" font-weight="700">Patient Home</text>
+                  <g id="dispatcher-marker" transform="translate(30, 90)">
+                    <circle cx="10" cy="10" r="12" fill="var(--secondary)" stroke="#FFF" stroke-width="2"/>
+                    <text x="4" y="15" fill="#1C2E2A" font-size="13">🏍</text>
+                  </g>
+                </svg>
+                <div class="eta-box" id="dispatch-eta-text">Distance: 4.8 km | ETA: 12 mins</div>
+              </div>
+
+              <div class="dispatch-address-box">
+                <h5><i class="ri-map-pin-line"></i> Home Visit Address:</h5>
+                <p id="dispatch-address-text">-</p>
+              </div>
+
+              <div class="dispatch-controls">
+                <div class="dispatch-step-control" id="control-step-start">
+                  <p>Accept the visit request and begin navigating to the patient's house.</p>
+                  <button class="btn-primary" id="btn-start-journey"><i class="ri-navigation-line"></i> Start Journey (En Route)</button>
+                </div>
+
+                <div class="dispatch-step-control" id="control-step-arrived" style="display: none;">
+                  <p>Once you arrive at the patient's house, click below to confirm arrival.</p>
+                  <button class="btn-primary" id="btn-mark-arrived"><i class="ri-user-location-line"></i> I Have Arrived</button>
+                </div>
+
+                <div class="dispatch-step-control" id="control-step-otp" style="display: none;">
+                  <p>Ask the patient for their secure 4-digit Booking OTP code to verify identity.</p>
+                  <div class="otp-field-row">
+                    <input type="text" maxlength="4" placeholder="••••" id="dispatch-otp-input">
+                    <button class="btn-primary" id="btn-verify-otp"><i class="ri-shield-keyhole-line"></i> Verify OTP</button>
+                  </div>
+                  <span class="error-text" id="otp-error-msg" style="display: none;">Invalid OTP! Please cross-check with client receipt.</span>
+                </div>
+
+                <div class="dispatch-step-control" id="control-step-active" style="display: none;">
+                  <div class="timer-box">
+                    <span class="timer-label">Session Elapsed Time:</span>
+                    <span class="timer-digits" id="session-timer-clock">00:00:00</span>
+                  </div>
+                  <p>Carry out the scheduled therapy session. Click below once treatment is complete.</p>
+                  <button class="btn-primary" id="btn-start-treatment" style="margin-bottom: 10px;"><i class="ri-play-circle-line"></i> Start Therapy Treatment</button>
+                  <button class="btn-primary btn-complete-treatment" id="btn-complete-treatment" style="display: none;"><i class="ri-check-line"></i> Finish Therapy Treatment</button>
+                </div>
+
+                <div class="dispatch-step-control" id="control-step-feedback" style="display: none;">
+                  <h5><i class="ri-chat-voice-line"></i> Therapy Visit Summary Notes</h5>
+                  <form id="therapist-feedback-form" onsubmit="return false;" style="margin-top: 10px;">
+                    <div class="form-group">
+                      <label>Visit Summary / Patient Response</label>
+                      <textarea id="dispatch-feedback" rows="3" placeholder="e.g. Completed Shirodhara therapy. Patient reported relief. Advised Ashwagandha." required></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Rate Patient General Wellness Index</label>
+                      <div class="rating-stars" id="feedback-stars-row">
+                        <i class="ri-star-line star-btn" data-val="1"></i>
+                        <i class="ri-star-line star-btn" data-val="2"></i>
+                        <i class="ri-star-line star-btn" data-val="3"></i>
+                        <i class="ri-star-line star-btn" data-val="4"></i>
+                        <i class="ri-star-line star-btn" data-val="5"></i>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-submit-feedback">
+                      <i class="ri-checkbox-circle-line"></i> Submit Report & Complete Visit
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY VIEW -->
+      <section class="workspace-section" id="view-history" style="display: none;">
+        <div class="view-header">
+          <div>
+            <h3>Completed Sessions & Visits</h3>
+            <p>Archive of all completed consultation sessions, diagnosis sheets, and home-visit reports.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table class="admin-table">
+              <thead>
+                <tr id="history-table-header">
+                  <th>ID</th><th>Patient</th><th>Date & Time</th><th>Outcome / Details</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE VIEW -->
+      <section class="workspace-section" id="view-profile" style="display: none;">
+        <div class="view-header">
+          <div>
+            <h3>My Profile</h3>
+            <p>View and update your practitioner account details.</p>
+          </div>
+        </div>
+        <div class="card profile-detail-card">
+          <div class="profile-detail-avatar">
+            <i class="ri-user-star-line" id="profile-detail-icon"></i>
+          </div>
+          <div class="profile-detail-info">
+            <h2 id="pdetail-name">-</h2>
+            <span class="profile-detail-role-badge" id="pdetail-role-badge">Doctor</span>
+            <div class="profile-detail-grid">
+              <div class="pdetail-item">
+                <i class="ri-mail-line"></i>
+                <div><label>Email</label><span id="pdetail-email">-</span></div>
+              </div>
+              <div class="pdetail-item">
+                <i class="ri-stethoscope-line"></i>
+                <div><label>Specialty</label><span id="pdetail-specialty">-</span></div>
+              </div>
+              <div class="pdetail-item">
+                <i class="ri-award-line"></i>
+                <div><label>Experience</label><span id="pdetail-experience">-</span></div>
+              </div>
+              <div class="pdetail-item">
+                <i class="ri-phone-line"></i>
+                <div><label>Phone</label><span id="pdetail-phone">-</span></div>
+              </div>
+              <div class="pdetail-item">
+                <i class="ri-star-fill"></i>
+                <div><label>Rating</label><span id="pdetail-rating">4.9 ★</span></div>
+              </div>
+              <div class="pdetail-item">
+                <i class="ri-calendar-check-line"></i>
+                <div><label>Member Since</label><span id="pdetail-joined">-</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:500px; margin-top:0;">
+          <h4><i class="ri-lock-password-line"></i> Change Password</h4>
+          <form id="change-password-form" onsubmit="return false;">
+            <div class="form-group">
+              <label>Current Password</label>
+              <div class="input-wrap">
+                <i class="ri-lock-line input-icon"></i>
+                <input type="password" id="cp-current" placeholder="Your current password">
+                <button type="button" class="toggle-password" onclick="togglePassword('cp-current', this)"><i class="ri-eye-off-line"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <div class="input-wrap">
+                <i class="ri-lock-line input-icon"></i>
+                <input type="password" id="cp-new" placeholder="Min. 6 characters">
+                <button type="button" class="toggle-password" onclick="togglePassword('cp-new', this)"><i class="ri-eye-off-line"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <div class="input-wrap">
+                <i class="ri-lock-2-line input-icon"></i>
+                <input type="password" id="cp-confirm" placeholder="Re-enter new password">
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">
+              <i class="ri-save-line"></i> Update Password
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Wrapper -->
+  <div class="toast-container" id="toast-wrapper"></div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/provider-auth.js"></script>
+  <script src="js/provider-app.js"></script>
+</body>
+</html>

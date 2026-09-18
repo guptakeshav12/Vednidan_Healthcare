@@ -1,13 +1,47 @@
 const fs = require('fs');
 const path = require('path');
-const { supabase, isConfigured } = require('../config/supabase');
+const { pool } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 
+let _localCache = null;
 const getLocalProducts = () => {
-  const jsonData = fs.readFileSync(productsFilePath, 'utf-8');
-  return JSON.parse(jsonData);
+  if (_localCache) return _localCache;
+  try {
+    const jsonData = fs.readFileSync(productsFilePath, 'utf-8');
+    _localCache = JSON.parse(jsonData);
+    return _localCache;
+  } catch (e) {
+    console.error('[Products] Error reading products.json:', e.message);
+    return [];
+  }
 };
+
+// Helper: serve from local JSON file with filtering + pagination
+function serveFromLocal(res, { page, limit, category, searchQuery, productType }) {
+  let filtered = getLocalProducts();
+
+  if (category !== 'all') {
+    filtered = filtered.filter(p => p.category === category);
+  }
+  if (productType !== 'all') {
+    filtered = filtered.filter(p => (p.name || '').toLowerCase().includes(productType));
+  }
+  if (searchQuery) {
+    filtered = filtered.filter(p =>
+      (p.name || '').toLowerCase().includes(searchQuery) ||
+      (p.shortDescription || '').toLowerCase().includes(searchQuery) ||
+      (p.category || '').toLowerCase().includes(searchQuery)
+    );
+  }
+
+  const totalProducts = filtered.length;
+  const totalPages = Math.ceil(totalProducts / limit) || 1;
+  const safePage = Math.max(1, Math.min(page, totalPages));
+  const paginatedProducts = filtered.slice((safePage - 1) * limit, safePage * limit);
+
+  return res.json({ products: paginatedProducts, page: safePage, limit, totalProducts, totalPages });
+}
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -17,93 +51,78 @@ exports.getAllProducts = async (req, res) => {
     const searchQuery = (req.query.search || '').toLowerCase().trim();
     const productType = (req.query.type || 'all').toLowerCase().trim();
 
-    if (!isConfigured) {
-      // Fallback to JSON file
-      const products = getLocalProducts();
-      let filtered = products;
+    const params = { page, limit, category, searchQuery, productType };
 
-      if (category !== 'all') {
-        filtered = filtered.filter(p => p.category === category);
+    // Try PostgreSQL pool first
+    if (pool) {
+      try {
+        let countQuery = 'SELECT COUNT(*) FROM products WHERE 1=1';
+        let dataQuery = 'SELECT * FROM products WHERE 1=1';
+        const vals = [];
+        let idx = 1;
+
+        if (category !== 'all') {
+          countQuery += ` AND category = $${idx}`;
+          dataQuery  += ` AND category = $${idx}`;
+          vals.push(category); idx++;
+        }
+        if (productType !== 'all') {
+          countQuery += ` AND LOWER(name) LIKE $${idx}`;
+          dataQuery  += ` AND LOWER(name) LIKE $${idx}`;
+          vals.push(`%${productType}%`); idx++;
+        }
+        if (searchQuery) {
+          countQuery += ` AND (LOWER(name) LIKE $${idx} OR LOWER(short_description) LIKE $${idx} OR LOWER(category) LIKE $${idx})`;
+          dataQuery  += ` AND (LOWER(name) LIKE $${idx} OR LOWER(short_description) LIKE $${idx} OR LOWER(category) LIKE $${idx})`;
+          vals.push(`%${searchQuery}%`); idx++;
+        }
+
+        const offset = (page - 1) * limit;
+        dataQuery += ` ORDER BY id ASC LIMIT $${idx} OFFSET $${idx + 1}`;
+        const dataVals = [...vals, limit, offset];
+
+        const [countRes, dataRes] = await Promise.all([
+          pool.query(countQuery, vals),
+          pool.query(dataQuery, dataVals)
+        ]);
+
+        const totalProducts = parseInt(countRes.rows[0].count);
+        const totalPages = Math.ceil(totalProducts / limit) || 1;
+
+        // Map snake_case DB fields to camelCase for frontend
+        const products = dataRes.rows.map(p => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: parseFloat(p.price),
+          image: p.image,
+          rating: parseFloat(p.rating),
+          reviewsCount: p.reviews_count,
+          shortDescription: p.short_description,
+          longDescription: p.long_description,
+          isBestSeller: p.is_bestseller,
+          benefits: p.benefits || [],
+          usageDirections: p.usage_directions,
+          ingredients: p.ingredients || []
+        }));
+
+        // If DB has no products yet, fall back to local JSON
+        if (totalProducts === 0) {
+          return serveFromLocal(res, params);
+        }
+
+        return res.json({ products, page, limit, totalProducts, totalPages });
+      } catch (dbErr) {
+        console.error('[Products DB Error]', dbErr.message);
+        // Fall through to local JSON
       }
-      if (productType !== 'all') {
-        filtered = filtered.filter(p => p.name.toLowerCase().includes(productType));
-      }
-      if (searchQuery) {
-        filtered = filtered.filter(p => 
-          p.name.toLowerCase().includes(searchQuery) || 
-          p.shortDescription.toLowerCase().includes(searchQuery) || 
-          p.category.toLowerCase().includes(searchQuery)
-        );
-      }
-
-      const totalProducts = filtered.length;
-      const totalPages = Math.ceil(totalProducts / limit);
-      page = Math.max(1, Math.min(page, totalPages || 1));
-      const paginatedProducts = filtered.slice((page - 1) * limit, page * limit);
-      
-      return res.json({
-        products: paginatedProducts,
-        page,
-        limit,
-        totalProducts,
-        totalPages
-      });
     }
 
-    // Connect to Supabase
-    let query = supabase.from('products').select('*', { count: 'exact' });
-
-    if (category !== 'all') {
-      query = query.eq('category', category);
-    }
-
-    if (productType !== 'all') {
-      query = query.ilike('name', `%${productType}%`);
-    }
-
-    if (searchQuery) {
-      query = query.or(`name.ilike.%${searchQuery}%,short_description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
-    }
-
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-    
-    // Sort by id ascending to keep grid ordering stable
-    query = query.range(from, to).order('id', { ascending: true });
-
-    const { data: dbProducts, count, error } = await query;
-    if (error) throw error;
-
-    const totalProducts = count || 0;
-    const totalPages = Math.ceil(totalProducts / limit);
-
-    // Map DB fields back to frontend fields (e.g. camelCase mapping if needed, though they match)
-    const formattedProducts = dbProducts.map(p => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      price: parseFloat(p.price),
-      image: p.image,
-      rating: parseFloat(p.rating),
-      reviewsCount: p.reviews_count,
-      shortDescription: p.short_description,
-      longDescription: p.long_description,
-      isBestSeller: p.is_bestseller,
-      benefits: p.benefits,
-      usageDirections: p.usage_directions,
-      ingredients: p.ingredients
-    }));
-
-    res.json({
-      products: formattedProducts,
-      page,
-      limit,
-      totalProducts,
-      totalPages
-    });
+    // Fallback: local JSON file
+    return serveFromLocal(res, params);
 
   } catch (error) {
-    console.error('Error fetching products with pagination:', error);
+    console.error('[Products] Unexpected error:', error);
     res.status(500).json({ message: 'Error retrieving products data' });
   }
 };
@@ -112,45 +131,42 @@ exports.getProductById = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    if (!isConfigured) {
-      // Fallback to JSON file
-      const product = getLocalProducts().find(p => p.id === id);
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
+    // Try PostgreSQL pool
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM products WHERE id = $1 LIMIT 1', [id]);
+        if (result.rowCount > 0) {
+          const p = result.rows[0];
+          return res.json({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: parseFloat(p.price),
+            image: p.image,
+            rating: parseFloat(p.rating),
+            reviewsCount: p.reviews_count,
+            shortDescription: p.short_description,
+            longDescription: p.long_description,
+            isBestSeller: p.is_bestseller,
+            benefits: p.benefits || [],
+            usageDirections: p.usage_directions,
+            ingredients: p.ingredients || []
+          });
+        }
+      } catch (dbErr) {
+        console.error('[Product Detail DB Error]', dbErr.message);
       }
-      return res.json(product);
     }
 
-    const { data: p, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!p) {
+    // Fallback: local JSON
+    const product = getLocalProducts().find(p => p.id === id);
+    if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
+    return res.json(product);
 
-    const formattedProduct = {
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      price: parseFloat(p.price),
-      image: p.image,
-      rating: parseFloat(p.rating),
-      reviewsCount: p.reviews_count,
-      shortDescription: p.short_description,
-      longDescription: p.long_description,
-      isBestSeller: p.is_bestseller,
-      benefits: p.benefits,
-      usageDirections: p.usage_directions,
-      ingredients: p.ingredients
-    };
-
-    res.json(formattedProduct);
   } catch (error) {
-    console.error('Error fetching product details:', error);
+    console.error('[Product Detail] Error:', error);
     res.status(500).json({ message: 'Error retrieving product detail' });
   }
 };

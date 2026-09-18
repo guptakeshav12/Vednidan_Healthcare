@@ -1,0 +1,142 @@
+[
+  {
+    "id": "CONS-1789548686902",
+    "timestamp": "2026-09-16T08:51:26.902Z",
+    "name": "peeyush gupta",
+    "weight": "52kg 161cm",
+    "height": "",
+    "problem": "त्वचा और मुंहासे",
+    "duration": "1 महीने से",
+    "category": "general",
+    "dominantDosha": "pitta",
+    "scores": {
+      "vata": 3,
+      "pitta": 4,
+      "kapha": 0
+    },
+    "language": "hi",
+    "diagnosis": "**पित्त दोष असंतुलन**: आपके शरीर में पित्त (अग्नि) की अधिकता है जिससे सीने में जलन, एसिडिटी, त्वचा पर चकत्ते और चिड़चिड़ापन होता है।",
+    "medicines": [
+      "अविपत्तिकर चूर्ण (सोते समय 1 चम्मच)",
+      "शतावरी चूर्ण (दिन में दो बार 1 चम्मच)",
+      "गिलोय सत्व (500mg)"
+    ],
+    "homeRemedies": [
+      "सुबह खाली पेट एलोवेरा का रस पिएं।",
+      "सौंफ और धनिए की चाय पिएं।",
+      "तीखा, खट्टा और तला हुआ भोजन न करें।"
+    ],
+    "therapies": [
+      "**विरेचन**: पित्त नाशक शोधन।",
+      "**तक्रधारा**: छाछ की शिरोधारा।",
+      "शीतली प्राणायाम करें।"
+    ]
+  },
+  {
+    "id": "CONS-1787636055642",
+    "timestamp": "2026-08-25T05:34:15.644Z",
+    "name": "priyanshi",
+    "weight": "53    160",
+    "height": "",
+    "problem": "pcod",
+    "duration": "More than 6 months",
+    "category": "womenshealth",
+    "dominantDosha": "vata",
+    "scores": {
+      "vata": 3,
+      "pitta": 2,
+      "kapha": 2
+    },
+    "language": "en",
+    "diagnosis": "**Vata-type Imbalance**: Based on your responses, your primary Dosha imbalance is VATA. Your symptoms (general complaint) are caused by accumulation of vata in the body channels (Srotas), disrupting the normal flow of Prana and tissue nutrition.",
+    "medicines": [
+      "Ashwagandha Churna (1 tsp warm milk nightly)",
+      "Dashamoola Kadha (25ml twice daily)",
+      "Yogaraj Guggulu (2 tabs twice daily)",
+      "Chyawanprash (1 tsp morning)",
+      "Brahmi Ghrita (1 tsp warm milk)"
+    ],
+    "homeRemedies": [
+      "Warm sesame oil daily body massage",
+      "Warm milk with Ashwagandha and nutmeg at bedtime",
+      "Ginger-lemon water before meals",
+      "Regular meal times — no skipping meals"
+    ],
+    "therapies": [
+      "Shirodhara — warm oil on forehead",
+      "Abhyanga full-body oil massage",
+      "Basti (medicated oil enema)",
+      "Nadi Shodhana Pranayama 20 min daily"
+    ]
+  },
+  {
+    "id": "CONS-1787635624257",
+    "timestamp": "2026-08-25T05:27:04.259Z",
+    "name": "keshav",
+    "weight": "49 165",
+    "height": "",
+    "problem": "Hair Fall",
+    "duration": "More than 6 months",
+    "category": "hair",
+    "dominantDosha": "vata",
+    "scores": {
+      "vata": 3,
+      "pitta": 2,
+      "kapha": 2
+    },
+    "language": "en",
+    "diagnosis": "**Vata-type Hair Loss (Khalitya — Vata Predominant)**: Classical Charaka Samhita describes Khalitya (baldness) as being caused primarily by Vata imbalance drying out the Asthi Dhatu (bone tissue, of which hair is a by-product). Vata depletes Sneha (lubrication) from hair roots causing thinning, breakage, and fall.",
+    "medicines": [
+      "Bhringraj Taila (massage warm into scalp every night)",
+      "Ashwagandha Churna (1 tsp with warm milk at bedtime)",
+      "Brahmi Amla Hair Oil (massage 2x weekly)",
+      "Narasimha Rasayana (1 tsp with milk — nourishes Asthi Dhatu)",
+      "Shatavari Churna (1 tsp with milk — rebuilds deep nourishing tissues)"
+    ],
+    "homeRemedies": [
+      "**Overnight Sesame-Bhringraj Scalp Mask**: Warm 3 tsp sesame oil + 1 tsp Bhringraj powder. Massage into scalp for 10 min, leave overnight, wash morning. 3x weekly.",
+      "**Onion Juice Scalp Rub**: Apply fresh onion juice to scalp, leave 30 min, wash. High sulfur content nourishes hair roots (Kesha Mula).",
+      "**Triphala Rinse**: Boil 2 tsp Triphala in 2 cups water for 15 min. Cool, strain and use as final hair rinse weekly.",
+      "**Diet Protocol**: Eat sesame seeds (1 tsp daily), coconut, soaked almonds, and iron-rich foods. Drink warm milk with Ashwagandha nightly. Avoid skipping meals."
+    ],
+    "therapies": [
+      "**Shiroabhyanga (Head Massage)**: 20-min daily self-massage with warm Bhringraj or Brahmi oil — stimulates Marma points on the scalp, improves Vata circulation to hair roots.",
+      "**Shirodhara**: Warm medicated oil (Dhanwantharam Tailam) poured continuously on the forehead — profoundly calms Vata, nourishes the scalp channels (Kesha Srotas).",
+      "**Nasya (Anu Taila)**: 2 drops of Anu Taila in each nostril — carries nourishment directly to the scalp via nasal channels.",
+      "**Thalam / Tailapichhu**: Medicated oil kept on crown of head (held with cotton) for 45 minutes — deeply penetrates and lubricates hair follicles."
+    ]
+  },
+  {
+    "id": "CONS-1787635391147",
+    "timestamp": "2026-08-25T05:23:11.148Z",
+    "name": "Rahul Kumar",
+    "weight": "70kg 175cm",
+    "height": "",
+    "problem": "जोड़ों का दर्द और सूजन",
+    "duration": "1 महीना",
+    "category": "general",
+    "dominantDosha": "vata",
+    "scores": {
+      "vata": 7,
+      "pitta": 0,
+      "kapha": 0
+    },
+    "language": "hi",
+    "diagnosis": "**वात दोष असंतुलन**: आपके शरीर में वात (वायु) की अधिकता है जिससे दर्द, शुष्कता, कब्ज और घबराहट जैसे लक्षण उत्पन्न होते हैं।",
+    "medicines": [
+      "अश्वगंधा चूर्ण (सोते समय दूध के साथ 1 चम्मच)",
+      "दशमूल काढ़ा (दिन में दो बार 25ml)",
+      "योगराज गुग्गुल (भोजन के बाद दिन में दो बार 2 गोली)"
+    ],
+    "homeRemedies": [
+      "रोजाना तिल के तेल से शरीर की मालिश करें।",
+      "सोते समय अश्वगंधा के साथ गर्म दूध लें।",
+      "हमेशा गर्म, ताजा और घी युक्त भोजन करें।"
+    ],
+    "therapies": [
+      "**अभ्यंग**: गर्म तेल से मालिश।",
+      "**बस्ती**: औषधीय तेल का एनिमा।",
+      "अनुलोम-विलोम प्राणायाम का अभ्यास करें।"
+    ]
+  }
+]

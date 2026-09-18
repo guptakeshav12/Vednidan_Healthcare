@@ -7,6 +7,18 @@
 const fs = require('fs');
 const path = require('path');
 
+// Load AI doctor knowledge base (Ayurvedic disease data)
+const knowledgeBasePath = path.join(__dirname, '../data/ai_doctor_knowledge.json');
+let knowledgeBase = [];
+try {
+  const kbRaw = fs.readFileSync(knowledgeBasePath, 'utf-8');
+  knowledgeBase = JSON.parse(kbRaw);
+  console.log(`[AI Doctor] Loaded ${knowledgeBase.length} disease records from knowledge base.`);
+} catch (e) {
+  console.error('[AI Doctor] Failed to load AI doctor knowledge base:', e);
+  knowledgeBase = [];
+}
+
 const productsFilePath = path.join(__dirname, '../data/products.json');
 const getProducts = () => {
   const jsonData = fs.readFileSync(productsFilePath, 'utf-8');
@@ -1383,6 +1395,9 @@ exports.consultDoctor = (req, res) => {
     let recommendedProducts = [];
     let suggestedQuestions = [];
     let nextStep = state.step;
+    let tx = null;
+    let kbMatch = null;
+    let dominantDosha = "";
 
     // Ensure state fields exist
     if (!state.scores) state.scores = { vata: 0, pitta: 0, kapha: 0 };
@@ -1533,7 +1548,7 @@ exports.consultDoctor = (req, res) => {
         nextStep = 12;
         const { vata, pitta, kapha } = state.scores;
 
-        let dominantDosha = vata >= pitta && vata >= kapha ? 'vata'
+        dominantDosha = vata >= pitta && vata >= kapha ? 'vata'
                           : pitta >= kapha ? 'pitta' : 'kapha';
 
         // Dual dosha labels
@@ -1560,13 +1575,58 @@ exports.consultDoctor = (req, res) => {
         }
 
         // Fetch treatments (localized if available, fallback to english)
-        let tx = null;
+        tx = null;
         if (lang !== 'en' && treatmentsLocalized[lang] && treatmentsLocalized[lang][state.category]) {
           tx = treatmentsLocalized[lang][state.category][dominantDosha];
         }
         if (!tx) {
           const catTreatments = treatments[state.category] || treatments['general'];
-          tx = catTreatments[dominantDosha] || buildFallbackTreatment(dominantDosha, state.problem);
+          tx = catTreatments[dominantDosha];
+        }
+        
+        // Search Knowledge Base for richer disease-specific treatment if user problem matches
+        kbMatch = null;
+        if (knowledgeBase.length > 0) {
+          const probLower = (state.problem || '').toLowerCase();
+          const catLower = (state.category || '').toLowerCase();
+          
+          kbMatch = knowledgeBase.find(item => {
+            const disease = (item.Disease || '').toLowerCase();
+            const hindiName = (item['Hindi Name'] || '').toLowerCase();
+            const marathiName = (item['Marathi Name'] || '').toLowerCase();
+            const symptoms = (item.Symptoms || '').toLowerCase();
+            return probLower.includes(disease) || disease.includes(probLower) ||
+                   probLower.includes(hindiName) || probLower.includes(marathiName) ||
+                   symptoms.split(',').some(s => probLower.includes(s.trim()));
+          });
+
+          if (kbMatch) {
+            console.log(`[AI Doctor] Matched Knowledge Base Disease: ${kbMatch.Disease}`);
+          }
+        }
+
+        if (!tx && kbMatch) {
+          tx = {
+            diagnosis: `**${kbMatch.Disease} (${kbMatch['Hindi Name'] || kbMatch['Marathi Name'] || ''})**: ${kbMatch.Symptoms}. Primary Dosha affect: ${kbMatch.Doshas || dominantDosha}. ${kbMatch['Diet and Lifestyle Recommendations'] || ''}`,
+            medicines: [
+              kbMatch['Ayurvedic Herbs'] ? `Ayurvedic Herbs: ${kbMatch['Ayurvedic Herbs']}` : '',
+              kbMatch.Formulation ? `Formulation: ${kbMatch.Formulation}` : '',
+              kbMatch['Medical Intervention'] ? `Medical Support: ${kbMatch['Medical Intervention']}` : ''
+            ].filter(Boolean),
+            homeRemedies: [
+              kbMatch['Herbal/Alternative Remedies'] ? `Herbal Remedy: ${kbMatch['Herbal/Alternative Remedies']}` : '',
+              kbMatch['Diet and Lifestyle Recommendations'] ? `Diet & Lifestyle: ${kbMatch['Diet and Lifestyle Recommendations']}` : '',
+              kbMatch.Prevention ? `Prevention: ${kbMatch.Prevention}` : ''
+            ].filter(Boolean),
+            therapies: [
+              kbMatch['Yoga & Physical Therapy'] ? `Yoga Therapy: ${kbMatch['Yoga & Physical Therapy']}` : '',
+              kbMatch['Diagnosis & Tests'] ? `Recommended Tests: ${kbMatch['Diagnosis & Tests']}` : ''
+            ].filter(Boolean)
+          };
+        }
+
+        if (!tx) {
+          tx = buildFallbackTreatment(dominantDosha, state.problem);
         }
 
         // Fetch matching products
@@ -1700,7 +1760,38 @@ exports.consultDoctor = (req, res) => {
 
     state.step = nextStep;
 
-    return res.json({ reply, chatState: state, recommendedProducts, suggestedQuestions });
+    // Log consultation report to consultation_logs.json when completed (step 12)
+    if (nextStep === 12 && tx) {
+      try {
+        const logFile = path.join(__dirname, '../data/consultation_logs.json');
+        let logs = [];
+        if (fs.existsSync(logFile)) {
+          logs = JSON.parse(fs.readFileSync(logFile, 'utf-8'));
+        }
+        logs.unshift({
+          id: 'CONS-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          name: state.name,
+          weight: state.weight,
+          height: state.height,
+          problem: state.problem,
+          duration: state.duration,
+          category: state.category,
+          dominantDosha,
+          scores: state.scores,
+          language: state.language,
+          diagnosis: tx.diagnosis,
+          medicines: tx.medicines,
+          homeRemedies: tx.homeRemedies,
+          therapies: tx.therapies
+        });
+        fs.writeFileSync(logFile, JSON.stringify(logs, null, 2), 'utf-8');
+      } catch (logErr) {
+        console.error('[AI Doctor] Error saving consultation log:', logErr);
+      }
+    }
+
+    return res.json({ reply, chatState: state, recommendedProducts, suggestedQuestions, treatment: tx, kbMatch });
 
   } catch (error) {
     console.error('[Charak AI Error]', error);

@@ -1,4 +1,4 @@
-﻿// Admin Panel Dashboard Engine
+// Admin Panel Dashboard Engine
 
 // Auto-detect backend URL: use /api if served from Express (port 5000), else full URL
 const ADMIN_API = (function() {
@@ -117,13 +117,25 @@ const AdminApp = {
           </button>
         `;
         break;
+      case 'partner-accounts':
+        titleEl.textContent = 'Partner Workspace Accounts';
+        descEl.textContent = 'Review login credentials, phone, specialties, rating, and manage partner logins.';
+        break;
+      case 'ai-consultations':
+        titleEl.textContent = 'AI Doctor Consultation Logs';
+        descEl.textContent = 'Review all AI Doctor consultations — patient details, dosha analysis, and prescribed Ayurvedic treatments.';
+        break;
+      case 'settings':
+        titleEl.textContent = 'System Settings & Credentials';
+        descEl.textContent = 'View default login credentials, system status, and VedNidan Healthcare platform configuration.';
+        break;
     }
   },
 
   loadActiveTab() {
     // Read hash if available, else load dashboard
     const hash = window.location.hash.replace('#', '');
-    if (['dashboard', 'products', 'orders', 'bookings', 'therapist-bookings', 'analytics', 'users', 'doctors', 'therapists'].includes(hash)) {
+    if (['dashboard', 'products', 'orders', 'bookings', 'therapist-bookings', 'analytics', 'users', 'doctors', 'therapists', 'partner-accounts', 'ai-consultations', 'settings'].includes(hash)) {
       this.switchTab(hash);
     } else {
       this.switchTab('dashboard');
@@ -159,6 +171,15 @@ const AdminApp = {
         break;
       case 'therapists':
         await this.fetchTherapists();
+        break;
+      case 'partner-accounts':
+        await this.fetchPartnerAccounts();
+        break;
+      case 'ai-consultations':
+        await this.fetchConsultationLogs();
+        break;
+      case 'settings':
+        await this.fetchSettings();
         break;
     }
   },
@@ -297,27 +318,49 @@ const AdminApp = {
 
       const container = document.getElementById('bookings-table-body');
       if (this.bookings.length === 0) {
-        container.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--admin-text-muted);">No doctor appointments scheduled.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--admin-text-muted);">No doctor appointments scheduled.</td></tr>`;
         return;
       }
 
-      container.innerHTML = this.bookings.map(b => `
-        <tr>
-          <td>${b.id}</td>
-          <td><strong>${b.patientName}</strong></td>
-          <td>${b.patientEmail}</td>
-          <td>${b.doctorName}</td>
-          <td>${b.date}</td>
-          <td><span style="color:var(--admin-accent-gold);font-weight:700;">${b.timeSlot}</span></td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${b.symptom}">${b.symptom}</td>
-          <td>${new Date(b.bookedAt).toLocaleDateString()}</td>
-          <td>
-            <button class="btn-icon btn-delete" title="Cancel Appointment" onclick="cancelDoctorBooking(${b.id})">
-              <i class="ri-close-circle-line"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
+      container.innerHTML = this.bookings.map(b => {
+        // Status badge colour
+        const statusColors = {
+          'Scheduled': '#3b82f6',
+          'In Progress': '#f59e0b',
+          'Completed': '#10b981',
+          'Cancelled': '#ef4444'
+        };
+        const statusColor = statusColors[b.status] || '#6b7280';
+        const statusBadge = `<span style="background:${statusColor}22;color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${b.status || 'Scheduled'}</span>`;
+
+        // Video Room Link
+        let videoCell = '<span style="color:var(--admin-text-muted);font-size:12px;">—</span>';
+        if (b.videoRoomId) {
+          videoCell = `<a href="https://meet.jit.si/${b.videoRoomId}" target="_blank" style="color:#3b82f6;font-size:11px;text-decoration:none;" title="Join Jitsi Room"><i class="ri-video-chat-line"></i> Join Call</a>`;
+        }
+
+        // Prescription pill
+        const rxCell = b.prescription
+          ? `<span title="${b.prescription}" style="display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--admin-success);font-size:12px;"><i class="ri-file-list-3-line"></i> ${b.prescription}</span>`
+          : '<span style="color:var(--admin-text-muted);font-size:12px;">Pending</span>';
+
+        return `
+          <tr>
+            <td><strong>#${b.id}</strong></td>
+            <td><strong>${b.patientName}</strong><br><span style="font-size:11px;color:var(--admin-text-muted);">${b.patientEmail || ''}</span></td>
+            <td>${b.doctorName}</td>
+            <td>${b.date} &nbsp;<span style="color:var(--admin-accent-gold);font-weight:700;">${b.timeSlot}</span></td>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${b.symptom}">${b.symptom}</td>
+            <td>${statusBadge}</td>
+            <td>${rxCell}</td>
+            <td>
+              <button class="btn-icon btn-delete" title="Cancel Appointment" onclick="cancelDoctorBooking(${b.id})">
+                <i class="ri-close-circle-line"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     } catch (e) {
       console.error('Error fetching bookings:', e);
     }
@@ -331,27 +374,63 @@ const AdminApp = {
 
       const container = document.getElementById('therapist-bookings-table-body');
       if (this.therapistBookings.length === 0) {
-        container.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--admin-text-muted);">No therapist appointments scheduled.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--admin-text-muted);">No therapist appointments scheduled.</td></tr>`;
         return;
       }
 
-      container.innerHTML = this.therapistBookings.map(b => `
-        <tr>
-          <td>${b.id}</td>
-          <td><strong>${b.patientName}</strong></td>
-          <td>${b.patientEmail}</td>
-          <td>${b.therapistName}</td>
-          <td><span style="background:rgba(207,168,92,0.1);color:var(--admin-accent-gold);padding:3px 8px;border-radius:4px;font-size:12px;font-weight:700;">${b.therapyType}</span></td>
-          <td>${b.date}</td>
-          <td><span style="color:var(--admin-accent-gold);font-weight:700;">${b.timeSlot}</span></td>
-          <td>${new Date(b.bookedAt).toLocaleDateString()}</td>
-          <td>
-            <button class="btn-icon btn-delete" title="Cancel Therapy Session" onclick="cancelTherapistBooking(${b.id})">
-              <i class="ri-close-circle-line"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
+      container.innerHTML = this.therapistBookings.map(b => {
+        // Dispatch status badge
+        const dispatchColors = {
+          'Pending':     { bg: '#6b728022', txt: '#9ca3af' },
+          'En Route':    { bg: '#f59e0b22', txt: '#f59e0b' },
+          'Arrived':     { bg: '#3b82f622', txt: '#3b82f6' },
+          'In Progress': { bg: '#8b5cf622', txt: '#8b5cf6' },
+          'Completed':   { bg: '#10b98122', txt: '#10b981' },
+          'Cancelled':   { bg: '#ef444422', txt: '#ef4444' }
+        };
+        const dc = dispatchColors[b.status] || dispatchColors['Pending'];
+        const statusBadge = `<span style="background:${dc.bg};color:${dc.txt};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${b.status || 'Pending'}</span>`;
+
+        // OTP — revealed only when session active or completed
+        const showOtp = ['Arrived', 'In Progress', 'Completed'].includes(b.status);
+        const otpCell = showOtp
+          ? `<span style="font-family:monospace;font-size:14px;font-weight:800;color:var(--admin-accent-gold);letter-spacing:3px;">${b.otpCode}</span>`
+          : `<span style="color:var(--admin-text-muted);font-size:12px;">Hidden</span>`;
+
+        // Feedback & rating stars
+        let feedbackCell = '<span style="color:var(--admin-text-muted);font-size:12px;">—</span>';
+        if (b.status === 'Completed') {
+          const stars = '★'.repeat(b.rating || 5) + '☆'.repeat(5 - (b.rating || 5));
+          feedbackCell = `
+            <div style="font-size:12px;">
+              <span style="color:var(--admin-accent-gold);">${stars}</span>
+              ${b.feedback ? `<br><span title="${b.feedback}" style="color:#e5e7eb;font-size:11px;display:block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.feedback}</span>` : ''}
+            </div>
+          `;
+        }
+
+        return `
+          <tr>
+            <td><strong>#${b.id}</strong></td>
+            <td><strong>${b.patientName}</strong><br><span style="font-size:11px;color:var(--admin-text-muted);">${b.patientEmail || ''}</span></td>
+            <td>${b.therapistName}</td>
+            <td><span style="background:rgba(207,168,92,0.1);color:var(--admin-accent-gold);padding:3px 8px;border-radius:4px;font-size:12px;font-weight:700;">${b.therapyType}</span></td>
+            <td>${b.date} &nbsp;<span style="color:var(--admin-accent-gold);font-weight:700;">${b.timeSlot}</span></td>
+            <td style="max-width:140px;font-size:12px;" title="${b.address}">
+              <i class="ri-map-pin-line" style="color:var(--admin-accent-gold);"></i>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:110px;vertical-align:middle;">${b.address || 'In-Clinic'}</span>
+            </td>
+            <td>${statusBadge}</td>
+            <td>${otpCell}</td>
+            <td>${feedbackCell}</td>
+            <td>
+              <button class="btn-icon btn-delete" title="Cancel Therapy Session" onclick="cancelTherapistBooking(${b.id})">
+                <i class="ri-close-circle-line"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     } catch (e) {
       console.error('Error fetching therapist bookings:', e);
     }
@@ -432,7 +511,7 @@ const AdminApp = {
 
       const container = document.getElementById('doctors-table-body');
       if (docs.length === 0) {
-        container.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--admin-text-muted);">No doctors in catalog.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--admin-text-muted);">No doctors in catalog.</td></tr>`;
         return;
       }
 
@@ -440,12 +519,15 @@ const AdminApp = {
         <tr>
           <td>#${d.id}</td>
           <td><strong>${d.name}</strong></td>
+          <td><span style="font-size:12px; color:#22c55e; font-weight:600;">${d.qualification || 'BAMS'}</span></td>
           <td>${d.specialty}</td>
+          <td style="font-size:12px;">${d.email || '—'}</td>
+          <td style="font-size:12px;">${d.phone || '—'}</td>
           <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${d.rating}</td>
           <td>${d.experience}</td>
           <td>
             <div class="action-buttons">
-              <button class="btn-icon btn-edit" title="Edit Doctor" onclick="openEditDoctorModal(${d.id}, '${d.name}', '${d.specialty}', ${d.rating}, '${d.experience}')">
+              <button class="btn-icon btn-edit" title="Edit Doctor" onclick='openEditDoctorModal(${JSON.stringify(d).replace(/'/g, "&apos;")})'>
                 <i class="ri-pencil-line"></i>
               </button>
               <button class="btn-icon btn-delete" title="Delete Doctor" onclick="deleteDoctorCatalog(${d.id})">
@@ -468,7 +550,7 @@ const AdminApp = {
 
       const container = document.getElementById('therapists-table-body');
       if (ths.length === 0) {
-        container.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--admin-text-muted);">No therapists in catalog.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--admin-text-muted);">No therapists in catalog.</td></tr>`;
         return;
       }
 
@@ -476,13 +558,16 @@ const AdminApp = {
         <tr>
           <td>#${t.id}</td>
           <td><strong>${t.name}</strong></td>
+          <td><span style="font-size:12px; color:#a855f7; font-weight:600;">${t.qualification || 'Certified Panchakarma Vaidya'}</span></td>
           <td>${t.specialty}</td>
+          <td style="font-size:12px;">${t.email || '—'}</td>
+          <td style="font-size:12px;">${t.phone || '—'}</td>
           <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${t.rating}</td>
           <td>${t.experience}</td>
           <td>${(t.therapies || []).map(th => `<span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${th}</span>`).join('')}</td>
           <td>
             <div class="action-buttons">
-              <button class="btn-icon btn-edit" title="Edit Therapist" onclick="openEditTherapistModal(${t.id}, '${t.name}', '${t.specialty}', ${t.rating}, '${t.experience}', '${(t.therapies || []).join(', ')}')">
+              <button class="btn-icon btn-edit" title="Edit Therapist" onclick='openEditTherapistModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
                 <i class="ri-pencil-line"></i>
               </button>
               <button class="btn-icon btn-delete" title="Delete Therapist" onclick="deleteTherapistCatalog(${t.id})">
@@ -495,6 +580,72 @@ const AdminApp = {
     } catch (e) {
       console.error(e);
     }
+  },
+
+  async fetchPartnerAccounts() {
+    try {
+      const res = await fetch(ADMIN_API + '/admin/provider-accounts');
+      if (!res.ok) throw new Error();
+      const accounts = await res.json();
+
+      const container = document.getElementById('partner-accounts-table-body');
+      if (accounts.length === 0) {
+        container.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--admin-text-muted);">No partner accounts registered.</td></tr>`;
+        return;
+      }
+
+      container.innerHTML = accounts.map(a => `
+        <tr>
+          <td>#${a.id}</td>
+          <td><strong>${a.name}</strong></td>
+          <td>${a.email}</td>
+          <td>${a.phone || '—'}</td>
+          <td><span class="badge ${a.role === 'doctor' ? 'badge-pending' : 'badge-shipped'}" style="text-transform: capitalize; font-weight:700;">${a.role}</span></td>
+          <td><span style="font-size:12px; color:${a.role === 'doctor' ? '#22c55e' : '#a855f7'}; font-weight:600;">${a.qualification || '—'}</span></td>
+          <td>${a.specialty}</td>
+          <td>${a.experience}</td>
+          <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${a.rating}</td>
+          <td>
+            <div class="action-buttons" style="gap: 8px;">
+              <button class="btn-admin-secondary" style="padding:4px 8px; font-size:11px; white-space:nowrap; display:flex; align-items:center; gap:4px;" title="Reset Password to default 123456" onclick="resetPartnerPassword(${a.id})">
+                <i class="ri-key-line"></i> Reset Password
+              </button>
+              <button class="btn-icon btn-delete" title="Delete Account" onclick="deletePartnerAccount(${a.id})">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      console.error('Error fetching partner accounts:', e);
+    }
+  }
+};
+
+window.resetPartnerPassword = async (id) => {
+  if (!confirm('Are you sure you want to reset this partner account password to default "123456"?')) return;
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/provider-accounts/${id}/reset-password`, { method: 'PUT' });
+    if (!res.ok) throw new Error();
+    alert('Password reset successfully to default "123456".');
+    AdminApp.fetchPartnerAccounts();
+  } catch (err) {
+    console.error(err);
+    alert('Error resetting password.');
+  }
+};
+
+window.deletePartnerAccount = async (id) => {
+  if (!confirm('Are you sure you want to permanently delete this partner account? This action cannot be undone.')) return;
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/provider-accounts/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    alert('Partner account deleted.');
+    AdminApp.fetchPartnerAccounts();
+  } catch (err) {
+    console.error(err);
+    alert('Error deleting partner account.');
   }
 };
 
@@ -508,6 +659,7 @@ window.openAddProductModal = () => {
   document.getElementById('product-modal-title').textContent = 'Add New Product';
   document.getElementById('product-form-id').value = '';
   document.getElementById('product-form').reset();
+  if (typeof resetProductImageUpload === 'function') resetProductImageUpload('');
   document.getElementById('product-modal-backdrop').classList.add('active');
 };
 
@@ -524,13 +676,20 @@ window.openEditProductModal = (id) => {
   document.getElementById('product-name').value = p.name;
   document.getElementById('product-category').value = p.category;
   document.getElementById('product-price').value = p.price;
-  document.getElementById('product-image').value = p.image;
+  document.getElementById('product-image').value = p.image || '';
   document.getElementById('product-short-desc').value = p.shortDescription || '';
   document.getElementById('product-long-desc').value = p.longDescription || '';
   document.getElementById('product-bestseller').checked = !!p.isBestSeller;
   document.getElementById('product-benefits').value = (p.benefits || []).join('\n');
   document.getElementById('product-usage').value = p.usageDirections || '';
   document.getElementById('product-ingredients').value = (p.ingredients || []).join(', ');
+
+  // Show existing product image in the upload widget
+  if (typeof resetProductImageUpload === 'function') resetProductImageUpload(p.image || '');
+
+  // Also populate the URL fallback field if it's an external URL
+  const urlFb = document.getElementById('product-image-url-fallback');
+  if (urlFb) urlFb.value = (p.image || '').startsWith('http') ? (p.image || '') : '';
 
   document.getElementById('product-modal-backdrop').classList.add('active');
 };
@@ -636,8 +795,11 @@ window.cancelTherapistBooking = async (id) => {
 
 window.openAddDoctorModal = () => {
   document.getElementById('doctor-modal-title').textContent = 'Add New Doctor';
-  document.getElementById('doctor-id').disabled = false;
+  const idField = document.getElementById('doctor-id');
+  idField.disabled = false;
+  idField.value = Math.floor(100 + Math.random() * 900); // Friendly auto-ID
   document.getElementById('doctor-form').reset();
+  document.getElementById('doctor-id').value = idField.value;
   document.getElementById('doctor-modal-backdrop').classList.add('active');
 };
 
@@ -645,16 +807,20 @@ window.closeDoctorModal = () => {
   document.getElementById('doctor-modal-backdrop').classList.remove('active');
 };
 
-window.openEditDoctorModal = (id, name, specialty, rating, experience) => {
+window.openEditDoctorModal = (d) => {
   document.getElementById('doctor-modal-title').textContent = 'Edit Doctor Details';
   const idField = document.getElementById('doctor-id');
-  idField.value = id;
+  idField.value = d.id;
   idField.disabled = true; // Cannot edit primary key ID
 
-  document.getElementById('doctor-name-input').value = name;
-  document.getElementById('doctor-specialty').value = specialty;
-  document.getElementById('doctor-rating').value = rating;
-  document.getElementById('doctor-experience').value = experience;
+  document.getElementById('doctor-name-input').value = d.name || '';
+  document.getElementById('doctor-qualification-input').value = d.qualification || '';
+  document.getElementById('doctor-email-input').value = d.email || '';
+  document.getElementById('doctor-phone-input').value = d.phone || '';
+  document.getElementById('doctor-password-input').value = ''; // Blank unless changing
+  document.getElementById('doctor-specialty').value = d.specialty || '';
+  document.getElementById('doctor-rating').value = d.rating || 4.8;
+  document.getElementById('doctor-experience').value = d.experience || '';
 
   document.getElementById('doctor-modal-backdrop').classList.add('active');
 };
@@ -662,12 +828,16 @@ window.openEditDoctorModal = (id, name, specialty, rating, experience) => {
 window.handleDoctorFormSubmit = async (e) => {
   e.preventDefault();
   const id = parseInt(document.getElementById('doctor-id').value);
-  const name = document.getElementById('doctor-name-input').value;
-  const specialty = document.getElementById('doctor-specialty').value;
-  const rating = parseFloat(document.getElementById('doctor-rating').value) || 4.5;
-  const experience = document.getElementById('doctor-experience').value;
+  const name = document.getElementById('doctor-name-input').value.trim();
+  const qualification = document.getElementById('doctor-qualification-input').value.trim();
+  const email = document.getElementById('doctor-email-input').value.trim();
+  const phone = document.getElementById('doctor-phone-input').value.trim();
+  const password = document.getElementById('doctor-password-input').value.trim();
+  const specialty = document.getElementById('doctor-specialty').value.trim();
+  const rating = parseFloat(document.getElementById('doctor-rating').value) || 4.8;
+  const experience = document.getElementById('doctor-experience').value.trim() || '10 years';
 
-  const docData = { id, name, specialty, rating, experience };
+  const docData = { id, name, qualification, email, phone, password, specialty, rating, experience };
   const isEdit = document.getElementById('doctor-id').disabled;
 
   const url = isEdit ? `/api/admin/doctors/${id}` : `/api/admin/doctors`;
@@ -680,9 +850,10 @@ window.handleDoctorFormSubmit = async (e) => {
       body: JSON.stringify(docData)
     });
     if (!res.ok) throw new Error();
-    alert(isEdit ? 'Doctor details updated successfully!' : 'New doctor added to directories!');
+    alert(isEdit ? 'Doctor details updated successfully!' : 'New doctor added to directories and provider accounts!');
     closeDoctorModal();
     AdminApp.fetchDoctors();
+    AdminApp.fetchPartnerAccounts();
   } catch (err) {
     console.error(err);
     alert('Error saving doctor data.');
@@ -696,6 +867,7 @@ window.deleteDoctorCatalog = async (id) => {
     if (!res.ok) throw new Error();
     alert('Doctor profile removed successfully.');
     AdminApp.fetchDoctors();
+    AdminApp.fetchPartnerAccounts();
   } catch (err) {
     console.error(err);
     alert('Error removing doctor profile.');
@@ -706,8 +878,11 @@ window.deleteDoctorCatalog = async (id) => {
 
 window.openAddTherapistModal = () => {
   document.getElementById('therapist-modal-title').textContent = 'Add New Therapist';
-  document.getElementById('therapist-id').disabled = false;
+  const idField = document.getElementById('therapist-id');
+  idField.disabled = false;
+  idField.value = Math.floor(200 + Math.random() * 800); // Friendly auto-ID
   document.getElementById('therapist-form').reset();
+  document.getElementById('therapist-id').value = idField.value;
   document.getElementById('therapist-modal-backdrop').classList.add('active');
 };
 
@@ -715,17 +890,22 @@ window.closeTherapistModal = () => {
   document.getElementById('therapist-modal-backdrop').classList.remove('active');
 };
 
-window.openEditTherapistModal = (id, name, specialty, rating, experience, therapiesStr) => {
+window.openEditTherapistModal = (t) => {
   document.getElementById('therapist-modal-title').textContent = 'Edit Therapist Details';
   const idField = document.getElementById('therapist-id');
-  idField.value = id;
+  idField.value = t.id;
   idField.disabled = true;
 
-  document.getElementById('therapist-name-input').value = name;
-  document.getElementById('therapist-specialty').value = specialty;
-  document.getElementById('therapist-rating').value = rating;
-  document.getElementById('therapist-experience').value = experience;
-  document.getElementById('therapist-therapies').value = therapiesStr;
+  document.getElementById('therapist-name-input').value = t.name || '';
+  document.getElementById('therapist-qualification-input').value = t.qualification || '';
+  document.getElementById('therapist-email-input').value = t.email || '';
+  document.getElementById('therapist-phone-input').value = t.phone || '';
+  document.getElementById('therapist-password-input').value = '';
+  document.getElementById('therapist-specialty').value = t.specialty || '';
+  document.getElementById('therapist-rating').value = t.rating || 4.9;
+  document.getElementById('therapist-experience').value = t.experience || '';
+  const therapiesArr = Array.isArray(t.therapies) ? t.therapies : (t.therapies ? t.therapies.split(',') : []);
+  document.getElementById('therapist-therapies').value = therapiesArr.join(', ');
 
   document.getElementById('therapist-modal-backdrop').classList.add('active');
 };
@@ -733,13 +913,17 @@ window.openEditTherapistModal = (id, name, specialty, rating, experience, therap
 window.handleTherapistFormSubmit = async (e) => {
   e.preventDefault();
   const id = parseInt(document.getElementById('therapist-id').value);
-  const name = document.getElementById('therapist-name-input').value;
-  const specialty = document.getElementById('therapist-specialty').value;
-  const rating = parseFloat(document.getElementById('therapist-rating').value) || 4.5;
-  const experience = document.getElementById('therapist-experience').value;
-  const therapies = document.getElementById('therapist-therapies').value.split(',').map(t => t.trim()).filter(t => t !== '');
+  const name = document.getElementById('therapist-name-input').value.trim();
+  const qualification = document.getElementById('therapist-qualification-input').value.trim();
+  const email = document.getElementById('therapist-email-input').value.trim();
+  const phone = document.getElementById('therapist-phone-input').value.trim();
+  const password = document.getElementById('therapist-password-input').value.trim();
+  const specialty = document.getElementById('therapist-specialty').value.trim();
+  const rating = parseFloat(document.getElementById('therapist-rating').value) || 4.9;
+  const experience = document.getElementById('therapist-experience').value.trim() || '15 years';
+  const therapies = document.getElementById('therapist-therapies').value.split(',').map(t => t.trim()).filter(Boolean);
 
-  const thData = { id, name, specialty, rating, experience, therapies };
+  const thData = { id, name, qualification, email, phone, password, specialty, rating, experience, therapies };
   const isEdit = document.getElementById('therapist-id').disabled;
 
   const url = isEdit ? `/api/admin/therapists/${id}` : `/api/admin/therapists`;
@@ -752,9 +936,10 @@ window.handleTherapistFormSubmit = async (e) => {
       body: JSON.stringify(thData)
     });
     if (!res.ok) throw new Error();
-    alert(isEdit ? 'Therapist details updated successfully!' : 'New therapist added to directories!');
+    alert(isEdit ? 'Therapist details updated successfully!' : 'New therapist added to directories and provider accounts!');
     closeTherapistModal();
     AdminApp.fetchTherapists();
+    AdminApp.fetchPartnerAccounts();
   } catch (err) {
     console.error(err);
     alert('Error saving therapist data.');
@@ -822,8 +1007,229 @@ window.closeUserOrdersModal = () => {
   document.getElementById('user-orders-modal-backdrop').classList.remove('active');
 };
 
+// ===== AI CONSULTATION LOGS =====
+AdminApp._allConsultations = [];
+
+AdminApp.fetchConsultationLogs = async function() {
+  const tbody = document.getElementById('consultations-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;"><i class="ri-loader-4-line ri-spin"></i> Loading...</td></tr>`;
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/consultation-logs`);
+    const logs = await res.json();
+    AdminApp._allConsultations = logs;
+    AdminApp.renderConsultations(logs);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#e74c3c;">Failed to load consultation logs.</td></tr>`;
+  }
+};
+
+AdminApp.renderConsultations = function(logs) {
+  const tbody = document.getElementById('consultations-tbody');
+  if (!tbody) return;
+  if (!logs || logs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--admin-text-muted);">No AI consultations recorded yet. Consultations appear here after patients use the AI Doctor.</td></tr>`;
+    return;
+  }
+  const doshaColors = { vata: '#8b5cf6', pitta: '#f59e0b', kapha: '#10b981' };
+  tbody.innerHTML = logs.map((log, i) => {
+    const dt = log.timestamp ? new Date(log.timestamp).toLocaleString('en-IN') : 'N/A';
+    const medicines = (log.medicines || []).slice(0, 2).join(', ');
+    const moreMeds = (log.medicines || []).length > 2 ? ` +${(log.medicines||[]).length - 2} more` : '';
+    const doshaColor = doshaColors[log.dominantDosha] || '#6b7280';
+    return `<tr>
+      <td style="font-size:11px;color:var(--admin-text-muted);">${log.id || ('LOG-'+(i+1))}</td>
+      <td><strong>${log.name || 'Anonymous'}</strong><br><small style="color:var(--admin-text-muted);">${log.weight ? log.weight+'kg' : ''} ${log.height ? '/ '+log.height : ''}</small></td>
+      <td>${log.problem || '—'}<br><small style="color:var(--admin-text-muted);">${log.duration || ''}</small></td>
+      <td><span class="badge" style="background:rgba(99,102,241,0.2);color:#818cf8;text-transform:capitalize;">${log.category || 'general'}</span></td>
+      <td><span class="badge" style="background:${doshaColor}22;color:${doshaColor};text-transform:capitalize;">${log.dominantDosha || '—'}</span><br><small style="color:var(--admin-text-muted);">${log.scores ? 'V:'+log.scores.vata+' P:'+log.scores.pitta+' K:'+log.scores.kapha : ''}</small></td>
+      <td style="max-width:200px;font-size:12px;">${medicines}${moreMeds ? '<em style="color:var(--admin-text-muted)">'+moreMeds+'</em>' : ''}</td>
+      <td><span style="text-transform:uppercase;font-size:11px;">${log.language === 'hi' ? '🇮🇳 Hindi' : log.language === 'mr' ? '🟠 Marathi' : '🌐 English'}</span></td>
+      <td style="font-size:11px;color:var(--admin-text-muted);">${dt}</td>
+    </tr>`;
+  }).join('');
+};
+
+AdminApp.filterConsultations = function(query) {
+  const q = (query || '').toLowerCase();
+  const filtered = AdminApp._allConsultations.filter(log =>
+    (log.name || '').toLowerCase().includes(q) ||
+    (log.problem || '').toLowerCase().includes(q) ||
+    (log.category || '').toLowerCase().includes(q)
+  );
+  AdminApp.renderConsultations(filtered);
+};
+
+// ===== SYSTEM SETTINGS =====
+AdminApp.fetchSettings = async function() {
+  const container = document.getElementById('settings-container');
+  if (!container) return;
+  container.innerHTML = `<div style="text-align:center;padding:60px;"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading settings...</p></div>`;
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/settings`);
+    const data = await res.json();
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;">
+
+        <!-- System Info Card -->
+        <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
+          <h3 style="color:var(--admin-accent-gold);margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="ri-server-line"></i> System Information</h3>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">System Name</td><td style="font-weight:700;">${data.systemName}</td></tr>
+            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Version</td><td><span class="badge" style="background:rgba(99,102,241,0.2);color:#818cf8;">${data.version}</span></td></tr>
+            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Environment</td><td><span class="badge" style="background:rgba(16,185,129,0.2);color:#10b981;">${data.environment}</span></td></tr>
+            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Database Status</td><td style="font-size:12px;color:#10b981;">${data.databaseStatus}</td></tr>
+            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Server Time</td><td style="font-size:12px;">${new Date(data.serverTime).toLocaleString('en-IN')}</td></tr>
+          </table>
+        </div>
+
+        <!-- Platform Stats Card -->
+        <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
+          <h3 style="color:var(--admin-accent-gold);margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="ri-bar-chart-box-line"></i> Platform Statistics</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
+              <div style="font-size:36px;font-weight:800;color:#6366f1;">${data.productsCount}</div>
+              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">Products in Store</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
+              <div style="font-size:36px;font-weight:800;color:#10b981;">${data.aiConsultationsCount}</div>
+              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">AI Consultations</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
+              <div style="font-size:36px;font-weight:800;color:#f59e0b;">${data.partnerAccountsCount}</div>
+              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">Partner Accounts</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Default Credentials Card -->
+        <div class="admin-card" style="border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:28px;grid-column:1/-1;">
+          <h3 style="color:#f87171;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><i class="ri-lock-password-line"></i> Default Login Credentials</h3>
+          <p style="font-size:12px;color:var(--admin-text-muted);margin-bottom:20px;">⚠️ Change these passwords in production. These are default credentials for initial setup.</p>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead><tr><th>Role</th><th>Portal URL</th><th>Default ID / Username</th><th>Default Password</th><th>Notes</th></tr></thead>
+              <tbody>
+                ${(data.defaultCredentials || []).map(cred => `
+                  <tr>
+                    <td><strong>${cred.role}</strong></td>
+                    <td><code style="font-size:11px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;">${cred.portal}</code></td>
+                    <td><code style="font-size:12px;color:#a78bfa;">${cred.defaultId}</code></td>
+                    <td><code style="font-size:12px;color:#fbbf24;background:rgba(251,191,36,0.1);padding:3px 8px;border-radius:4px;">${cred.defaultPassword}</code></td>
+                    <td style="font-size:11px;color:var(--admin-text-muted);">${cred.notes}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p style="color:#e74c3c;text-align:center;padding:40px;">Failed to load settings. Please try again.</p>`;
+  }
+};
+
+// ─── Product Image Upload Handler ───────────────────────────────────────────
+// Called once the DOM is ready (inside DOMContentLoaded below)
+function initProductImageUpload() {
+  const fileInput    = document.getElementById('product-img-file-input');
+  const dropzone     = document.getElementById('product-img-dropzone');
+  const previewWrap  = document.getElementById('product-img-preview-wrap');
+  const previewImg   = document.getElementById('product-img-preview');
+  const placeholder  = document.getElementById('product-img-placeholder');
+  const hiddenUrl    = document.getElementById('product-image');
+  const urlFallback  = document.getElementById('product-image-url-fallback');
+  const statusDiv    = document.getElementById('product-img-upload-status');
+
+  if (!fileInput || !dropzone) return;
+
+  // Drag-and-drop visual feedback
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.background = 'rgba(74,124,111,0.15)'; });
+  dropzone.addEventListener('dragleave', () => { dropzone.style.background = 'rgba(74,124,111,0.05)'; });
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.style.background = 'rgba(74,124,111,0.05)';
+    if (e.dataTransfer.files.length > 0) handleImageFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length > 0) handleImageFile(e.target.files[0]);
+  });
+
+  // URL fallback overrides uploaded image
+  urlFallback.addEventListener('input', () => {
+    const val = urlFallback.value.trim();
+    if (val) {
+      hiddenUrl.value = val;
+      showPreview(val);
+    }
+  });
+
+  async function handleImageFile(file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, WEBP).');
+      return;
+    }
+
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    showPreview(localUrl);
+
+    // Upload to server
+    if (statusDiv) { statusDiv.style.display = 'block'; statusDiv.textContent = 'Uploading...'; statusDiv.style.color = '#94a3b8'; }
+
+    try {
+      const formData = new FormData();
+      formData.append('productImage', file);
+
+      const res = await fetch(ADMIN_API + '/admin/upload-product-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.imageUrl) {
+        hiddenUrl.value = data.imageUrl;
+        showPreview(data.imageUrl);
+        if (statusDiv) { statusDiv.textContent = '✓ Image uploaded successfully!'; statusDiv.style.color = '#22c55e'; }
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Image upload error:', err);
+      // Keep the local preview but flag as not saved
+      if (statusDiv) { statusDiv.textContent = '⚠ Could not upload to server — image may not persist after server restart.'; statusDiv.style.color = '#f59e0b'; }
+    }
+  }
+
+  function showPreview(src) {
+    previewImg.src = src;
+    previewWrap.style.display = 'block';
+    placeholder.style.display = 'none';
+  }
+
+  // Expose to reset from outside (modal open/close)
+  window.resetProductImageUpload = (existingUrl) => {
+    fileInput.value = '';
+    urlFallback.value = '';
+    hiddenUrl.value = existingUrl || '';
+    if (statusDiv) { statusDiv.style.display = 'none'; statusDiv.textContent = ''; }
+    if (existingUrl) {
+      showPreview(existingUrl);
+    } else {
+      previewWrap.style.display = 'none';
+      placeholder.style.display = 'block';
+      previewImg.src = '';
+    }
+  };
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   AdminApp.init();
+  initProductImageUpload();
 });
+
 

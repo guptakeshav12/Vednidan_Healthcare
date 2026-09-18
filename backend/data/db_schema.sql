@@ -1,5 +1,4 @@
 -- VedNidan Healthcare Supabase PostgreSQL DB Schema
--- Copy and run these statements inside your Supabase SQL Editor panel.
 
 -- 1. Create Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -12,8 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- 2. Create Doctors Catalog Table
 CREATE TABLE IF NOT EXISTS doctors (
-  id INT PRIMARY KEY,
+  id BIGINT PRIMARY KEY,
   name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  qualification TEXT,
   specialty TEXT NOT NULL,
   rating NUMERIC(3, 2) DEFAULT 4.5,
   experience TEXT NOT NULL
@@ -21,8 +23,11 @@ CREATE TABLE IF NOT EXISTS doctors (
 
 -- 3. Create Therapists Catalog Table
 CREATE TABLE IF NOT EXISTS therapists (
-  id INT PRIMARY KEY,
+  id BIGINT PRIMARY KEY,
   name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  qualification TEXT,
   specialty TEXT NOT NULL,
   rating NUMERIC(3, 2) DEFAULT 4.5,
   experience TEXT NOT NULL,
@@ -51,12 +56,12 @@ CREATE TABLE IF NOT EXISTS orders (
   id BIGINT PRIMARY KEY,
   customer_name TEXT NOT NULL,
   customer_email TEXT NOT NULL,
-  items JSONB NOT NULL, -- Array of { id, name, price, quantity }
+  items JSONB NOT NULL,
   subtotal NUMERIC(10, 2) NOT NULL,
   discount NUMERIC(10, 2) DEFAULT 0.00,
   shipping NUMERIC(10, 2) DEFAULT 0.00,
   total NUMERIC(10, 2) NOT NULL,
-  status TEXT DEFAULT 'Pending', -- 'Pending', 'Shipped', 'Delivered', 'Cancelled'
+  status TEXT DEFAULT 'Pending',
   ordered_at TIMESTAMPTZ DEFAULT NOW(),
   shipping_address TEXT NOT NULL,
   shipping_city TEXT NOT NULL,
@@ -70,11 +75,14 @@ CREATE TABLE IF NOT EXISTS bookings (
   id BIGINT PRIMARY KEY,
   doctor_id INT REFERENCES doctors(id) ON DELETE SET NULL,
   doctor_name TEXT NOT NULL,
-  date TEXT NOT NULL, -- e.g. '2026-06-06'
-  time_slot TEXT NOT NULL, -- e.g. '11:00 AM'
+  date TEXT NOT NULL,
+  time_slot TEXT NOT NULL,
   patient_name TEXT NOT NULL,
   patient_email TEXT NOT NULL,
   symptom TEXT,
+  status TEXT DEFAULT 'Scheduled',
+  prescription TEXT DEFAULT '',
+  video_room_id TEXT DEFAULT '',
   booked_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -83,15 +91,56 @@ CREATE TABLE IF NOT EXISTS therapist_bookings (
   id BIGINT PRIMARY KEY,
   therapist_id INT REFERENCES therapists(id) ON DELETE SET NULL,
   therapist_name TEXT NOT NULL,
-  date TEXT NOT NULL, -- e.g. '2026-06-06'
-  time_slot TEXT NOT NULL, -- e.g. '03:00 PM'
+  date TEXT NOT NULL,
+  time_slot TEXT NOT NULL,
   patient_name TEXT NOT NULL,
   patient_email TEXT NOT NULL,
   therapy_type TEXT NOT NULL,
+  address TEXT NOT NULL DEFAULT '',
+  status TEXT DEFAULT 'Pending',
+  otp_code VARCHAR(4) DEFAULT '',
+  feedback TEXT DEFAULT '',
+  rating INT DEFAULT 5,
   booked_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert Initial Default Doctors (For seeding compatibility fallback)
+-- 8. Create Provider Accounts Table
+CREATE TABLE IF NOT EXISTS provider_accounts (
+  id BIGINT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL,
+  specialty TEXT,
+  qualification TEXT,
+  experience TEXT,
+  rating NUMERIC(3, 2) DEFAULT 4.5,
+  phone TEXT,
+  therapies TEXT[],
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. Create AI Consultation Logs Table
+CREATE TABLE IF NOT EXISTS consultation_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  name TEXT,
+  weight TEXT,
+  height TEXT,
+  problem TEXT,
+  duration TEXT,
+  category TEXT,
+  dominant_dosha TEXT,
+  scores JSONB,
+  language TEXT,
+  diagnosis TEXT,
+  medicines JSONB,
+  home_remedies JSONB,
+  therapies JSONB
+);
+
+-- Insert Initial Default Doctors
 INSERT INTO doctors (id, name, specialty, rating, experience) VALUES
 (101, 'Dr. Vasudev Shashtri', 'Nadi Pariksha & Pulse Diagnosis', 4.9, '22 years'),
 (102, 'Dr. Ananya Mishra', 'Ayurvedic Skincare & Hair Care Expert', 4.8, '14 years'),

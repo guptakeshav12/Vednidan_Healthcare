@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/booking.css">
   <link rel="stylesheet" href="css/therapist-booking.css">
+  <!-- jsPDF for Prescription PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -274,21 +276,25 @@
 
           <!-- Scanning Results Grid (Hidden by default) -->
           <div class="scan-results-box" id="scanner-results-state" style="display: none;">
-            <h3 class="scan-results-header"><i class="ri-check-double-line" style="color: var(--success);"></i> Extracted Ayurvedic Items</h3>
+            <h3 class="scan-results-header"><i class="ri-check-double-line" style="color: var(--success);"></i> Prescription Scan Results</h3>
             
-            <p style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Raw Extracted Text Snippets:</p>
+            <!-- Summary pill badges -->
+            <div id="ocr-summary-counts" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
+
+            <p style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Raw OCR Text:</p>
             <div class="ocr-raw-text-details" id="ocr-raw-text">
               <!-- Raw OCR results text -->
             </div>
 
             <div class="scan-results-list" id="ocr-matched-list">
-              <!-- Matched product rows render here -->
+              <!-- Matched & OOS product rows render here -->
             </div>
 
             <button class="btn-primary add-selected-btn" id="ocr-add-selected-btn">
-              Add Selected Items to Cart <i class="ri-shopping-cart-2-line"></i>
+              <i class="ri-shopping-cart-2-line"></i> Add Selected Available Medicines to Cart
             </button>
           </div>
+
         </div>
 
       </div>
@@ -413,6 +419,12 @@
               </select>
             </div>
 
+            <!-- Home Address -->
+            <div class="therapy-input-group">
+              <label class="auth-label">Home Address for Therapy Visit</label>
+              <textarea placeholder="Enter full address where the therapist will visit (e.g. Flat/House No, Street, Landmark, City, ZIP)..." class="therapy-input" id="therapy-patient-address" rows="2" style="font-family:inherit;resize:vertical;" required></textarea>
+            </div>
+
             <!-- Health Concern -->
             <div class="therapy-input-group">
               <label class="auth-label">Health Concern / Reason for Therapy</label>
@@ -519,16 +531,23 @@
     <section id="track-page" class="page-section fade-in">
       <div class="tracking-container-box">
         
+        <!-- Tracking Type Switcher -->
+        <div class="tracking-selector-tabs" style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+          <button class="track-tab-btn active" id="track-remedies-tab" style="padding: 10px 20px; border-radius: 20px; border: 1px solid var(--primary); background: var(--primary); color: white; font-weight: 700; cursor: pointer; outline: none; font-size: 12px;">Track Remedies</button>
+          <button class="track-tab-btn" id="track-sessions-tab" style="padding: 10px 20px; border-radius: 20px; border: 1px solid var(--text-muted); background: none; color: var(--text-secondary); font-weight: 700; cursor: pointer; outline: none; font-size: 12px;">Track Doctor/Therapy Session</button>
+        </div>
+
         <div class="tracking-search-card">
-          <h3 class="tracking-search-title"><i class="ri-map-pin-line"></i> Track Your Order</h3>
-          <p class="tracking-search-subtitle">Enter your Order ID to check live status and shipping timeline.</p>
+          <h3 class="tracking-search-title" id="track-search-title-label"><i class="ri-map-pin-line"></i> Track Your Order</h3>
+          <p class="tracking-search-subtitle" id="track-search-subtitle-label">Enter your Order ID to check live status and shipping timeline.</p>
           <div class="tracking-search-bar">
             <input type="text" placeholder="Enter Order ID (e.g. 1780000000001)..." id="tracking-input-id" class="tracking-search-input">
             <button class="btn-primary" id="tracking-search-btn">Track Order</button>
           </div>
         </div>
 
-        <div class="tracking-details-card" id="tracking-results-card" style="display: none;">
+        <!-- REMEDY TRACKING RESULTS CARD -->
+        <div class="tracking-details-card" id="tracking-results-card" style="display: none; margin-top: 20px;">
           <div class="tracking-header-info">
             <div>
               <span class="tracking-id-badge">Order ID: #<span id="track-order-id-label"></span></span>
@@ -573,6 +592,93 @@
               </ul>
               <hr style="border:none; border-top:1px solid rgba(255,255,255,0.05); margin: 12px 0;">
               <p><strong>Grand Total:</strong> ₹<span id="track-order-total-price">0</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SESSION TRACKING RESULTS CARD -->
+        <div class="tracking-details-card" id="tracking-session-results-card" style="display: none; margin-top: 20px;">
+          <div class="tracking-header-info" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--accent); padding-bottom: 16px; margin-bottom: 20px;">
+            <div>
+              <span class="tracking-id-badge" style="background-color: var(--primary); color: white; padding: 4px 8px; border-radius: var(--radius-sm); font-weight: 700; font-size: 12px; margin-right: 8px;">Booking ID: #<span id="track-session-id-label">-</span></span>
+              <span class="tracking-date-label" style="font-size: 12px; color: var(--text-secondary);">Date: <span id="track-session-date">-</span></span>
+            </div>
+            <div>
+              <span class="badge" id="track-session-status-badge" style="background-color: var(--secondary); color: var(--primary-dark); font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: var(--radius-full);">Pending</span>
+            </div>
+          </div>
+
+          <!-- Doctor Consultation call panel -->
+          <div id="track-doctor-consult-panel" style="display: none; text-align: center; padding: 20px 0;">
+            <div style="background-color: var(--background); border-radius: 8px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--accent);">
+              <h4 style="margin-bottom: 10px; font-size: 18px;"><i class="ri-nurse-line" style="color: var(--primary);"></i> <span id="track-doc-name-label">-</span></h4>
+              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">Your online diagnostic consultation is scheduled. Click below to join Jitsi voice & video room once the doctor initiates the session.</p>
+              
+              <!-- Join Video Call Room Frame Button -->
+              <div id="join-video-call-box">
+                <button class="btn-primary" id="btn-patient-join-call" style="display: flex; align-items: center; gap: 8px; margin: 0 auto;" disabled><i class="ri-video-on-line"></i> Join Live Video consultation</button>
+                <p id="patient-call-wait-message" style="font-size: 11px; color: var(--text-muted); margin-top: 10px;"><span class="pulse-dot" style="display:inline-block; width:6px; height:6px; background-color:var(--text-muted); border-radius:50%; margin-right:4px;"></span> Waiting for doctor to initiate room call...</p>
+              </div>
+            </div>
+
+            <!-- Prescription Outcome Card -->
+            <div id="patient-prescription-box" style="display: none; background-color: var(--accent); border-radius: 8px; padding: 20px; text-align: left; border: 1px solid rgba(10, 77, 60, 0.08);">
+              <h4 style="color: var(--primary-dark); margin-bottom: 12px; font-size: 16px;"><i class="ri-file-list-3-line"></i> Doctor's Prescription & Diagnostic Report</h4>
+              <div id="patient-prescription-content" style="font-size: 13px; color: var(--text-primary); line-height: 1.6; white-space: pre-line; background: var(--surface); padding: 16px; border-radius: 6px; border: 1px solid var(--accent);"></div>
+            </div>
+          </div>
+
+          <!-- Therapist Home visit dispatch timeline -->
+          <div id="track-therapist-visit-panel" style="display: none;">
+            <div class="tracking-progress-timeline" style="display: flex; justify-content: space-between; position: relative; margin: 40px 0 40px; padding: 0 10px;">
+              <div class="progress-bar-line" style="position: absolute; top: 15px; left: 20px; right: 20px; height: 4px; background-color: var(--accent); z-index: 1;">
+                <div class="progress-bar-inner-fill" id="track-session-progress-fill-line" style="width: 0%; height: 100%; background-color: var(--primary); transition: width 0.5s ease-in-out;"></div>
+              </div>
+              <div class="timeline-step active" id="step-session-pending" style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; width: 60px; text-align: center;">
+                <div class="timeline-dot" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 14px;"><i class="ri-clipboard-line"></i></div>
+                <span class="timeline-text" style="font-size: 11px; font-weight: 700; color: var(--text-primary);">Booked</span>
+              </div>
+              <div class="timeline-step" id="step-session-enroute" style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; width: 60px; text-align: center;">
+                <div class="timeline-dot" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px;"><i class="ri-bike-line"></i></div>
+                <span class="timeline-text" style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">En Route</span>
+              </div>
+              <div class="timeline-step" id="step-session-arrived" style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; width: 60px; text-align: center;">
+                <div class="timeline-dot" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px;"><i class="ri-map-pin-user-line"></i></div>
+                <span class="timeline-text" style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Arrived</span>
+              </div>
+              <div class="timeline-step" id="step-session-inprogress" style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; width: 60px; text-align: center;">
+                <div class="timeline-dot" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px;"><i class="ri-pulse-line"></i></div>
+                <span class="timeline-text" style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Treatment</span>
+              </div>
+              <div class="timeline-step" id="step-session-completed" style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2; width: 60px; text-align: center;">
+                <div class="timeline-dot" style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--surface); border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px;"><i class="ri-checkbox-circle-line"></i></div>
+                <span class="timeline-text" style="font-size: 11px; font-weight: 600; color: var(--text-secondary);">Finished</span>
+              </div>
+            </div>
+
+            <!-- OTP Card / Status updates -->
+            <div class="tracking-info-grid" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; margin-top: 30px; border-top: 1px solid var(--accent); padding-top: 24px;">
+              <div class="tracking-info-col" style="display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="font-size: 15px; color: var(--primary-dark);"><i class="ri-shield-keyhole-line"></i> Secure Visit OTP Code</h4>
+                <div id="track-session-otp-card" style="background-color: var(--background); border: 1px dashed var(--text-muted); border-radius: 8px; padding: 18px; text-align: center; border-color: var(--primary);">
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; text-transform: uppercase; margin-bottom: 4px;">Provide to Therapist on Arrival</span>
+                  <span id="track-session-otp-code" style="font-size: 28px; font-weight: 800; color: var(--primary-dark); letter-spacing: 4px; font-family: monospace;">-</span>
+                </div>
+                <p id="track-session-status-desc" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">Your home-visit request is pending therapist departure from the wellness clinic.</p>
+              </div>
+              <div class="tracking-info-col" style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                <h4 style="font-size: 15px; color: var(--primary-dark);"><i class="ri-hand-heart-line"></i> Therapist & Session Details</h4>
+                <p id="track-therapist-name-label"><strong>Therapist:</strong> -</p>
+                <p id="track-therapy-type-label"><strong>Therapy Type:</strong> -</p>
+                <p id="track-visit-address-label"><strong>Home Visit Address:</strong> -</p>
+                
+                <!-- Feedback Summary if Completed -->
+                <div id="track-session-feedback-box" style="display: none; margin-top: 10px; background-color: var(--accent); padding: 14px; border-radius: 8px; border: 1px solid rgba(10, 77, 60, 0.05);">
+                  <h5 style="font-size: 12px; color: var(--primary-dark); margin-bottom: 4px;"><i class="ri-chat-check-line"></i> Therapist Session Summary:</h5>
+                  <p id="track-session-feedback-notes" style="font-size: 12px; color: var(--text-secondary); font-style: italic; line-height: 1.4;"></p>
+                  <p id="track-session-rating-val" style="font-size: 12px; color: var(--secondary-dark); margin-top: 6px; font-weight: 700;"></p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -778,6 +884,76 @@
       </form>
       <div class="auth-switch-text">
         Already have an account? <span class="auth-switch-link" id="goto-login-btn">Log In</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medicine Availability & Add-to-Cart Popup Modal -->
+  <div class="med-avail-backdrop" id="med-avail-backdrop">
+    <div class="med-avail-modal">
+      <div class="med-avail-header">
+        <div>
+          <h3 class="med-avail-title"><i class="ri-capsule-line"></i> Prescribed Medicines — Store Availability</h3>
+          <p class="med-avail-subtitle">Below are medicines suggested by AI Doctor. Available ones can be added directly to your cart.</p>
+        </div>
+        <button class="med-avail-close" id="med-avail-close-btn" aria-label="Close"><i class="ri-close-line"></i></button>
+      </div>
+      <div class="med-avail-list" id="med-avail-list">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="med-avail-footer">
+        <button class="btn-primary med-avail-add-all" id="med-avail-add-all-btn">🛒 Add All Available to Cart</button>
+        <button class="btn-secondary med-avail-dismiss" id="med-avail-dismiss-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER ACTIVITY & BOOKINGS DASHBOARD MODAL -->
+  <div class="user-activity-backdrop" id="user-activity-modal">
+    <div class="user-activity-panel">
+      <div class="activity-modal-header">
+        <div>
+          <div class="activity-user-badge"><i class="ri-shield-user-line"></i> Patient Dashboard</div>
+          <h3 class="activity-modal-title" id="activity-modal-user-heading">My Activities & Bookings</h3>
+        </div>
+        <button type="button" class="activity-close-btn" id="activity-modal-close-btn" aria-label="Close"><i class="ri-close-line"></i></button>
+      </div>
+
+      <!-- Tabs Bar -->
+      <div class="activity-tabs-bar">
+        <button type="button" class="activity-tab-btn active" data-tab="orders" id="act-tab-orders">
+          <i class="ri-shopping-bag-3-line"></i> Medicine Orders <span class="activity-count-badge" id="act-orders-count">0</span>
+        </button>
+        <button type="button" class="activity-tab-btn" data-tab="doctor" id="act-tab-doctor">
+          <i class="ri-nurse-line"></i> Doctor Appointments <span class="activity-count-badge" id="act-doctor-count">0</span>
+        </button>
+        <button type="button" class="activity-tab-btn" data-tab="therapist" id="act-tab-therapist">
+          <i class="ri-hand-heart-line"></i> Therapist Sessions <span class="activity-count-badge" id="act-therapist-count">0</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Content Pane -->
+      <div class="activity-content-container">
+        <!-- Pane 1: Orders -->
+        <div class="activity-tab-pane" id="act-pane-orders">
+          <div class="activity-cards-list" id="act-orders-list">
+            <div class="activity-empty-state"><i class="ri-loader-4-line ri-spin" style="font-size:28px;"></i><p>Loading your orders...</p></div>
+          </div>
+        </div>
+
+        <!-- Pane 2: Doctor Bookings -->
+        <div class="activity-tab-pane" id="act-pane-doctor" style="display:none;">
+          <div class="activity-cards-list" id="act-doctor-list">
+            <div class="activity-empty-state"><i class="ri-loader-4-line ri-spin" style="font-size:28px;"></i><p>Loading consultations...</p></div>
+          </div>
+        </div>
+
+        <!-- Pane 3: Therapist Sessions -->
+        <div class="activity-tab-pane" id="act-pane-therapist" style="display:none;">
+          <div class="activity-cards-list" id="act-therapist-list">
+            <div class="activity-empty-state"><i class="ri-loader-4-line ri-spin" style="font-size:28px;"></i><p>Loading therapist visits...</p></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

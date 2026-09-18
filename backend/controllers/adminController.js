@@ -1,12 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const { supabase, isConfigured } = require('../config/supabase');
+const { supabase, isConfigured, pool } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 const bookingsFilePath = path.join(__dirname, '../data/bookings.json');
 const therapistBookingsFilePath = path.join(__dirname, '../data/therapist_bookings.json');
 const ordersFilePath = path.join(__dirname, '../data/orders.json');
 const usersFilePath = path.join(__dirname, '../data/users.json');
+const accountsFilePath = path.join(__dirname, '../data/provider_accounts.json');
+const doctorsFilePath = path.join(__dirname, '../data/doctors.json');
+const therapistsFilePath = path.join(__dirname, '../data/therapists.json');
 
 // Standard fallback doctor/therapist lists
 const localDoctors = [
@@ -105,6 +108,9 @@ exports.getBookings = async (req, res) => {
       patientName: b.patient_name,
       patientEmail: b.patient_email,
       symptom: b.symptom,
+      status: b.status || 'Scheduled',
+      prescription: b.prescription || '',
+      videoRoomId: b.video_room_id || '',
       bookedAt: b.booked_at
     }));
 
@@ -156,6 +162,11 @@ exports.getTherapistBookings = async (req, res) => {
       patientName: b.patient_name,
       patientEmail: b.patient_email,
       therapyType: b.therapy_type,
+      address: b.address || 'In-Clinic Session',
+      status: b.status || 'Pending',
+      otpCode: b.otp_code || '----',
+      feedback: b.feedback || '',
+      rating: b.rating || 5,
       bookedAt: b.booked_at
     }));
 
@@ -602,10 +613,27 @@ exports.getAnalytics = async (req, res) => {
 // 12. Doctors CRUD
 exports.getDoctors = async (req, res) => {
   try {
-    if (!isConfigured) return res.json(localDoctors);
-    const { data, error } = await supabase.from('doctors').select('*').order('id', { ascending: true });
-    if (error) throw error;
-    res.json(data);
+    let doctors = readFileHelper(doctorsFilePath, localDoctors);
+
+    // Cross-merge with any registered provider accounts with role === 'doctor'
+    const accounts = readFileHelper(accountsFilePath, []);
+    accounts.filter(a => a.role === 'doctor').forEach(acc => {
+      if (!doctors.some(d => d.id === acc.id || (d.email && acc.email && d.email.toLowerCase() === acc.email.toLowerCase()))) {
+        doctors.push({
+          id: acc.id,
+          name: acc.name,
+          email: acc.email,
+          phone: acc.phone || '',
+          qualification: acc.qualification || 'BAMS, Ayurvedic Physician',
+          specialty: acc.specialty || 'General Ayurvedic Consultation',
+          rating: acc.rating || 4.8,
+          experience: acc.experience || '5 years',
+          avatar: acc.avatar || 'assets/doctor_avatar.png'
+        });
+      }
+    });
+
+    res.json(doctors);
   } catch (e) {
     res.status(500).json({ message: 'Error fetching doctors' });
   }
@@ -613,18 +641,93 @@ exports.getDoctors = async (req, res) => {
 
 exports.addDoctor = async (req, res) => {
   try {
-    const { id, name, specialty, rating, experience } = req.body;
-    if (!id || !name || !specialty) return res.status(400).json({ message: 'Missing doctor data' });
+    const { id, name, specialty, rating, experience, email, phone, qualification, password } = req.body;
+    if (!name || !specialty) return res.status(400).json({ message: 'Name and specialty are required' });
 
-    if (!isConfigured) {
-      localDoctors.push({ id, name, specialty, rating: rating || 4.5, experience });
-      return res.status(201).json({ success: true, doctor: { id, name } });
+    const docId = id ? parseInt(id) : Date.now();
+    const docEmail = (email && email.trim()) ? email.trim().toLowerCase() : `dr.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@vednidan.com`;
+    const docPhone = (phone && phone.trim()) ? phone.trim() : '9876543210';
+    const docQual = (qualification && qualification.trim()) ? qualification.trim() : 'BAMS, Ayurvedic Physician';
+    const docExp = experience || '10 years';
+    const docRating = parseFloat(rating) || 4.8;
+    const plainPassword = (password && password.trim()) ? password.trim() : 'Password123';
+
+    const newDoc = {
+      id: docId,
+      name: name.trim(),
+      email: docEmail,
+      phone: docPhone,
+      qualification: docQual,
+      specialty: specialty.trim(),
+      rating: docRating,
+      experience: docExp,
+      avatar: 'assets/doctor_avatar.png'
+    };
+
+    // Update local doctors.json
+    const doctors = readFileHelper(doctorsFilePath, localDoctors);
+    const existingIdx = doctors.findIndex(d => d.id === newDoc.id || (d.email && d.email.toLowerCase() === docEmail));
+    if (existingIdx >= 0) {
+      doctors[existingIdx] = { ...doctors[existingIdx], ...newDoc };
+    } else {
+      doctors.push(newDoc);
+    }
+    writeFileHelper(doctorsFilePath, doctors);
+
+    // Auto-provision/sync provider account for Doctor portal login
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(plainPassword, 10);
+    const accounts = readFileHelper(accountsFilePath, []);
+    const accIdx = accounts.findIndex(a => a.email.toLowerCase() === docEmail);
+    const providerAccount = {
+      id: newDoc.id,
+      name: newDoc.name,
+      email: docEmail,
+      passwordHash,
+      role: 'doctor',
+      phone: docPhone,
+      qualification: docQual,
+      specialty: newDoc.specialty,
+      experience: docExp,
+      rating: docRating,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    if (accIdx >= 0) {
+      accounts[accIdx] = { ...accounts[accIdx], ...providerAccount };
+    } else {
+      accounts.push(providerAccount);
+    }
+    writeFileHelper(accountsFilePath, accounts);
+
+    // Sync to PostgreSQL DB
+    if (pool) {
+      try {
+        await pool.query(`
+          INSERT INTO doctors (id, name, email, phone, qualification, specialty, rating, experience)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone,
+            qualification = EXCLUDED.qualification, specialty = EXCLUDED.specialty,
+            rating = EXCLUDED.rating, experience = EXCLUDED.experience
+        `, [newDoc.id, newDoc.name, newDoc.email, newDoc.phone, newDoc.qualification, newDoc.specialty, newDoc.rating, newDoc.experience]);
+
+        await pool.query(`
+          INSERT INTO provider_accounts (id, name, email, password_hash, role, specialty, qualification, experience, rating, phone, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name, email = EXCLUDED.email, password_hash = EXCLUDED.password_hash,
+            role = EXCLUDED.role, specialty = EXCLUDED.specialty, qualification = EXCLUDED.qualification,
+            experience = EXCLUDED.experience, rating = EXCLUDED.rating, phone = EXCLUDED.phone, status = EXCLUDED.status
+        `, [newDoc.id, newDoc.name, docEmail, passwordHash, 'doctor', newDoc.specialty, newDoc.qualification, newDoc.experience, newDoc.rating, newDoc.phone, 'active']);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync addDoctor]', dbErr.message);
+      }
     }
 
-    const { data, error } = await supabase.from('doctors').insert({ id, name, specialty, rating, experience }).select('*').single();
-    if (error) throw error;
-    res.status(201).json({ success: true, doctor: data });
+    return res.status(201).json({ success: true, doctor: newDoc });
   } catch (e) {
+    console.error('Error adding doctor:', e);
     res.status(500).json({ message: 'Error saving doctor details' });
   }
 };
@@ -632,19 +735,67 @@ exports.addDoctor = async (req, res) => {
 exports.updateDoctor = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, specialty, rating, experience } = req.body;
+    const { name, email, phone, qualification, specialty, rating, experience, password } = req.body;
 
-    if (!isConfigured) {
-      const idx = localDoctors.findIndex(d => d.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
-      localDoctors[idx] = { ...localDoctors[idx], name, specialty, rating, experience };
-      return res.json({ success: true });
+    const doctors = readFileHelper(doctorsFilePath, localDoctors);
+    const idx = doctors.findIndex(d => d.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
+
+    doctors[idx] = {
+      ...doctors[idx],
+      name: name ? name.trim() : doctors[idx].name,
+      email: email ? email.trim().toLowerCase() : doctors[idx].email,
+      phone: phone !== undefined ? phone.trim() : doctors[idx].phone,
+      qualification: qualification !== undefined ? qualification.trim() : doctors[idx].qualification,
+      specialty: specialty ? specialty.trim() : doctors[idx].specialty,
+      rating: rating !== undefined ? parseFloat(rating) : doctors[idx].rating,
+      experience: experience || doctors[idx].experience
+    };
+    writeFileHelper(doctorsFilePath, doctors);
+
+    // Sync provider account
+    const accounts = readFileHelper(accountsFilePath, []);
+    const accIdx = accounts.findIndex(a => a.id === id || (doctors[idx].email && a.email.toLowerCase() === doctors[idx].email.toLowerCase()));
+    if (accIdx !== -1) {
+      if (name) accounts[accIdx].name = name.trim();
+      if (email) accounts[accIdx].email = email.trim().toLowerCase();
+      if (phone !== undefined) accounts[accIdx].phone = phone.trim();
+      if (qualification !== undefined) accounts[accIdx].qualification = qualification.trim();
+      if (specialty) accounts[accIdx].specialty = specialty.trim();
+      if (experience) accounts[accIdx].experience = experience;
+      if (rating !== undefined) accounts[accIdx].rating = parseFloat(rating);
+      if (password && password.trim()) {
+        const bcrypt = require('bcryptjs');
+        accounts[accIdx].passwordHash = await bcrypt.hash(password.trim(), 10);
+      }
+      writeFileHelper(accountsFilePath, accounts);
     }
 
-    const { data, error } = await supabase.from('doctors').update({ name, specialty, rating, experience }).eq('id', id).select('*').single();
-    if (error) throw error;
-    res.json({ success: true, doctor: data });
+    if (pool) {
+      try {
+        await pool.query(`
+          UPDATE doctors SET
+            name = COALESCE($1, name), email = COALESCE($2, email), phone = COALESCE($3, phone),
+            qualification = COALESCE($4, qualification), specialty = COALESCE($5, specialty),
+            rating = COALESCE($6, rating), experience = COALESCE($7, experience)
+          WHERE id = $8
+        `, [doctors[idx].name, doctors[idx].email, doctors[idx].phone, doctors[idx].qualification, doctors[idx].specialty, doctors[idx].rating, doctors[idx].experience, id]);
+
+        await pool.query(`
+          UPDATE provider_accounts SET
+            name = COALESCE($1, name), email = COALESCE($2, email), phone = COALESCE($3, phone),
+            qualification = COALESCE($4, qualification), specialty = COALESCE($5, specialty),
+            rating = COALESCE($6, rating), experience = COALESCE($7, experience)
+          WHERE id = $8 OR email = $2
+        `, [doctors[idx].name, doctors[idx].email, doctors[idx].phone, doctors[idx].qualification, doctors[idx].specialty, doctors[idx].rating, doctors[idx].experience, id]);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync updateDoctor]', dbErr.message);
+      }
+    }
+
+    return res.json({ success: true, doctor: doctors[idx] });
   } catch (e) {
+    console.error('Error updating doctor:', e);
     res.status(500).json({ message: 'Error updating doctor details' });
   }
 };
@@ -652,18 +803,30 @@ exports.updateDoctor = async (req, res) => {
 exports.deleteDoctor = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    let doctors = readFileHelper(doctorsFilePath, localDoctors);
+    const idx = doctors.findIndex(d => d.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
+    const deletedDoc = doctors[idx];
+    doctors.splice(idx, 1);
+    writeFileHelper(doctorsFilePath, doctors);
 
-    if (!isConfigured) {
-      const idx = localDoctors.findIndex(d => d.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Doctor not found' });
-      localDoctors.splice(idx, 1);
-      return res.json({ success: true });
+    // Remove corresponding provider account
+    let accounts = readFileHelper(accountsFilePath, []);
+    accounts = accounts.filter(a => a.id !== id && (!deletedDoc.email || a.email.toLowerCase() !== deletedDoc.email.toLowerCase()));
+    writeFileHelper(accountsFilePath, accounts);
+
+    if (pool) {
+      try {
+        await pool.query('DELETE FROM doctors WHERE id = $1', [id]);
+        await pool.query('DELETE FROM provider_accounts WHERE id = $1 OR email = $2', [id, deletedDoc.email || '']);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync deleteDoctor]', dbErr.message);
+      }
     }
 
-    const { error } = await supabase.from('doctors').delete().eq('id', id);
-    if (error) throw error;
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (e) {
+    console.error('Error deleting doctor:', e);
     res.status(500).json({ message: 'Error deleting doctor details' });
   }
 };
@@ -671,10 +834,28 @@ exports.deleteDoctor = async (req, res) => {
 // 13. Therapists CRUD
 exports.getTherapists = async (req, res) => {
   try {
-    if (!isConfigured) return res.json(localTherapists);
-    const { data, error } = await supabase.from('therapists').select('*').order('id', { ascending: true });
-    if (error) throw error;
-    res.json(data);
+    let therapists = readFileHelper(therapistsFilePath, localTherapists);
+
+    // Cross-merge with any registered provider accounts with role === 'therapist'
+    const accounts = readFileHelper(accountsFilePath, []);
+    accounts.filter(a => a.role === 'therapist').forEach(acc => {
+      if (!therapists.some(t => t.id === acc.id || (t.email && acc.email && t.email.toLowerCase() === acc.email.toLowerCase()))) {
+        therapists.push({
+          id: acc.id,
+          name: acc.name,
+          email: acc.email,
+          phone: acc.phone || '',
+          qualification: acc.qualification || 'Certified Panchakarma Vaidya',
+          specialty: acc.specialty || 'General Ayurvedic Therapist',
+          rating: acc.rating || 4.8,
+          experience: acc.experience || '5 years',
+          therapies: acc.therapies && acc.therapies.length ? acc.therapies : ["General Consultation", "Panchakarma", "Abhyanga"],
+          avatar: acc.avatar || 'assets/doctor_avatar.png'
+        });
+      }
+    });
+
+    res.json(therapists);
   } catch (e) {
     res.status(500).json({ message: 'Error fetching therapists' });
   }
@@ -682,18 +863,97 @@ exports.getTherapists = async (req, res) => {
 
 exports.addTherapist = async (req, res) => {
   try {
-    const { id, name, specialty, rating, experience, therapies } = req.body;
-    if (!id || !name || !specialty) return res.status(400).json({ message: 'Missing therapist data' });
+    const { id, name, specialty, rating, experience, therapies, email, phone, qualification, password } = req.body;
+    if (!name || !specialty) return res.status(400).json({ message: 'Name and specialty are required' });
 
-    if (!isConfigured) {
-      localTherapists.push({ id, name, specialty, rating: rating || 4.5, experience, therapies: therapies || [] });
-      return res.status(201).json({ success: true, therapist: { id, name } });
+    const thId = id ? parseInt(id) : Date.now();
+    const thEmail = (email && email.trim()) ? email.trim().toLowerCase() : `therapist.${name.toLowerCase().replace(/[^a-z0-9]/g, '')}@vednidan.com`;
+    const thPhone = (phone && phone.trim()) ? phone.trim() : '9876543212';
+    const thQual = (qualification && qualification.trim()) ? qualification.trim() : 'Certified Panchakarma Vaidya';
+    const parsedTherapies = Array.isArray(therapies) ? therapies : (therapies ? therapies.split(',').map(s => s.trim()).filter(Boolean) : ["Panchakarma", "Abhyanga"]);
+    const thExp = experience || '10 years';
+    const thRating = parseFloat(rating) || 4.8;
+    const plainPassword = (password && password.trim()) ? password.trim() : 'Password123';
+
+    const newTherapist = {
+      id: thId,
+      name: name.trim(),
+      email: thEmail,
+      phone: thPhone,
+      qualification: thQual,
+      specialty: specialty.trim(),
+      rating: thRating,
+      experience: thExp,
+      therapies: parsedTherapies,
+      avatar: 'assets/doctor_avatar.png'
+    };
+
+    // Update local therapists.json
+    const therapists = readFileHelper(therapistsFilePath, localTherapists);
+    const existingIdx = therapists.findIndex(t => t.id === newTherapist.id || (t.email && t.email.toLowerCase() === thEmail));
+    if (existingIdx >= 0) {
+      therapists[existingIdx] = { ...therapists[existingIdx], ...newTherapist };
+    } else {
+      therapists.push(newTherapist);
+    }
+    writeFileHelper(therapistsFilePath, therapists);
+
+    // Auto-provision/sync provider account for Therapist portal login
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(plainPassword, 10);
+    const accounts = readFileHelper(accountsFilePath, []);
+    const accIdx = accounts.findIndex(a => a.email.toLowerCase() === thEmail);
+    const providerAccount = {
+      id: newTherapist.id,
+      name: newTherapist.name,
+      email: thEmail,
+      passwordHash,
+      role: 'therapist',
+      phone: thPhone,
+      qualification: thQual,
+      specialty: newTherapist.specialty,
+      experience: thExp,
+      therapies: parsedTherapies,
+      rating: thRating,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    if (accIdx >= 0) {
+      accounts[accIdx] = { ...accounts[accIdx], ...providerAccount };
+    } else {
+      accounts.push(providerAccount);
+    }
+    writeFileHelper(accountsFilePath, accounts);
+
+    // Sync to PostgreSQL DB
+    if (pool) {
+      try {
+        await pool.query(`
+          INSERT INTO therapists (id, name, email, phone, qualification, specialty, rating, experience, therapies)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone,
+            qualification = EXCLUDED.qualification, specialty = EXCLUDED.specialty,
+            rating = EXCLUDED.rating, experience = EXCLUDED.experience, therapies = EXCLUDED.therapies
+        `, [newTherapist.id, newTherapist.name, newTherapist.email, newTherapist.phone, newTherapist.qualification, newTherapist.specialty, newTherapist.rating, newTherapist.experience, newTherapist.therapies]);
+
+        await pool.query(`
+          INSERT INTO provider_accounts (id, name, email, password_hash, role, specialty, qualification, experience, rating, phone, therapies, status)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name, email = EXCLUDED.email, password_hash = EXCLUDED.password_hash,
+            role = EXCLUDED.role, specialty = EXCLUDED.specialty, qualification = EXCLUDED.qualification,
+            experience = EXCLUDED.experience, rating = EXCLUDED.rating, phone = EXCLUDED.phone,
+            therapies = EXCLUDED.therapies, status = EXCLUDED.status
+        `, [newTherapist.id, newTherapist.name, thEmail, passwordHash, 'therapist', newTherapist.specialty, newTherapist.qualification, newTherapist.experience, newTherapist.rating, newTherapist.phone, newTherapist.therapies, 'active']);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync addTherapist]', dbErr.message);
+      }
     }
 
-    const { data, error } = await supabase.from('therapists').insert({ id, name, specialty, rating, experience, therapies }).select('*').single();
-    if (error) throw error;
-    res.status(201).json({ success: true, therapist: data });
+    return res.status(201).json({ success: true, therapist: newTherapist });
   } catch (e) {
+    console.error('Error adding therapist:', e);
     res.status(500).json({ message: 'Error saving therapist details' });
   }
 };
@@ -701,19 +961,73 @@ exports.addTherapist = async (req, res) => {
 exports.updateTherapist = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, specialty, rating, experience, therapies } = req.body;
+    const { name, email, phone, qualification, specialty, rating, experience, therapies, password } = req.body;
 
-    if (!isConfigured) {
-      const idx = localTherapists.findIndex(t => t.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
-      localTherapists[idx] = { ...localTherapists[idx], name, specialty, rating, experience, therapies: therapies || [] };
-      return res.json({ success: true });
+    const therapists = readFileHelper(therapistsFilePath, localTherapists);
+    const idx = therapists.findIndex(t => t.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
+
+    const parsedTherapies = therapies ? (Array.isArray(therapies) ? therapies : therapies.split(',').map(s => s.trim()).filter(Boolean)) : therapists[idx].therapies;
+
+    therapists[idx] = {
+      ...therapists[idx],
+      name: name ? name.trim() : therapists[idx].name,
+      email: email ? email.trim().toLowerCase() : therapists[idx].email,
+      phone: phone !== undefined ? phone.trim() : therapists[idx].phone,
+      qualification: qualification !== undefined ? qualification.trim() : therapists[idx].qualification,
+      specialty: specialty ? specialty.trim() : therapists[idx].specialty,
+      rating: rating !== undefined ? parseFloat(rating) : therapists[idx].rating,
+      experience: experience || therapists[idx].experience,
+      therapies: parsedTherapies
+    };
+    writeFileHelper(therapistsFilePath, therapists);
+
+    // Sync provider account
+    const accounts = readFileHelper(accountsFilePath, []);
+    const accIdx = accounts.findIndex(a => a.id === id || (therapists[idx].email && a.email.toLowerCase() === therapists[idx].email.toLowerCase()));
+    if (accIdx !== -1) {
+      if (name) accounts[accIdx].name = name.trim();
+      if (email) accounts[accIdx].email = email.trim().toLowerCase();
+      if (phone !== undefined) accounts[accIdx].phone = phone.trim();
+      if (qualification !== undefined) accounts[accIdx].qualification = qualification.trim();
+      if (specialty) accounts[accIdx].specialty = specialty.trim();
+      if (experience) accounts[accIdx].experience = experience;
+      if (parsedTherapies) accounts[accIdx].therapies = parsedTherapies;
+      if (rating !== undefined) accounts[accIdx].rating = parseFloat(rating);
+      if (password && password.trim()) {
+        const bcrypt = require('bcryptjs');
+        accounts[accIdx].passwordHash = await bcrypt.hash(password.trim(), 10);
+      }
+      writeFileHelper(accountsFilePath, accounts);
     }
 
-    const { data, error } = await supabase.from('therapists').update({ name, specialty, rating, experience, therapies }).eq('id', id).select('*').single();
-    if (error) throw error;
-    res.json({ success: true, therapist: data });
+    if (pool) {
+      try {
+        await pool.query(`
+          UPDATE therapists SET
+            name = COALESCE($1, name), email = COALESCE($2, email), phone = COALESCE($3, phone),
+            qualification = COALESCE($4, qualification), specialty = COALESCE($5, specialty),
+            rating = COALESCE($6, rating), experience = COALESCE($7, experience),
+            therapies = COALESCE($8, therapies)
+          WHERE id = $9
+        `, [therapists[idx].name, therapists[idx].email, therapists[idx].phone, therapists[idx].qualification, therapists[idx].specialty, therapists[idx].rating, therapists[idx].experience, therapists[idx].therapies, id]);
+
+        await pool.query(`
+          UPDATE provider_accounts SET
+            name = COALESCE($1, name), email = COALESCE($2, email), phone = COALESCE($3, phone),
+            qualification = COALESCE($4, qualification), specialty = COALESCE($5, specialty),
+            rating = COALESCE($6, rating), experience = COALESCE($7, experience),
+            therapies = COALESCE($8, therapies)
+          WHERE id = $9 OR email = $2
+        `, [therapists[idx].name, therapists[idx].email, therapists[idx].phone, therapists[idx].qualification, therapists[idx].specialty, therapists[idx].rating, therapists[idx].experience, therapists[idx].therapies, id]);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync updateTherapist]', dbErr.message);
+      }
+    }
+
+    return res.json({ success: true, therapist: therapists[idx] });
   } catch (e) {
+    console.error('Error updating therapist:', e);
     res.status(500).json({ message: 'Error updating therapist details' });
   }
 };
@@ -721,18 +1035,169 @@ exports.updateTherapist = async (req, res) => {
 exports.deleteTherapist = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    let therapists = readFileHelper(therapistsFilePath, localTherapists);
+    const idx = therapists.findIndex(t => t.id === id);
+    if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
+    const deletedT = therapists[idx];
+    therapists.splice(idx, 1);
+    writeFileHelper(therapistsFilePath, therapists);
 
-    if (!isConfigured) {
-      const idx = localTherapists.findIndex(t => t.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Therapist not found' });
-      localTherapists.splice(idx, 1);
-      return res.json({ success: true });
+    // Remove corresponding provider account
+    let accounts = readFileHelper(accountsFilePath, []);
+    accounts = accounts.filter(a => a.id !== id && (!deletedT.email || a.email.toLowerCase() !== deletedT.email.toLowerCase()));
+    writeFileHelper(accountsFilePath, accounts);
+
+    if (pool) {
+      try {
+        await pool.query('DELETE FROM therapists WHERE id = $1', [id]);
+        await pool.query('DELETE FROM provider_accounts WHERE id = $1 OR email = $2', [id, deletedT.email || '']);
+      } catch (dbErr) {
+        console.warn('[Admin DB Sync deleteTherapist]', dbErr.message);
+      }
     }
 
-    const { error } = await supabase.from('therapists').delete().eq('id', id);
+    return res.json({ success: true });
+  } catch (e) {
+    console.error('Error deleting therapist:', e);
+    res.status(500).json({ message: 'Error deleting therapist details' });
+  }
+};
+
+// =========================================================
+// NEW: Partner Accounts management
+// =========================================================
+exports.getProviderAccounts = async (req, res) => {
+  try {
+    if (pool) {
+      try {
+        const result = await pool.query(`
+          SELECT id, name, email, role, specialty, qualification, experience, rating, phone, therapies, created_at
+          FROM provider_accounts ORDER BY id ASC
+        `);
+        if (result.rowCount > 0) {
+          const formatted = result.rows.map(a => ({
+            id: a.id,
+            name: a.name,
+            email: a.email,
+            role: a.role,
+            phone: a.phone || '',
+            qualification: a.qualification || '',
+            specialty: a.specialty || '',
+            experience: a.experience || '',
+            therapies: a.therapies || [],
+            rating: a.rating ? parseFloat(a.rating) : 4.5,
+            createdAt: a.created_at
+          }));
+          return res.json(formatted);
+        }
+      } catch (dbErr) {
+        console.warn('[Admin getProviderAccounts DB fallback]', dbErr.message);
+      }
+    }
+
+    const list = readFileHelper(accountsFilePath, []);
+    const safe = list.map(a => ({
+      id: a.id,
+      name: a.name,
+      email: a.email,
+      role: a.role,
+      phone: a.phone || '',
+      qualification: a.qualification || '',
+      specialty: a.specialty || '',
+      experience: a.experience || '',
+      therapies: a.therapies || [],
+      rating: a.rating ? parseFloat(a.rating) : 4.5,
+      createdAt: a.createdAt || new Date().toISOString()
+    }));
+    return res.json(safe);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Error fetching partner accounts' });
+  }
+};
+
+exports.deleteProviderAccount = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!isConfigured) {
+      let accounts = readFileHelper(accountsFilePath, []);
+      accounts = accounts.filter(a => a.id !== id);
+      writeFileHelper(accountsFilePath, accounts);
+      return res.json({ success: true });
+    }
+    const { error } = await supabase.from('provider_accounts').delete().eq('id', id);
     if (error) throw error;
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ message: 'Error deleting therapist details' });
+    console.error(e);
+    res.status(500).json({ message: 'Error deleting account' });
+  }
+};
+
+exports.resetProviderPassword = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const bcrypt = require('bcryptjs');
+    const defaultHash = await bcrypt.hash('123456', 10);
+
+    if (!isConfigured) {
+      const accounts = readFileHelper(accountsFilePath, []);
+      const idx = accounts.findIndex(a => a.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Account not found' });
+      accounts[idx].passwordHash = defaultHash;
+      writeFileHelper(accountsFilePath, accounts);
+      return res.json({ success: true, message: 'Password reset to 123456' });
+    }
+
+    const { error } = await supabase
+      .from('provider_accounts')
+      .update({ password_hash: defaultHash })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Password reset to 123456' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Error resetting password' });
+  }
+};
+
+// GET /api/admin/consultation-logs
+exports.getConsultationLogs = async (req, res) => {
+  try {
+    const consultationLogsFilePath = path.join(__dirname, '../data/consultation_logs.json');
+    const logs = readFileHelper(consultationLogsFilePath, []);
+    res.json(logs);
+  } catch (error) {
+    console.error('Error fetching consultation logs:', error);
+    res.status(500).json({ message: 'Error retrieving AI consultation logs' });
+  }
+};
+
+// GET /api/admin/settings
+exports.getSystemSettings = async (req, res) => {
+  try {
+    const accounts = readFileHelper(accountsFilePath, []);
+    const products = readFileHelper(productsFilePath, []);
+    const consultationLogs = readFileHelper(path.join(__dirname, '../data/consultation_logs.json'), []);
+
+    res.json({
+      systemName: "VedNidan Healthcare Control Center",
+      version: "v2.5.0-production",
+      environment: process.env.NODE_ENV || "development",
+      databaseStatus: isConfigured ? "Connected (Supabase Cloud PostgreSQL)" : "Active (Local JSON Persistence Engine)",
+      defaultCredentials: [
+        { role: "Super Admin", portal: "/admin.html", defaultId: "admin", defaultPassword: "admin", notes: "Full system administration & metrics control" },
+        { role: "Ayurvedic Doctor (Default)", portal: "/provider.html", defaultId: "dr.vasudev@vednidan.com / 9876543210", defaultPassword: "Password123", notes: "Doctor portal diagnosis & appointment management" },
+        { role: "Ayurvedic Therapist (Default)", portal: "/provider.html", defaultId: "therapist.meera@vednidan.com / 9876543212", defaultPassword: "Password123", notes: "Therapist portal Panchakarma & session management" }
+      ],
+      partnerAccountsCount: accounts.length,
+      productsCount: products.length,
+      aiConsultationsCount: consultationLogs.length,
+      serverTime: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching system settings:', error);
+    res.status(500).json({ message: 'Error retrieving system settings' });
   }
 };
