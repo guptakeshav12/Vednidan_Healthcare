@@ -59,9 +59,13 @@ app.use('/api/provider', providerRoutes);
 // ============================
 app.use(express.static(FRONTEND_DIR));
 
-// Explicit route for admin panel
-app.get('/admin', (req, res) => {
+// Explicit clean routes for Admin and Provider portals
+app.get(['/admin', '/admin.html'], (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'admin.html'));
+});
+
+app.get(['/provider', '/provider.html', '/doctor-login', '/therapist-login'], (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'provider.html'));
 });
 
 // Catch-all: serve index.html for SPA routing (must be LAST route)
