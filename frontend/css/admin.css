@@ -34,59 +34,86 @@ body.admin-body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--admin-border);
-  padding: 30px 20px;
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
   position: fixed;
+  top: 0;
+  left: 0;
   height: 100vh;
   box-sizing: border-box;
   z-index: 100;
+  overflow: hidden;
 }
 
 .admin-logo {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--admin-accent-gold);
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 .admin-logo i {
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .admin-menu {
   list-style: none;
-  padding: 0;
+  padding: 0 4px 16px 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-accent-gold) rgba(255, 255, 255, 0.05);
+}
+
+.admin-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.admin-menu::-webkit-scrollbar-thumb {
+  background: var(--admin-accent-gold);
+  border-radius: 4px;
+}
+
+.admin-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-accent-gold-hover);
 }
 
 .admin-menu-item a {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 10px 14px;
   color: var(--admin-text-muted);
   text-decoration: none;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
 }
 
 .admin-menu-item.active a,
 .admin-menu-item a:hover {
   color: var(--admin-text-main);
-  background: rgba(207, 168, 92, 0.08);
-  border-color: rgba(207, 168, 92, 0.25);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: rgba(207, 168, 92, 0.12);
+  border-color: rgba(207, 168, 92, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .admin-menu-item.active a i,
@@ -96,6 +123,9 @@ body.admin-body {
 
 .admin-sidebar-footer {
   margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
 .btn-logout {

@@ -1329,59 +1329,165 @@ AdminApp.filterConsultations = function(query) {
 AdminApp.fetchSettings = async function() {
   const container = document.getElementById('settings-container');
   if (!container) return;
-  container.innerHTML = `<div style="text-align:center;padding:60px;"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading settings...</p></div>`;
+  container.innerHTML = `<div style="text-align:center;padding:60px;"><i class="ri-loader-4-line ri-spin" style="font-size:32px;color:var(--admin-accent-gold);"></i><p style="margin-top:12px;color:var(--admin-text-muted);">Loading system settings & diagnostics...</p></div>`;
   try {
     const res = await fetch(`${ADMIN_API}/admin/settings`);
     const data = await res.json();
     container.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:24px;">
 
-        <!-- System Info Card -->
-        <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
-          <h3 style="color:var(--admin-accent-gold);margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="ri-server-line"></i> System Information</h3>
-          <table style="width:100%;border-collapse:collapse;">
-            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">System Name</td><td style="font-weight:700;">${data.systemName}</td></tr>
-            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Version</td><td><span class="badge" style="background:rgba(99,102,241,0.2);color:#818cf8;">${data.version}</span></td></tr>
-            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Environment</td><td><span class="badge" style="background:rgba(16,185,129,0.2);color:#10b981;">${data.environment}</span></td></tr>
-            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Database Status</td><td style="font-size:12px;color:#10b981;">${data.databaseStatus}</td></tr>
-            <tr><td style="padding:8px 0;color:var(--admin-text-muted);font-size:13px;">Server Time</td><td style="font-size:12px;">${new Date(data.serverTime).toLocaleString('en-IN')}</td></tr>
-          </table>
-        </div>
-
-        <!-- Platform Stats Card -->
-        <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
-          <h3 style="color:var(--admin-accent-gold);margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="ri-bar-chart-box-line"></i> Platform Statistics</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
-              <div style="font-size:36px;font-weight:800;color:#6366f1;">${data.productsCount}</div>
-              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">Products in Store</div>
+        <!-- Top Status & Actions Banner -->
+        <div class="admin-card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding:20px 24px;">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;box-shadow:0 0 10px #22c55e;animation:pulse 2s infinite;"></div>
+            <div>
+              <h4 style="margin:0 0 2px;color:var(--admin-text-main);font-size:16px;">Core Platform Online &amp; Operational</h4>
+              <span style="font-size:12px;color:var(--admin-text-muted);">Running ${data.systemName} &bull; ${data.version}</span>
             </div>
-            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
-              <div style="font-size:36px;font-weight:800;color:#10b981;">${data.aiConsultationsCount}</div>
-              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">AI Consultations</div>
-            </div>
-            <div style="text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;">
-              <div style="font-size:36px;font-weight:800;color:#f59e0b;">${data.partnerAccountsCount}</div>
-              <div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px;">Partner Accounts</div>
-            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-admin-secondary" onclick="AdminApp.fetchSettings()" style="display:flex;align-items:center;gap:6px;">
+              <i class="ri-refresh-line"></i> Refresh Diagnostics
+            </button>
+            <a href="/provider.html" target="_blank" class="btn-admin-primary" style="display:flex;align-items:center;gap:6px;text-decoration:none;padding:10px 18px;font-size:13px;">
+              <i class="ri-shield-user-line"></i> Provider Portal <i class="ri-external-link-line" style="font-size:12px;"></i>
+            </a>
+            <a href="/index.html" target="_blank" class="btn-admin-secondary" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
+              <i class="ri-home-4-line"></i> Main Website <i class="ri-external-link-line" style="font-size:12px;"></i>
+            </a>
           </div>
         </div>
 
-        <!-- Default Credentials Card -->
-        <div class="admin-card" style="border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:28px;grid-column:1/-1;">
-          <h3 style="color:#f87171;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><i class="ri-lock-password-line"></i> Default Login Credentials</h3>
-          <p style="font-size:12px;color:var(--admin-text-muted);margin-bottom:20px;">⚠️ Change these passwords in production. These are default credentials for initial setup.</p>
-          <div style="overflow-x:auto;">
+        <!-- 3-Column Diagnostic Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;">
+
+          <!-- Card 1: System Information -->
+          <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;">
+            <h3 style="color:var(--admin-accent-gold);margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;">
+              <i class="ri-server-line"></i> Server &amp; Architecture
+            </h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <tbody>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Control Center</td>
+                  <td style="font-weight:700;text-align:right;">${data.systemName}</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Build Release</td>
+                  <td style="text-align:right;"><span class="badge" style="background:rgba(99,102,241,0.2);color:#818cf8;">${data.version}</span></td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Environment</td>
+                  <td style="text-align:right;"><span class="badge" style="background:rgba(16,185,129,0.2);color:#10b981;">${data.environment}</span></td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Database Engine</td>
+                  <td style="font-size:12px;color:#10b981;font-weight:600;text-align:right;">${data.databaseStatus}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Server Local Time</td>
+                  <td style="font-size:12px;text-align:right;color:var(--admin-text-main);">${new Date(data.serverTime).toLocaleString('en-IN')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Card 2: Payment Gateway & UPI Direct Mode -->
+          <div class="admin-card" style="border:1px solid rgba(207,168,92,0.25);border-radius:16px;padding:24px;background:linear-gradient(135deg, rgba(207,168,92,0.06), rgba(16,185,129,0.04));">
+            <h3 style="color:var(--admin-accent-gold);margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;">
+              <i class="ri-qr-code-line"></i> Payment Gateway &amp; UPI
+            </h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <tbody>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Payment Mode</td>
+                  <td style="font-weight:700;text-align:right;color:#22c55e;"><i class="ri-check-line"></i> Direct Company UPI QR</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Transaction Fees</td>
+                  <td style="font-weight:700;text-align:right;color:#22c55e;">0% (Zero Gateway Fees)</td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">UPI VPA Address</td>
+                  <td style="text-align:right;"><code style="color:var(--admin-accent-gold);background:rgba(207,168,92,0.15);padding:2px 8px;border-radius:4px;">vednidan@icici</code></td>
+                </tr>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Auto-Fill Amount</td>
+                  <td style="text-align:right;color:#22c55e;font-weight:700;">Enabled (Instant Scan)</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;color:var(--admin-text-muted);">Settlement Speed</td>
+                  <td style="text-align:right;color:var(--admin-text-main);font-weight:600;">Direct to Bank Account</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Card 3: Platform Live Metrics -->
+          <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;">
+            <h3 style="color:var(--admin-accent-gold);margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;">
+              <i class="ri-bar-chart-box-line"></i> Platform Repositories
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div onclick="AdminApp.switchTab('products')" style="cursor:pointer;text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.05);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--admin-accent-gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                <div style="font-size:28px;font-weight:800;color:#818cf8;">${data.productsCount || 0}</div>
+                <div style="font-size:11px;color:var(--admin-text-muted);margin-top:2px;">Medicines / Products</div>
+              </div>
+              <div onclick="AdminApp.switchTab('ai-consultations')" style="cursor:pointer;text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.05);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--admin-accent-gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                <div style="font-size:28px;font-weight:800;color:#10b981;">${data.aiConsultationsCount || 0}</div>
+                <div style="font-size:11px;color:var(--admin-text-muted);margin-top:2px;">AI Consultations</div>
+              </div>
+              <div onclick="AdminApp.switchTab('partner-accounts')" style="cursor:pointer;text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.05);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--admin-accent-gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                <div style="font-size:28px;font-weight:800;color:#f59e0b;">${data.partnerAccountsCount || 0}</div>
+                <div style="font-size:11px;color:var(--admin-text-muted);margin-top:2px;">Partner Accounts</div>
+              </div>
+              <div onclick="AdminApp.switchTab('bookings')" style="cursor:pointer;text-align:center;padding:16px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.05);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--admin-accent-gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                <div style="font-size:28px;font-weight:800;color:#38bdf8;">Live</div>
+                <div style="font-size:11px;color:var(--admin-text-muted);margin-top:2px;">Appointments Active</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Default Credentials & Access Management Card -->
+        <div class="admin-card" style="border:1px solid rgba(207,168,92,0.25);border-radius:16px;padding:28px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+            <h3 style="color:var(--admin-accent-gold);margin:0;display:flex;align-items:center;gap:10px;font-size:18px;">
+              <i class="ri-shield-keyhole-line"></i> Authorized Portals &amp; Login Credentials
+            </h3>
+            <span style="font-size:12px;color:var(--admin-text-muted);background:rgba(255,255,255,0.05);padding:4px 12px;border-radius:20px;">
+              <i class="ri-information-line"></i> Credentials for doctors, therapists, and administrators
+            </span>
+          </div>
+          <p style="font-size:13px;color:var(--admin-text-muted);margin:0 0 16px;">
+            Use these portal URLs and credentials to login into doctor clinical workspace, therapist in-clinic dashboard, or the administrator control center.
+          </p>
+          <div class="table-responsive" style="margin:0;">
             <table class="admin-table">
-              <thead><tr><th>Role</th><th>Portal URL</th><th>Default ID / Username</th><th>Default Password</th><th>Notes</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Designated Role</th>
+                  <th>Portal Endpoint</th>
+                  <th>Default Login ID / Email</th>
+                  <th>Default Password</th>
+                  <th>Operational Scope</th>
+                  <th>Direct Access</th>
+                </tr>
+              </thead>
               <tbody>
                 ${(data.defaultCredentials || []).map(cred => `
                   <tr>
-                    <td><strong>${cred.role}</strong></td>
-                    <td><code style="font-size:11px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;">${cred.portal}</code></td>
-                    <td><code style="font-size:12px;color:#a78bfa;">${cred.defaultId}</code></td>
-                    <td><code style="font-size:12px;color:#fbbf24;background:rgba(251,191,36,0.1);padding:3px 8px;border-radius:4px;">${cred.defaultPassword}</code></td>
-                    <td style="font-size:11px;color:var(--admin-text-muted);">${cred.notes}</td>
+                    <td><strong style="color:var(--admin-text-main);">${cred.role}</strong></td>
+                    <td><code style="font-size:12px;background:rgba(255,255,255,0.06);padding:4px 10px;border-radius:6px;color:#38bdf8;">${cred.portal}</code></td>
+                    <td><code style="font-size:12px;color:#a78bfa;font-weight:600;">${cred.defaultId}</code></td>
+                    <td><code style="font-size:12px;color:#fbbf24;background:rgba(251,191,36,0.12);padding:4px 10px;border-radius:6px;font-weight:700;">${cred.defaultPassword}</code></td>
+                    <td style="font-size:12px;color:var(--admin-text-muted);">${cred.notes}</td>
+                    <td>
+                      <a href="${cred.portal}" target="_blank" class="btn-table-action" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Open Portal">
+                        <i class="ri-external-link-line"></i> Open
+                      </a>
+                    </td>
                   </tr>
                 `).join('')}
               </tbody>

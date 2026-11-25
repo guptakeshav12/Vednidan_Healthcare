@@ -533,6 +533,54 @@
       </div>
     </section>
 
+    <!-- ===== VIEW 11: AI CONSULTATIONS TAB ===== -->
+    <section id="view-ai-consultations" class="admin-view">
+      <div class="admin-card">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="consult-search" placeholder="Search by patient name, problem, dosha, medicine..." oninput="AdminApp.filterConsultations(this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view full diagnostic records</div>
+        <div class="table-responsive" id="consultations-table-wrapper">
+          <table class="admin-table" id="consultations-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Patient Profile</th>
+                <th>Health Concern / Symptoms</th>
+                <th>Category</th>
+                <th>Dominant Dosha &amp; Score</th>
+                <th>Prescribed Remedies</th>
+                <th>Language</th>
+                <th>Consultation Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="consultations-tbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin"></i> Loading AI consultations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 12: SYSTEM SETTINGS TAB ===== -->
+    <section id="view-settings" class="admin-view">
+      <div class="admin-settings-grid" id="settings-container">
+        <div style="text-align:center;padding:60px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading system settings...</p></div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ===== PRODUCT ADD/EDIT MODAL OVERLAY ===== -->
@@ -800,54 +848,6 @@
       </div>
     </div>
   </div>
-
-  <!-- ===== VIEW: AI CONSULTATIONS ===== -->
-  <section id="view-ai-consultations" class="admin-view">
-    <div class="admin-card">
-      <div class="catalog-toolbar">
-        <div class="catalog-search-wrap">
-          <i class="ri-search-line"></i>
-          <input type="text" class="catalog-search-input" id="consult-search" placeholder="Search by patient name, problem, dosha, medicine..." oninput="AdminApp.filterConsultations(this.value)">
-        </div>
-        <div class="catalog-scroll-controls">
-          <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', -300)">
-            <i class="ri-arrow-left-line"></i> Move Left
-          </button>
-          <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', 300)">
-            Move Right <i class="ri-arrow-right-line"></i>
-          </button>
-        </div>
-      </div>
-      <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view full diagnostic records</div>
-      <div class="table-responsive" id="consultations-table-wrapper">
-        <table class="admin-table" id="consultations-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Patient Profile</th>
-              <th>Health Concern / Symptoms</th>
-              <th>Category</th>
-              <th>Dominant Dosha &amp; Score</th>
-              <th>Prescribed Remedies</th>
-              <th>Language</th>
-              <th>Consultation Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="consultations-tbody">
-            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin"></i> Loading AI consultations...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== VIEW: SYSTEM SETTINGS ===== -->
-  <section id="view-settings" class="admin-view">
-    <div class="admin-settings-grid" id="settings-container">
-      <div style="text-align:center;padding:60px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading system settings...</p></div>
-    </div>
-  </section>
 
   <!-- ===== FULL CATALOG ITEM DETAILS INSPECTION MODAL ===== -->
   <div class="admin-modal-backdrop" id="admin-detail-view-backdrop">
