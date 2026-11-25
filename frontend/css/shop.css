@@ -377,9 +377,16 @@
   transition: var(--transition-normal);
 }
 
-.modal-backdrop.active {
-  opacity: 1;
-  visibility: visible;
+.modal-backdrop.active,
+.modal-backdrop[style*="display: flex"],
+#payment-modal-backdrop.active,
+#payment-modal-backdrop[style*="display: flex"],
+#invoice-modal-backdrop.active,
+#invoice-modal-backdrop[style*="display: flex"],
+#delivery-modal-backdrop.active,
+#delivery-modal-backdrop[style*="display: flex"] {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .modal-container {

@@ -12,14 +12,18 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
   <!-- Custom Stylesheets -->
   <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" type="image/jpeg" href="assets/vednidan-logo.jpg">
 </head>
 <body class="admin-body">
 
   <!-- ===== SIDEBAR NAVIGATION ===== -->
   <aside class="admin-sidebar">
-    <div class="admin-logo">
-      <i class="ri-heart-pulse-fill"></i>
-      <span>VedNidan Control</span>
+    <div class="admin-logo" style="display:flex; align-items:center; gap:10px; padding:20px 24px;">
+      <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="width:40px; height:auto; object-fit:contain; background:white; padding:2px; border-radius:6px;">
+      <div style="line-height:1.2;">
+        <div style="font-weight:800; font-size:16px; font-family:sans-serif;"><span style="color:#4ade80;">Ved</span><span style="color:#fbbf24;">nidan</span></div>
+        <div style="font-size:9px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; font-weight:700;">Healthcare Control</div>
+      </div>
     </div>
     
     <ul class="admin-menu">
@@ -85,35 +89,42 @@
 
     <!-- ===== VIEW 1: DASHBOARD TAB ===== -->
     <section id="view-dashboard" class="admin-view active">
-      <!-- Stats Cards -->
-      <div class="admin-stats-grid">
-        <div class="admin-stat-card">
+      <!-- Comprehensive Financial Stats Cards (All Amounts Received) -->
+      <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div class="admin-stat-card" style="border-left: 4px solid var(--admin-accent-gold);">
           <div class="stat-details">
-            <span class="stat-title">Total Revenue</span>
-            <span class="stat-val" id="stat-revenue">₹0</span>
+            <span class="stat-title">Total Amount Received</span>
+            <span class="stat-val" id="stat-revenue" style="color: var(--admin-accent-gold);">₹0</span>
+            <span style="font-size: 11px; color: var(--admin-text-muted);">Grand All Receipts</span>
           </div>
-          <div class="stat-icon-box"><i class="ri-money-rupee-circle-line"></i></div>
+          <div class="stat-icon-box" style="background: rgba(207, 168, 92, 0.1); color: var(--admin-accent-gold);"><i class="ri-wallet-3-line"></i></div>
         </div>
-        <div class="admin-stat-card">
+
+        <div class="admin-stat-card" style="border-left: 4px solid #3b82f6;">
           <div class="stat-details">
-            <span class="stat-title">Total Orders</span>
-            <span class="stat-val" id="stat-orders">0</span>
+            <span class="stat-title">Product Orders Revenue</span>
+            <span class="stat-val" id="stat-orders-revenue" style="color: #60a5fa;">₹0</span>
+            <span style="font-size: 11px; color: var(--admin-text-muted);"><span id="stat-orders">0</span> total orders</span>
           </div>
-          <div class="stat-icon-box"><i class="ri-shopping-cart-2-line"></i></div>
+          <div class="stat-icon-box" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;"><i class="ri-shopping-bag-3-line"></i></div>
         </div>
-        <div class="admin-stat-card">
+
+        <div class="admin-stat-card" style="border-left: 4px solid #10b981;">
           <div class="stat-details">
-            <span class="stat-title">Doctor Bookings</span>
-            <span class="stat-val" id="stat-bookings">0</span>
+            <span class="stat-title">Doctor Consultation Fees</span>
+            <span class="stat-val" id="stat-doctor-revenue" style="color: #34d399;">₹0</span>
+            <span style="font-size: 11px; color: var(--admin-text-muted);"><span id="stat-bookings">0</span> consultations (₹499/ea)</span>
           </div>
-          <div class="stat-icon-box"><i class="ri-calendar-check-line"></i></div>
+          <div class="stat-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #34d399;"><i class="ri-nurse-line"></i></div>
         </div>
-        <div class="admin-stat-card">
+
+        <div class="admin-stat-card" style="border-left: 4px solid #14b8a6;">
           <div class="stat-details">
-            <span class="stat-title">Therapist Bookings</span>
-            <span class="stat-val" id="stat-therapist-bookings">0</span>
+            <span class="stat-title">Therapist Session Fees</span>
+            <span class="stat-val" id="stat-therapist-revenue" style="color: #2dd4bf;">₹0</span>
+            <span style="font-size: 11px; color: var(--admin-text-muted);"><span id="stat-therapist-bookings">0</span> sessions (₹799/ea)</span>
           </div>
-          <div class="stat-icon-box"><i class="ri-nurse-line"></i></div>
+          <div class="stat-icon-box" style="background: rgba(20, 184, 166, 0.1); color: #2dd4bf;"><i class="ri-hand-heart-line"></i></div>
         </div>
       </div>
 
@@ -121,9 +132,20 @@
       <div class="admin-card">
         <div class="admin-card-header">
           <h3 class="admin-card-title"><i class="ri-time-line"></i> Recent Pending Orders</h3>
-          <a href="#orders" onclick="switchTab('orders')" style="color:var(--admin-accent-gold);text-decoration:none;font-size:13px;font-weight:700;">View All Orders</a>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="catalog-scroll-controls">
+              <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('dashboard-recent-orders-wrapper', -300)">
+                <i class="ri-arrow-left-line"></i> Move Left
+              </button>
+              <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('dashboard-recent-orders-wrapper', 300)">
+                Move Right <i class="ri-arrow-right-line"></i>
+              </button>
+            </div>
+            <a href="#orders" onclick="switchTab('orders')" style="color:var(--admin-accent-gold);text-decoration:none;font-size:13px;font-weight:700;">View All Orders</a>
+          </div>
         </div>
-        <div class="table-responsive">
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="dashboard-recent-orders-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -146,7 +168,22 @@
     <!-- ===== VIEW 2: PRODUCTS TAB ===== -->
     <section id="view-products" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-products-input" placeholder="Search products by name, category, price..." oninput="filterCatalogTable('products-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('products-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('products-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="products-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -169,7 +206,22 @@
     <!-- ===== VIEW 3: ORDERS TAB ===== -->
     <section id="view-orders" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-orders-input" placeholder="Search orders by customer, items, ID..." oninput="filterCatalogTable('orders-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('orders-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('orders-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="orders-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -194,14 +246,31 @@
     <!-- ===== VIEW 4: DOCTOR BOOKINGS TAB ===== -->
     <section id="view-bookings" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-bookings-input" placeholder="Search appointments by patient, doctor, status..." oninput="filterCatalogTable('bookings-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('bookings-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('bookings-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="bookings-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Patient Name</th>
                 <th>Ayurvedic Doctor</th>
-                <th>Date & Time</th>
+                <th>Date &amp; Time</th>
+                <th>Consultation Fee</th>
+                <th>Payment (Method/Status)</th>
                 <th>Symptom</th>
                 <th>Status</th>
                 <th>Prescription Notes</th>
@@ -219,7 +288,22 @@
     <!-- ===== VIEW 5: THERAPIST BOOKINGS TAB ===== -->
     <section id="view-therapist-bookings" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-therapist-bookings-input" placeholder="Search sessions by patient, therapist, therapy type..." oninput="filterCatalogTable('therapist-bookings-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('therapist-bookings-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('therapist-bookings-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="therapist-bookings-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -227,7 +311,9 @@
                 <th>Patient Name</th>
                 <th>Therapist Name</th>
                 <th>Therapy Type</th>
-                <th>Date & Time</th>
+                <th>Date &amp; Time</th>
+                <th>Session Fee</th>
+                <th>Payment (Method/Status)</th>
                 <th>Visit Address</th>
                 <th>Status</th>
                 <th>OTP</th>
@@ -286,7 +372,22 @@
     <!-- ===== VIEW 7: CUSTOMERS TAB ===== -->
     <section id="view-users" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-users-input" placeholder="Search customers by name, email, ID..." oninput="filterCatalogTable('users-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('users-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('users-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="users-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -310,7 +411,22 @@
     <!-- ===== VIEW 8: DOCTORS MANAGEMENT TAB ===== -->
     <section id="view-doctors" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-doctors-input" placeholder="Search doctor by name, specialty, ID..." oninput="filterCatalogTable('doctors-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('doctors-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('doctors-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="doctors-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -336,7 +452,22 @@
     <!-- ===== VIEW 9: THERAPISTS MANAGEMENT TAB ===== -->
     <section id="view-therapists" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-therapists-input" placeholder="Search therapist by name, therapies, ID..." oninput="filterCatalogTable('therapists-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('therapists-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('therapists-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="therapists-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -363,7 +494,22 @@
     <!-- ===== VIEW 10: PARTNER WORKSPACE ACCOUNTS ===== -->
     <section id="view-partner-accounts" class="admin-view">
       <div class="admin-card">
-        <div class="table-responsive">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-partners-input" placeholder="Search partner by name, email, role..." oninput="filterCatalogTable('partner-accounts-table-body', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('partner-accounts-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('partner-accounts-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view all columns</div>
+        <div class="table-responsive" id="partner-accounts-table-wrapper">
           <table class="admin-table">
             <thead>
               <tr>
@@ -657,27 +803,42 @@
 
   <!-- ===== VIEW: AI CONSULTATIONS ===== -->
   <section id="view-ai-consultations" class="admin-view">
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-      <input type="text" id="consult-search" placeholder="Search by patient name or disease..." class="admin-form-input" style="max-width:320px;" oninput="AdminApp.filterConsultations(this.value)">
-    </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table" id="consultations-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Patient Name</th>
-            <th>Problem / Disease</th>
-            <th>Category</th>
-            <th>Dominant Dosha</th>
-            <th>Medicines Prescribed</th>
-            <th>Language</th>
-            <th>Date & Time</th>
-          </tr>
-        </thead>
-        <tbody id="consultations-tbody">
-          <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin"></i> Loading consultations...</td></tr>
-        </tbody>
-      </table>
+    <div class="admin-card">
+      <div class="catalog-toolbar">
+        <div class="catalog-search-wrap">
+          <i class="ri-search-line"></i>
+          <input type="text" class="catalog-search-input" id="consult-search" placeholder="Search by patient name, problem, dosha, medicine..." oninput="AdminApp.filterConsultations(this.value)">
+        </div>
+        <div class="catalog-scroll-controls">
+          <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', -300)">
+            <i class="ri-arrow-left-line"></i> Move Left
+          </button>
+          <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('consultations-table-wrapper', 300)">
+            Move Right <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+      </div>
+      <div class="table-scroll-hint"><i class="ri-arrow-left-right-line"></i> Swipe or click Move Left / Move Right buttons to view full diagnostic records</div>
+      <div class="table-responsive" id="consultations-table-wrapper">
+        <table class="admin-table" id="consultations-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Patient Profile</th>
+              <th>Health Concern / Symptoms</th>
+              <th>Category</th>
+              <th>Dominant Dosha &amp; Score</th>
+              <th>Prescribed Remedies</th>
+              <th>Language</th>
+              <th>Consultation Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="consultations-tbody">
+            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin"></i> Loading AI consultations...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -687,6 +848,22 @@
       <div style="text-align:center;padding:60px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading system settings...</p></div>
     </div>
   </section>
+
+  <!-- ===== FULL CATALOG ITEM DETAILS INSPECTION MODAL ===== -->
+  <div class="admin-modal-backdrop" id="admin-detail-view-backdrop">
+    <div class="admin-modal" style="width: 720px; max-width: 95vw;">
+      <div class="admin-modal-header">
+        <h3 class="admin-modal-title" id="admin-detail-view-title"><i class="ri-file-info-line"></i> Full Catalog Item Details</h3>
+        <button class="btn-modal-close" onclick="closeAdminDetailView()"><i class="ri-close-line"></i></button>
+      </div>
+      <div id="admin-detail-view-content" style="padding: 10px 0;">
+        <!-- Populated dynamically with complete fields -->
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminDetailView()">Close Window</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Javascript Modules -->
   <script src="js/admin-app.js"></script>

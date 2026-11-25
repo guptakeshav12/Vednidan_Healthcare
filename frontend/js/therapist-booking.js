@@ -137,6 +137,40 @@ const TherapistBooking = {
     }
   },
 
+  selectTherapistById(therapistId) {
+    const id = parseInt(therapistId);
+    this.selectedTherapistId = id;
+    this.selectedTimeSlot = null;
+    this.selectedTherapyType = null;
+
+    document.querySelectorAll('.therapist-row').forEach(row => {
+      if (parseInt(row.dataset.id) === id) {
+        row.classList.add('active');
+        const radio = row.querySelector('.therapist-select-radio');
+        if (radio) radio.checked = true;
+      } else {
+        row.classList.remove('active');
+      }
+    });
+
+    const step2 = document.getElementById('therapy-datetime-section');
+    if (step2) {
+      step2.style.opacity = '1';
+      step2.style.pointerEvents = 'auto';
+    }
+
+    this.updateTherapyTypeDropdown();
+
+    if (!this.selectedDateString) {
+      const firstDate = document.querySelector('.therapy-date-card');
+      if (firstDate) firstDate.click();
+    } else {
+      this.fetchSlots();
+    }
+
+    this.updateBookingSummary();
+  },
+
   // ─── Render Therapist Cards ───────────────────────────────────────────
   renderTherapists() {
     const list = document.getElementById('therapist-booking-list');
@@ -288,30 +322,68 @@ const TherapistBooking = {
     `;
   },
 
-  // ─── Submit Booking ───────────────────────────────────────────────────
-  async submitBooking() {
+  // ─── Submit Booking with UPI Payment Verification ───────────────────────
+  submitBooking() {
     const patientName  = document.getElementById('therapy-patient-name')?.value.trim();
     const patientEmail = document.getElementById('therapy-patient-email')?.value.trim();
     const address      = document.getElementById('therapy-patient-address')?.value.trim();
     const concern      = document.getElementById('therapy-patient-concern')?.value.trim();
     const therapyType  = document.getElementById('therapy-type-select')?.value;
 
-    if (!this.selectedTherapistId || !this.selectedDateString || !this.selectedTimeSlot) {
-      showToast('Please select a therapist, date, and time slot first.', 'warning');
+    if (!this.selectedTherapistId) {
+      showToast('Please select an Ayurvedic Therapist first.', 'warning');
       return;
     }
-    if (!patientName || !patientEmail) {
-      showToast('Please fill in your name and email address.', 'warning');
+    if (!this.selectedDateString) {
+      showToast('Please select a session date.', 'warning');
       return;
     }
-    if (!address) {
-      showToast('Please enter your home address for the therapist visit.', 'warning');
+    if (!this.selectedTimeSlot) {
+      showToast('Please select an available time slot.', 'warning');
+      return;
+    }
+    if (!patientName || patientName.length < 2) {
+      showToast('Please enter your full name.', 'warning');
+      document.getElementById('therapy-patient-name')?.focus();
+      return;
+    }
+    if (!patientEmail || !patientEmail.includes('@')) {
+      showToast('Please enter a valid email address.', 'warning');
+      document.getElementById('therapy-patient-email')?.focus();
+      return;
+    }
+    if (!address || address.length < 4) {
+      showToast('Please enter your complete address for the therapist visit.', 'warning');
+      document.getElementById('therapy-patient-address')?.focus();
       return;
     }
 
+    const therapist = this.therapists.find(t => t.id === this.selectedTherapistId) || { name: 'Ayurvedic Therapist', specialty: 'General' };
+    const dateObj = new Date(this.selectedDateString);
+    const dateFormatted = dateObj.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Open Payment Modal with ₹799 UPI QR Code
+    if (typeof BookingPaymentModal !== 'undefined') {
+      BookingPaymentModal.open({
+        title: 'Therapy Session Fee',
+        specialistName: `${therapist.name} (${therapyType || therapist.specialty})`,
+        slotText: `${dateFormatted} at ${this.selectedTimeSlot}`,
+        amount: 799,
+        onConfirmed: async (paymentInfo) => {
+          await this.executeTherapistBookingWithPayment(paymentInfo, patientName, patientEmail, address, concern, therapyType, therapist, dateFormatted);
+        }
+      });
+    } else {
+      this.executeTherapistBookingWithPayment({ paymentMethod: 'UPI Direct', paymentStatus: 'Paid', amount: 799 }, patientName, patientEmail, address, concern, therapyType, therapist, dateFormatted);
+    }
+  },
+
+  async executeTherapistBookingWithPayment(paymentInfo, patientName, patientEmail, address, concern, therapyType, therapist, dateFormatted) {
     const btn = document.getElementById('confirm-therapy-btn');
-    btn.disabled = true;
-    btn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Processing session booking...`;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Confirming session...`;
+    }
 
     try {
       const res = await fetch((window.API_BASE || '/api') + '/therapist-booking/book', {
@@ -324,36 +396,36 @@ const TherapistBooking = {
           patientName,
           patientEmail,
           therapyType: therapyType || "General Ayurvedic Session",
-          address: address
+          address: address,
+          amount: paymentInfo.amount || 799,
+          paymentMethod: paymentInfo.paymentMethod || 'UPI Direct',
+          paymentStatus: 'Paid',
+          paymentId: paymentInfo.paymentId || ('UPI-TH-' + Date.now())
         })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Session booking failed');
 
-      // Reuse the success overlay from the doctor booking
-      const overlay    = document.getElementById('checkout-success-overlay');
-      const titleEl    = overlay?.querySelector('.success-title');
-      const summaryEl  = document.getElementById('success-invoice-summary');
+      const overlay   = document.getElementById('checkout-success-overlay');
+      const titleEl   = overlay?.querySelector('.success-title');
+      const summaryEl = document.getElementById('success-invoice-summary');
 
-      if (titleEl) titleEl.textContent = "Therapy Session Booked! 🌿";
+      if (titleEl) titleEl.textContent = "Therapy Session Booked & Paid! 🌿";
 
       if (summaryEl) {
-        const therapist = this.therapists.find(t => t.id === this.selectedTherapistId);
-        const dateObj   = new Date(this.selectedDateString);
-        const dateStr   = dateObj.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const otpVal    = data.booking.otp_code || data.booking.otpCode || 'N/A';
+        const otpVal = data.booking.otp_code || data.booking.otpCode || '----';
 
         summaryEl.innerHTML = `
-          Your home therapy session with <strong>${therapist.name}</strong> has been scheduled successfully:
-          <div class="therapy-success-details" style="background-color: var(--background); border-radius: 8px; padding: 16px; margin: 15px 0; border: 1px solid var(--accent);">
-            <div style="margin-bottom: 8px;"><i class="ri-calendar-event-line" style="color: var(--primary);"></i> <strong>Date:</strong> ${dateStr}</div>
-            <div style="margin-bottom: 8px;"><i class="ri-time-line" style="color: var(--primary);"></i> <strong>Time:</strong> ${this.selectedTimeSlot}</div>
-            <div style="margin-bottom: 8px;"><i class="ri-leaf-line" style="color: var(--primary);"></i> <strong>Therapy:</strong> ${therapyType || 'General Ayurvedic Session'}</div>
-            <div style="margin-bottom: 8px;"><i class="ri-map-pin-line" style="color: var(--primary);"></i> <strong>Visit Address:</strong> ${address}</div>
-            <div style="margin-bottom: 8px;"><i class="ri-user-line" style="color: var(--primary);"></i> <strong>Patient:</strong> ${patientName}</div>
-            <div style="margin-bottom: 8px; font-size: 15px;"><i class="ri-shield-keyhole-line" style="color: var(--secondary-dark);"></i> <strong>Patient OTP Code:</strong> <strong style="font-size: 18px; color: var(--primary); font-family: monospace;">${otpVal}</strong></div>
-            <div><i class="ri-money-rupee-circle-line" style="color: var(--primary);"></i> <strong>Fee:</strong> ₹799 (Pay on service completion)</div>
+          Your home therapy session with <strong>${therapist.name}</strong> is confirmed:
+          <div class="therapy-success-details" style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin: 15px 0; border: 1px solid #86efac;">
+            <div style="margin-bottom: 8px;"><i class="ri-calendar-event-line" style="color: #16a34a;"></i> <strong>Date:</strong> ${dateFormatted}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-time-line" style="color: #16a34a;"></i> <strong>Time:</strong> ${this.selectedTimeSlot}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-leaf-line" style="color: #16a34a;"></i> <strong>Therapy:</strong> ${therapyType || 'General Ayurvedic Session'}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-map-pin-line" style="color: #16a34a;"></i> <strong>Visit Address:</strong> ${address}</div>
+            <div style="margin-bottom: 8px;"><i class="ri-user-line" style="color: #16a34a;"></i> <strong>Patient:</strong> ${patientName} (${patientEmail})</div>
+            <div style="margin-bottom: 8px;"><i class="ri-shield-check-line" style="color: #16a34a;"></i> <strong>Payment Status:</strong> <span style="color:#15803d; font-weight:800;">PAID (₹${paymentInfo.amount || 799} via UPI Direct)</span></div>
+            <div style="margin-bottom: 8px; font-size: 15px;"><i class="ri-shield-keyhole-line" style="color: var(--secondary-dark);"></i> <strong>Patient OTP Code:</strong> <strong style="font-size: 18px; color: #16a34a; font-family: monospace;">${otpVal}</strong></div>
           </div>
           <p style="margin-top:16px;font-size:13px;color:var(--text-secondary); line-height: 1.5;">
             ⚠️ <strong>Important:</strong> Please keep this OTP code safe. Share it with your therapist <strong>only when they arrive at your home</strong> to verify their identity and start the therapy session.
@@ -368,8 +440,10 @@ const TherapistBooking = {
       console.error(err);
       showToast(err.message || 'Error scheduling therapy session', 'error');
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = `<i class="ri-calendar-check-line"></i> Confirm Therapy Session`;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ri-qr-code-line"></i> Pay ₹799 &amp; Confirm Session`;
+      }
     }
   },
 
@@ -408,3 +482,5 @@ const TherapistBooking = {
 document.addEventListener('DOMContentLoaded', () => {
   TherapistBooking.init();
 });
+
+window.TherapistBooking = TherapistBooking;

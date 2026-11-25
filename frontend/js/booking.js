@@ -119,6 +119,42 @@ const Booking = {
     }
   },
 
+  selectDoctorById(doctorId) {
+    const id = parseInt(doctorId);
+    this.selectedDoctorId = id;
+    this.selectedTimeSlot = null;
+
+    // Highlight row
+    document.querySelectorAll('.doctor-booking-row').forEach(row => {
+      if (parseInt(row.dataset.id) === id) {
+        row.classList.add('active');
+        const radio = row.querySelector('.doctor-select-radio');
+        if (radio) radio.checked = true;
+      } else {
+        row.classList.remove('active');
+      }
+    });
+
+    // Unlock step 2
+    const step2 = document.getElementById('booking-datetime-section');
+    if (step2) {
+      step2.style.opacity = '1';
+      step2.style.pointerEvents = 'auto';
+    }
+
+    // Auto-select first available date if none selected
+    if (!this.selectedDateString) {
+      const firstDateCard = document.querySelector('.calendar-date-card');
+      if (firstDateCard) {
+        firstDateCard.click();
+      }
+    } else {
+      this.fetchSlots();
+    }
+
+    this.updateBookingSummary();
+  },
+
   renderDoctors() {
     const list = document.getElementById('doctor-booking-list');
     if (!list) return;
@@ -254,19 +290,60 @@ const Booking = {
     `;
   },
 
-  async submitBooking() {
+  submitBooking() {
     const patientName = document.getElementById('booking-patient-name').value.trim();
     const patientEmail = document.getElementById('booking-patient-email').value.trim();
     const symptom = document.getElementById('booking-patient-symptoms').value.trim();
 
-    if (!this.selectedDoctorId || !this.selectedDateString || !this.selectedTimeSlot) {
-      showToast('Please select a doctor, date, and time slot first.', 'warning');
+    if (!this.selectedDoctorId) {
+      showToast('Please select an Ayurvedic Doctor first.', 'warning');
+      return;
+    }
+    if (!this.selectedDateString) {
+      showToast('Please choose a consultation date.', 'warning');
+      return;
+    }
+    if (!this.selectedTimeSlot) {
+      showToast('Please select an available time slot.', 'warning');
+      return;
+    }
+    if (!patientName || patientName.length < 2) {
+      showToast('Please enter the patient full name.', 'warning');
+      document.getElementById('booking-patient-name')?.focus();
+      return;
+    }
+    if (!patientEmail || !patientEmail.includes('@')) {
+      showToast('Please enter a valid patient email address.', 'warning');
+      document.getElementById('booking-patient-email')?.focus();
       return;
     }
 
+    const doc = this.doctors.find(d => d.id === this.selectedDoctorId) || { name: 'Ayurvedic Specialist', specialty: 'General' };
+    const dateObj = new Date(this.selectedDateString);
+    const dateFormatted = dateObj.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Open Payment Modal with ₹499 UPI QR Code
+    if (typeof BookingPaymentModal !== 'undefined') {
+      BookingPaymentModal.open({
+        title: 'Doctor Consultation Fee',
+        specialistName: `${doc.name} (${doc.specialty})`,
+        slotText: `${dateFormatted} at ${this.selectedTimeSlot}`,
+        amount: 499,
+        onConfirmed: async (paymentInfo) => {
+          await this.executeBookingWithPayment(paymentInfo, patientName, patientEmail, symptom, doc, dateFormatted);
+        }
+      });
+    } else {
+      this.executeBookingWithPayment({ paymentMethod: 'UPI Direct', paymentStatus: 'Paid', amount: 499 }, patientName, patientEmail, symptom, doc, dateFormatted);
+    }
+  },
+
+  async executeBookingWithPayment(paymentInfo, patientName, patientEmail, symptom, doc, dateFormatted) {
     const confirmBtn = document.getElementById('confirm-booking-btn');
-    confirmBtn.disabled = true;
-    confirmBtn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Processing slot allocation...`;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Securing your slot...`;
+    }
 
     try {
       const response = await fetch((window.API_BASE || '/api') + '/booking/book', {
@@ -278,47 +355,48 @@ const Booking = {
           timeSlot: this.selectedTimeSlot,
           patientName,
           patientEmail,
-          symptom
+          symptom,
+          amount: paymentInfo.amount || 499,
+          paymentMethod: paymentInfo.paymentMethod || 'UPI Direct',
+          paymentStatus: 'Paid',
+          paymentId: paymentInfo.paymentId || ('UPI-DOC-' + Date.now())
         })
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Booking submission failed');
 
-      // Trigger checkout success modal, but populate it with booking details!
+      // Trigger checkout success modal with payment confirmed details
       const checkoutSuccessOverlay = document.getElementById('checkout-success-overlay');
-      const successTitle = checkoutSuccessOverlay.querySelector('.success-title');
+      const successTitle = checkoutSuccessOverlay?.querySelector('.success-title');
       const summaryText = document.getElementById('success-invoice-summary');
 
-      if (successTitle) successTitle.textContent = "Consultation Booked Successfully!";
+      if (successTitle) successTitle.textContent = "Consultation Booked & Paid! ✔";
       if (summaryText) {
-        const doc = this.doctors.find(d => d.id === this.selectedDoctorId);
-        const dateObj = new Date(this.selectedDateString);
-        const dateString = dateObj.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
         summaryText.innerHTML = `
-          Your consultation with <strong>${doc.name}</strong> is scheduled on:
-          <div class="booking-success-details">
-            <div><i class="ri-calendar-event-line"></i> <strong>Date:</strong> ${dateString}</div>
-            <div><i class="ri-time-line"></i> <strong>Time:</strong> ${this.selectedTimeSlot} (Online Video Call)</div>
-            <div><i class="ri-user-line"></i> <strong>Patient:</strong> ${patientName}</div>
-            <div><i class="ri-mail-line"></i> <strong>Email:</strong> ${patientEmail}</div>
+          Your consultation with <strong>${doc.name}</strong> is confirmed:
+          <div class="booking-success-details" style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:16px; margin:15px 0;">
+            <div style="margin-bottom:6px;"><i class="ri-calendar-event-line" style="color:#16a34a;"></i> <strong>Date:</strong> ${dateFormatted}</div>
+            <div style="margin-bottom:6px;"><i class="ri-time-line" style="color:#16a34a;"></i> <strong>Time:</strong> ${this.selectedTimeSlot} (Online Video Call)</div>
+            <div style="margin-bottom:6px;"><i class="ri-user-line" style="color:#16a34a;"></i> <strong>Patient:</strong> ${patientName} (${patientEmail})</div>
+            <div style="margin-bottom:6px;"><i class="ri-shield-check-line" style="color:#16a34a;"></i> <strong>Payment Status:</strong> <span style="color:#15803d; font-weight:800;">PAID (₹${paymentInfo.amount || 499} via UPI Direct)</span></div>
+            <div><i class="ri-file-list-3-line" style="color:#16a34a;"></i> <strong>Booking Reference:</strong> #BK-${data.booking.id}</div>
           </div>
-          <p style="margin-top: 15px;">A secure video link has been emailed to you. Please log in 5 minutes before your schedule.</p>
+          <p style="margin-top: 15px; color:#4b5563;">A secure video consultation link and receipt has been sent to <strong>${patientEmail}</strong>. Please join 5 minutes before your schedule.</p>
         `;
       }
 
-      checkoutSuccessOverlay.classList.add('active');
-
-      // Reset form states
+      checkoutSuccessOverlay?.classList.add('active');
       this.resetBookingForm();
 
     } catch (e) {
       console.error(e);
       showToast(e.message || 'Error scheduling booking', 'error');
     } finally {
-      confirmBtn.disabled = false;
-      confirmBtn.innerHTML = `Confirm Appointment & Generate Slot Receipt`;
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<i class="ri-qr-code-line"></i> Pay ₹499 &amp; Confirm Appointment`;
+      }
     }
   },
 
@@ -361,3 +439,58 @@ const Booking = {
 document.addEventListener('DOMContentLoaded', () => {
   Booking.init();
 });
+
+// Unified Booking Tab Switcher (Single Page Doctor + Therapist)
+window.switchUnifiedBookingTab = function(type) {
+  const docSection = document.getElementById('unified-doctor-section');
+  const thSection = document.getElementById('unified-therapist-section');
+  const btnDoc = document.getElementById('tab-btn-doctor');
+  const btnTh = document.getElementById('tab-btn-therapist');
+
+  // Navigate to booking-page if not currently active
+  if (typeof App !== 'undefined' && App.navigateTo) {
+    App.navigateTo('booking-page');
+  } else {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    const bp = document.getElementById('booking-page');
+    if (bp) bp.classList.add('active');
+  }
+
+  if (type === 'therapist') {
+    if (docSection) docSection.style.display = 'none';
+    if (thSection) thSection.style.display = 'block';
+
+    if (btnDoc) {
+      btnDoc.style.background = 'transparent';
+      btnDoc.style.color = '#4a5568';
+    }
+    if (btnTh) {
+      btnTh.style.background = '#27ae60';
+      btnTh.style.color = '#ffffff';
+    }
+
+    if (typeof TherapistBooking !== 'undefined' && TherapistBooking.renderTherapists) {
+      TherapistBooking.renderTherapists();
+    }
+  } else {
+    if (docSection) docSection.style.display = 'block';
+    if (thSection) thSection.style.display = 'none';
+
+    if (btnDoc) {
+      btnDoc.style.background = '#27ae60';
+      btnDoc.style.color = '#ffffff';
+    }
+    if (btnTh) {
+      btnTh.style.background = 'transparent';
+      btnTh.style.color = '#4a5568';
+    }
+
+    if (typeof Booking !== 'undefined' && Booking.renderDoctors) {
+      Booking.renderDoctors();
+    }
+  }
+
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+};
+
+window.Booking = Booking;

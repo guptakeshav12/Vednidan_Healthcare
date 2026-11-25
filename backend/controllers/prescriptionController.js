@@ -117,36 +117,101 @@ function parseOcrLines(text) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Levenshtein distance for fuzzy matching
+// ─────────────────────────────────────────────────────────────────
+function levenshtein(a, b) {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+// Clean product name to remove common brand names, forms, and special characters
+function cleanName(name) {
+  return name.toLowerCase()
+    .replace(/vednidan/g, '')
+    .replace(/vati/g, '')
+    .replace(/tablet/g, '')
+    .replace(/syrup/g, '')
+    .replace(/capsule/g, '')
+    .replace(/churna/g, '')
+    .replace(/powder/g, '')
+    .replace(/oil/g, '')
+    .replace(/juice/g, '')
+    .replace(/ghee/g, '')
+    .replace(/\(/g, '')
+    .replace(/\)/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .trim();
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Fuzzy-match a medicine name against the product catalog
-// Score based on token overlap; returns best matching product or null
+// Score based on exact, substring, fuzzy token overlap, and ingredients
 // ─────────────────────────────────────────────────────────────────
 function matchMedicineToProduct(medicineName, products) {
-  const queryTokens = medicineName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter(t => t.length > 2);
+  const rawQuery = medicineName.toLowerCase().trim();
+  const queryTokens = cleanName(medicineName).split(/\s+/).filter(t => t.length > 2);
 
-  if (queryTokens.length === 0) return { bestMatch: null, suggestions: [] };
+  if (queryTokens.length === 0 && rawQuery.length < 3) return { bestMatch: null, suggestions: [] };
 
   let scoredProducts = [];
 
   for (const p of products) {
-    const productText = [p.name, ...(p.ingredients || []), p.category || '']
-      .join(' ')
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ');
-
+    const pName = p.name.toLowerCase();
+    const cleanPName = cleanName(p.name);
+    const pTokens = cleanPName.split(/\s+/).filter(t => t.length > 2);
+    
     let score = 0;
 
-    for (const token of queryTokens) {
-      if (productText.includes(token)) {
-        score += token.length >= 6 ? 3 : 2;
-        if (p.name.toLowerCase().startsWith(token)) score += 2;
+    // 1. Exact match of raw name
+    if (pName === rawQuery) score += 100;
+    
+    // 2. Exact match of cleaned name
+    if (cleanPName === cleanName(medicineName) && cleanPName.length > 0) score += 80;
+
+    // 3. Substring match
+    if (pName.includes(rawQuery) && rawQuery.length > 3) score += 50;
+
+    // 4. Token matching with fuzzy (Levenshtein)
+    for (const qToken of queryTokens) {
+      let bestTokenScore = 0;
+      for (const pToken of pTokens) {
+        if (pToken === qToken) {
+          bestTokenScore = Math.max(bestTokenScore, qToken.length >= 5 ? 15 : 10);
+        } else if (pToken.startsWith(qToken) || qToken.startsWith(pToken)) {
+          bestTokenScore = Math.max(bestTokenScore, 8);
+        } else {
+          // Fuzzy match
+          const dist = levenshtein(qToken, pToken);
+          if (dist <= 1 && qToken.length >= 4) bestTokenScore = Math.max(bestTokenScore, 5);
+          else if (dist <= 2 && qToken.length >= 6) bestTokenScore = Math.max(bestTokenScore, 3);
+        }
       }
+      score += bestTokenScore;
     }
 
-    if (productText.includes(medicineName.toLowerCase())) score += 10;
+    // 5. Ingredient matching
+    if (p.ingredients && Array.isArray(p.ingredients)) {
+      for (const ing of p.ingredients) {
+        const ingStr = ing.toLowerCase();
+        if (ingStr.includes(rawQuery) || rawQuery.includes(ingStr)) score += 20;
+        for (const qToken of queryTokens) {
+          if (ingStr.includes(qToken)) score += 5;
+        }
+      }
+    }
 
     if (score > 0) {
       scoredProducts.push({ product: p, score });
@@ -157,10 +222,10 @@ function matchMedicineToProduct(medicineName, products) {
 
   const bestScore = scoredProducts.length > 0 ? scoredProducts[0].score : 0;
   
-  // Threshold: require at least score 4 to be a confident match
-  const bestMatch = bestScore >= 4 ? scoredProducts[0].product : null;
+  // Threshold: require at least score 15 to be a confident match (e.g., strong token or ingredient match)
+  const bestMatch = bestScore >= 15 ? scoredProducts[0].product : null;
   
-  // Get top 3 alternatives (excluding bestMatch if it exists)
+  // Get top 3 alternatives
   const suggestions = scoredProducts
     .filter(sp => sp.product !== bestMatch)
     .slice(0, 3)

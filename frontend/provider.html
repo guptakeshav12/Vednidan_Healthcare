@@ -16,6 +16,7 @@
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/variables.css">
+  <link rel="icon" type="image/jpeg" href="assets/vednidan-logo.jpg">
   <link rel="stylesheet" href="css/provider.css">
 
   <!-- Jitsi Meet External API -->
@@ -31,8 +32,8 @@
     <!-- Left decorative panel -->
     <div class="auth-brand-panel">
       <div class="auth-brand-inner">
-        <div class="auth-logo">
-          <i class="ri-leaf-line"></i>
+        <div class="auth-logo" style="width:72px; height:72px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,0.2); margin-bottom:16px;">
+          <img src="assets/vednidan-logo-transparent.png" alt="VedNidan Healthcare" style="width:64px; height:64px; object-fit:contain; border-radius:50%;">
         </div>
         <h1>VedNidan Healthcare</h1>
         <p>Practitioner & Therapist Portal</p>
@@ -88,10 +89,10 @@
 
           <form id="login-form" autocomplete="on">
             <div class="form-group">
-              <label>Email Address</label>
+              <label>Doctor / Therapist ID or Email</label>
               <div class="input-wrap">
-                <i class="ri-mail-line input-icon"></i>
-                <input type="email" id="login-email" placeholder="doctor@vednidan.in" required autocomplete="email">
+                <i class="ri-user-star-line input-icon"></i>
+                <input type="text" id="login-email" placeholder="e.g. 101, 201 or doctor@vednidan.com" required autocomplete="username">
               </div>
             </div>
 
@@ -366,9 +367,12 @@
   <div class="workspace-panel" id="provider-workspace-view" style="display: none;">
     <!-- Sidebar -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <i class="ri-leaf-line"></i>
-        <span>VedNidan Partner</span>
+      <div class="sidebar-brand" style="display:flex; align-items:center; gap:10px;">
+        <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="width:38px; height:auto; object-fit:contain; background:white; padding:2px; border-radius:6px;">
+        <div style="line-height:1.2;">
+          <div style="font-weight:800; font-size:15px;"><span style="color:#22c55e;">Ved</span><span style="color:#f59e0b;">nidan</span></div>
+          <div style="font-size:9px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; font-weight:700;">Partner Portal</div>
+        </div>
       </div>
 
       <div class="profile-card">
@@ -511,48 +515,74 @@
 
               <div class="dispatch-address-box">
                 <h5><i class="ri-map-pin-line"></i> Home Visit Address:</h5>
-                <p id="dispatch-address-text">-</p>
+                <div id="dispatch-address-locked" style="padding: 12px 14px; background: rgba(239,68,68,0.1); border: 1px dashed rgba(239,68,68,0.3); border-radius: 8px; color: #fca5a5; font-size: 13px;">
+                  <i class="ri-lock-line"></i> Patient home address is protected. Please click <strong>"Accept Therapy Booking"</strong> below to unlock the complete address and start navigation.
+                </div>
+                <p id="dispatch-address-text" style="display: none; padding: 12px 14px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; color: #86efac; font-size: 14px; font-weight: 600; line-height: 1.4;">-</p>
               </div>
 
               <div class="dispatch-controls">
+                <!-- STEP 1: ACCEPT BOOKING -->
                 <div class="dispatch-step-control" id="control-step-start">
-                  <p>Accept the visit request and begin navigating to the patient's house.</p>
-                  <button class="btn-primary" id="btn-start-journey"><i class="ri-navigation-line"></i> Start Journey (En Route)</button>
+                  <div style="background: rgba(207,168,92,0.1); border: 1px solid var(--admin-border); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
+                    <h5 style="margin: 0 0 6px; color: var(--admin-accent-gold); font-size: 15px;"><i class="ri-check-line"></i> New Session Request</h5>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Review the patient's requested therapy and time slot. Click <strong>Accept Therapy Booking</strong> to receive the patient's destination address and begin travel.</p>
+                  </div>
+                  <button class="btn-primary" id="btn-start-journey" style="padding: 12px 24px; font-size: 15px; font-weight: 700; background: #27ae60; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="ri-check-double-line" style="font-size: 20px;"></i> Accept Therapy Booking &amp; Unlock Address
+                  </button>
                 </div>
 
+                <!-- STEP 2: ARRIVED AT DESTINATION -->
                 <div class="dispatch-step-control" id="control-step-arrived" style="display: none;">
-                  <p>Once you arrive at the patient's house, click below to confirm arrival.</p>
-                  <button class="btn-primary" id="btn-mark-arrived"><i class="ri-user-location-line"></i> I Have Arrived</button>
+                  <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
+                    <h5 style="margin: 0 0 6px; color: #60a5fa; font-size: 15px;"><i class="ri-navigation-line"></i> En Route to Patient Destination</h5>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">You have accepted this session. Travel safely to the address shown above. Once you reach the patient's doorstep, click below to confirm arrival.</p>
+                  </div>
+                  <button class="btn-primary" id="btn-mark-arrived" style="padding: 12px 24px; font-size: 15px; font-weight: 700; background: #3b82f6; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="ri-user-location-line" style="font-size: 20px;"></i> I Have Arrived at Patient's Home
+                  </button>
                 </div>
 
+                <!-- STEP 3: OTP VERIFICATION -->
                 <div class="dispatch-step-control" id="control-step-otp" style="display: none;">
-                  <p>Ask the patient for their secure 4-digit Booking OTP code to verify identity.</p>
-                  <div class="otp-field-row">
-                    <input type="text" maxlength="4" placeholder="••••" id="dispatch-otp-input">
-                    <button class="btn-primary" id="btn-verify-otp"><i class="ri-shield-keyhole-line"></i> Verify OTP</button>
+                  <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 16px; margin-bottom: 14px;">
+                    <h5 style="margin: 0 0 6px; color: #fbbf24; font-size: 15px;"><i class="ri-shield-keyhole-line"></i> Patient Security Verification</h5>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Ask the patient for their <strong>4-digit Booking OTP</strong> (displayed on their receipt or tracking page) to verify identity before treatment begins.</p>
                   </div>
-                  <span class="error-text" id="otp-error-msg" style="display: none;">Invalid OTP! Please cross-check with client receipt.</span>
+                  <div class="otp-field-row" style="display: flex; gap: 10px; max-width: 360px;">
+                    <input type="text" maxlength="4" placeholder="Enter 4-digit OTP" id="dispatch-otp-input" style="font-size: 18px; letter-spacing: 4px; text-align: center; font-weight: 800; font-family: monospace;">
+                    <button class="btn-primary" id="btn-verify-otp" style="white-space: nowrap; font-weight: 700;">
+                      <i class="ri-shield-check-line"></i> Verify &amp; Start
+                    </button>
+                  </div>
+                  <span class="error-text" id="otp-error-msg" style="display: none; color: #ef4444; font-size: 13px; font-weight: 700; margin-top: 8px;">⚠ Invalid OTP! Please ask patient to check their booking confirmation code.</span>
                 </div>
 
+                <!-- STEP 4: ACTIVE THERAPY & LIVE TIMER -->
                 <div class="dispatch-step-control" id="control-step-active" style="display: none;">
-                  <div class="timer-box">
-                    <span class="timer-label">Session Elapsed Time:</span>
-                    <span class="timer-digits" id="session-timer-clock">00:00:00</span>
+                  <div class="timer-box" style="background: rgba(0,0,0,0.4); border: 2px solid #27ae60; border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 16px;">
+                    <span class="timer-label" style="display: block; font-size: 12px; color: #86efac; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 6px;">Therapy Session In Progress</span>
+                    <span class="timer-digits" id="session-timer-clock" style="font-size: 42px; font-weight: 900; font-family: monospace; color: #22c55e;">00:00:00</span>
+                    <p style="margin: 10px 0 0; font-size: 13px; color: var(--text-secondary);">Perform classical Ayurvedic panchakarma / massage. When the full session is finished, click below.</p>
                   </div>
-                  <p>Carry out the scheduled therapy session. Click below once treatment is complete.</p>
-                  <button class="btn-primary" id="btn-start-treatment" style="margin-bottom: 10px;"><i class="ri-play-circle-line"></i> Start Therapy Treatment</button>
-                  <button class="btn-primary btn-complete-treatment" id="btn-complete-treatment" style="display: none;"><i class="ri-check-line"></i> Finish Therapy Treatment</button>
+                  <button class="btn-primary" id="btn-start-treatment" style="margin-bottom: 10px; width: 100%; padding: 12px; font-size: 15px; font-weight: 700;"><i class="ri-play-circle-line"></i> Start Therapy Timer</button>
+                  <button class="btn-primary btn-complete-treatment" id="btn-complete-treatment" style="display: none; width: 100%; padding: 14px; font-size: 16px; font-weight: 800; background: #10b981; border: none; box-shadow: 0 4px 15px rgba(16,185,129,0.4);">
+                    <i class="ri-checkbox-circle-fill"></i> Complete Therapy Complete (Finish Session)
+                  </button>
                 </div>
 
+                <!-- STEP 5: VISIT SUMMARY NOTES -->
                 <div class="dispatch-step-control" id="control-step-feedback" style="display: none;">
-                  <h5><i class="ri-chat-voice-line"></i> Therapy Visit Summary Notes</h5>
-                  <form id="therapist-feedback-form" onsubmit="return false;" style="margin-top: 10px;">
+                  <h5><i class="ri-file-text-line"></i> Post-Therapy Clinical Remarks</h5>
+                  <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Summarize the treatment performed and patient's response. The customer will immediately receive the rating and feedback form on their screen.</p>
+                  <form id="therapist-feedback-form" onsubmit="return false;">
                     <div class="form-group">
-                      <label>Visit Summary / Patient Response</label>
-                      <textarea id="dispatch-feedback" rows="3" placeholder="e.g. Completed Shirodhara therapy. Patient reported relief. Advised Ashwagandha." required></textarea>
+                      <label>Therapist Clinical Notes / Recommendations</label>
+                      <textarea id="dispatch-feedback" rows="3" placeholder="e.g. Completed full body Abhyanga with Mahanarayan Taila. Tension in lower back relieved. Advised warm water bath and light diet." required></textarea>
                     </div>
                     <div class="form-group">
-                      <label>Rate Patient General Wellness Index</label>
+                      <label>Rate Patient Vitality / Recovery Score</label>
                       <div class="rating-stars" id="feedback-stars-row">
                         <i class="ri-star-line star-btn" data-val="1"></i>
                         <i class="ri-star-line star-btn" data-val="2"></i>
@@ -561,8 +591,8 @@
                         <i class="ri-star-line star-btn" data-val="5"></i>
                       </div>
                     </div>
-                    <button type="submit" class="btn-primary" id="btn-submit-feedback">
-                      <i class="ri-checkbox-circle-line"></i> Submit Report & Complete Visit
+                    <button type="submit" class="btn-primary" id="btn-submit-feedback" style="padding: 12px 24px; font-size: 15px; font-weight: 700;">
+                      <i class="ri-checkbox-circle-line"></i> Finalize Report &amp; Close Booking
                     </button>
                   </form>
                 </div>

@@ -13,7 +13,10 @@
     "otpCode": "4266",
     "feedback": "",
     "rating": 5,
-    "bookedAt": "2026-08-25T05:37:51.160Z"
+    "bookedAt": "2026-08-25T05:37:51.160Z",
+    "patientRating": 5,
+    "patientFeedback": "Excellent Panchakarma therapy. Relieved back pain completely.",
+    "patientFeedbackAt": "2026-11-24T16:18:49.937Z"
   },
   {
     "id": 1787735219262,
@@ -62,5 +65,61 @@
     "feedback": "",
     "rating": 5,
     "bookedAt": "2026-09-16T08:55:55.013Z"
+  },
+  {
+    "id": 1795345556732,
+    "therapistId": 1788519506401,
+    "therapistName": "Vaidya Priya Sharma",
+    "date": "2026-11-25",
+    "timeSlot": "03:00 PM",
+    "patientName": "Shubh sharma",
+    "patientEmail": "shubhsharma12@gmail.com",
+    "therapyType": "General Ayurvedic Session",
+    "address": "12 SAKET NAGAR KOTA",
+    "status": "Pending",
+    "otpCode": "1795",
+    "feedback": "",
+    "rating": 5,
+    "bookedAt": "2026-11-22T11:05:56.733Z"
+  },
+  {
+    "id": 1795527902959,
+    "therapistId": 201,
+    "therapistName": "Vaidya Pradeep Sharma",
+    "date": "2026-11-28",
+    "timeSlot": "11:00 AM",
+    "patientName": "Kavita Singh",
+    "patientEmail": "kavita@test.com",
+    "therapyType": "Panchakarma & Basti",
+    "address": "Flat 402, Green Valley Apartments, Indore",
+    "amount": 799,
+    "paymentMethod": "UPI Direct",
+    "paymentStatus": "Paid",
+    "paymentId": "UPI-TH-TEST-456",
+    "status": "Confirmed",
+    "otpCode": "6123",
+    "feedback": "",
+    "rating": 5,
+    "bookedAt": "2026-11-24T13:45:02.960Z"
+  },
+  {
+    "id": 1795531609960,
+    "therapistId": 1789548466278,
+    "therapistName": "VAIDHYA RANU KAWAR",
+    "date": "2026-11-27",
+    "timeSlot": "09:00 AM",
+    "patientName": "Shubh sharma",
+    "patientEmail": "shubhsharma12@gmail.com",
+    "therapyType": "PANCHKARMA",
+    "address": "525/3 janshi rani circle jaipye",
+    "amount": 799,
+    "paymentMethod": "UPI Direct",
+    "paymentStatus": "Paid",
+    "paymentId": "UPI-BK-1795531609878",
+    "status": "Confirmed",
+    "otpCode": "9396",
+    "feedback": "",
+    "rating": 5,
+    "bookedAt": "2026-11-24T14:46:49.960Z"
   }
 ]

@@ -15,7 +15,9 @@ const hasValidKey = Boolean(
   !supabaseKey.includes('placeholder-anon-key')
 );
 
-// PostgreSQL pool
+let isPoolReady = false;
+
+// PostgreSQL pool with short 1.5s connection timeout to prevent blocking
 const pool = new Pool({
   host: 'aws-0-ap-northeast-2.pooler.supabase.com',
   port: 5432,
@@ -24,19 +26,21 @@ const pool = new Pool({
   database: 'postgres',
   ssl: { rejectUnauthorized: false },
   max: 5,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 8000
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 1500
 });
 
 pool.on('error', (err) => {
-  console.error('[PostgreSQL Pool Error]', err.message);
+  isPoolReady = false;
 });
 
-// Test connection on startup quietly
+// Test connection on startup quietly without hanging
 pool.query('SELECT 1').then(() => {
+  isPoolReady = true;
   console.log('[Database] Connected to Supabase PostgreSQL successfully!');
 }).catch(err => {
-  console.log('[Database Notice] DB connection pool idle/fallback active:', err.message);
+  isPoolReady = false;
+  console.log('[Database Notice] DB connection pool idle/fallback active: Local JSON database operational');
 });
 
 // Supabase JS Client (used when valid API key is present)
@@ -51,6 +55,7 @@ const isConfigured = hasValidKey;
 module.exports = {
   supabase,
   pool,
+  isPoolReady: () => isPoolReady,
   supabaseUrl,
   isConfigured
 };

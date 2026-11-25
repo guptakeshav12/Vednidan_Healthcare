@@ -13,64 +13,90 @@
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 8px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: 28px;
+  transition: transform 0.2s ease;
 }
 
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background-color: var(--primary);
-  border-radius: 50%;
+.logo:hover {
+  transform: translateY(-1px);
+}
+
+.brand-vertical-lockup {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--secondary);
-  font-weight: bold;
-  font-size: 20px;
+  text-align: center;
 }
 
-.logo-text {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.brand-logo-img {
+  height: 52px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.06));
 }
 
-.logo-tagline {
-  font-size: 10px;
+.brand-healthcare-subtext {
+  font-size: 8.5px;
   font-family: var(--font-body);
-  color: var(--secondary-dark);
+  font-weight: 800;
+  color: #006837;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-top: -4px;
+  margin-top: 1px;
+  opacity: 0.9;
+}
+
+.footer-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.footer-logo-img {
+  width: 60px;
+  height: auto;
+  object-fit: contain;
 }
 
 /* Nav Links */
 .nav-menu {
   display: flex;
-  gap: 32px;
+  gap: 20px;
   list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
 }
 
 .nav-link {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
   position: relative;
-  padding: 8px 0;
+  padding: 6px 0;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   transition: var(--transition-fast);
 }
 
@@ -95,6 +121,28 @@
 
 /* Actions in Header */
 .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.search-bar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--background);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  width: 170px;
+  transition: width 0.3s ease;
+}
+
+.search-bar-container:focus-within {
+  width: 220px;
+  border-color: var(--primary);
+}
   display: flex;
   align-items: center;
   gap: 20px;

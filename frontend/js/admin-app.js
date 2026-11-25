@@ -1,5 +1,144 @@
 // Admin Panel Dashboard Engine
 
+// === CATALOG CONTROLS: LEFT-TO-RIGHT SCROLLING, FILTERING & DETAIL VIEW ===
+
+window.scrollAdminTable = (wrapperId, delta) => {
+  const el = document.getElementById(wrapperId);
+  if (el) {
+    el.scrollBy({ left: delta, behavior: 'smooth' });
+  }
+};
+
+window.filterCatalogTable = (tbodyId, query) => {
+  const q = (query || '').toLowerCase().trim();
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  const rows = tbody.getElementsByTagName('tr');
+  for (let i = 0; i < rows.length; i++) {
+    const text = rows[i].innerText.toLowerCase();
+    if (!q || text.includes(q)) {
+      rows[i].style.display = '';
+    } else {
+      rows[i].style.display = 'none';
+    }
+  }
+};
+
+window.viewCatalogItemDetails = (type, id) => {
+  const modal = document.getElementById('admin-detail-view-backdrop');
+  const title = document.getElementById('admin-detail-view-title');
+  const container = document.getElementById('admin-detail-view-content');
+  if (!modal || !container) return;
+
+  let item = null;
+  let html = '';
+
+  if (type === 'product') {
+    item = (AdminApp.products || []).find(p => p.id === id);
+    if (!item) return;
+    title.innerHTML = `<i class="ri-bubble-chart-line"></i> Product Details: ${item.name}`;
+    html = `
+      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px;">
+        <img src="${item.image}" alt="${item.name}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:2px solid var(--admin-accent-gold);" onerror="this.src='assets/doctor_avatar.png'">
+        <div style="flex:1;min-width:240px;">
+          <h4 style="margin:0 0 6px;color:var(--admin-text-main);font-size:18px;">${item.name}</h4>
+          <span style="background:rgba(207,168,92,0.15);color:var(--admin-accent-gold);padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;text-transform:capitalize;">${item.category}</span>
+          <p style="margin:8px 0 0;color:var(--admin-text-muted);font-size:13px;">${item.shortDescription || 'No short summary provided.'}</p>
+        </div>
+      </div>
+      <div class="detail-item-grid">
+        <div class="detail-item-card"><span class="detail-label">Product ID</span><div class="detail-value">#${item.id}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Retail Price</span><div class="detail-value" style="color:var(--admin-success);font-size:18px;">₹${item.price}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Customer Rating</span><div class="detail-value"><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${item.rating} (${item.reviewsCount || 0} reviews)</div></div>
+        <div class="detail-item-card"><span class="detail-label">Best Seller Badge</span><div class="detail-value">${item.isBestSeller ? 'Yes ★' : 'Standard'}</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Active Key Ingredients</span><div class="detail-value">${(item.ingredients || []).join(', ') || 'Classical botanical herbs'}</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Usage Directions</span><div class="detail-value">${item.usageDirections || 'Take twice daily after meals.'}</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Key Health Benefits</span><div class="detail-value">${(item.benefits || []).map(b => `• ${b}`).join('<br>') || 'Holistic wellness formulation'}</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Complete Long Description</span><div class="detail-value" style="font-weight:400;font-size:13px;line-height:1.5;">${item.longDescription || '—'}</div></div>
+      </div>
+    `;
+  } else if (type === 'doctor') {
+    item = (AdminApp.doctors || []).find(d => d.id === id);
+    if (!item) return;
+    title.innerHTML = `<i class="ri-nurse-line"></i> Doctor Profile: ${item.name}`;
+    html = `
+      <div style="display:flex;gap:18px;align-items:center;margin-bottom:16px;">
+        <img src="${item.avatar || 'assets/doctor_avatar.png'}" alt="${item.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #22c55e;">
+        <div>
+          <h4 style="margin:0 0 4px;font-size:18px;color:var(--admin-text-main);">${item.name}</h4>
+          <span style="color:#22c55e;font-size:13px;font-weight:700;">${item.qualification || 'BAMS, MD'}</span>
+          <div style="font-size:12px;color:var(--admin-text-muted);margin-top:2px;">Specialty: ${item.specialty}</div>
+        </div>
+      </div>
+      <div class="detail-item-grid">
+        <div class="detail-item-card"><span class="detail-label">Doctor ID (Login)</span><div class="detail-value">#${item.id}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Official Email</span><div class="detail-value">${item.email || 'doctor'+item.id+'@vednidan.com'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Phone Contact</span><div class="detail-value">${item.phone || '+91 9876543210'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Experience</span><div class="detail-value">${item.experience || '10 years'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Rating</span><div class="detail-value"><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${item.rating || 4.8} / 5.0</div></div>
+        <div class="detail-item-card"><span class="detail-label">Consultation Fee</span><div class="detail-value" style="color:var(--admin-success);">₹499 (Online Video Call)</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Specialist Focus</span><div class="detail-value">${item.specialty} — Ayurvedic pulse diagnosis, systemic balance, herbal therapy prescriptions.</div></div>
+      </div>
+    `;
+  } else if (type === 'therapist') {
+    item = (AdminApp.therapists || []).find(t => t.id === id);
+    if (!item) return;
+    title.innerHTML = `<i class="ri-user-star-line"></i> Therapist Profile: ${item.name}`;
+    const thList = Array.isArray(item.therapies) ? item.therapies : (item.therapies ? item.therapies.split(',') : []);
+    html = `
+      <div style="display:flex;gap:18px;align-items:center;margin-bottom:16px;">
+        <img src="${item.avatar || 'assets/doctor_avatar.png'}" alt="${item.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #a855f7;">
+        <div>
+          <h4 style="margin:0 0 4px;font-size:18px;color:var(--admin-text-main);">${item.name}</h4>
+          <span style="color:#a855f7;font-size:13px;font-weight:700;">${item.qualification || 'Certified Panchakarma Vaidya'}</span>
+          <div style="font-size:12px;color:var(--admin-text-muted);margin-top:2px;">Specialty: ${item.specialty}</div>
+        </div>
+      </div>
+      <div class="detail-item-grid">
+        <div class="detail-item-card"><span class="detail-label">Therapist ID (Login)</span><div class="detail-value">#${item.id}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Official Email</span><div class="detail-value">${item.email || 'therapist'+item.id+'@vednidan.com'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Phone Contact</span><div class="detail-value">${item.phone || '+91 9876543212'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Clinical Experience</span><div class="detail-value">${item.experience || '12 years'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Patient Rating</span><div class="detail-value"><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${item.rating || 4.9} / 5.0</div></div>
+        <div class="detail-item-card"><span class="detail-label">Standard Session Fee</span><div class="detail-value" style="color:#0d9488;font-size:18px;font-weight:700;">₹799 (Home / Clinic Visit)</div></div>
+        <div class="detail-item-card" style="grid-column: 1/-1;"><span class="detail-label">Therapies Offered</span><div class="detail-value">${thList.map(t => `<span style="display:inline-block;background:rgba(168,85,247,0.15);color:#c084fc;padding:3px 10px;border-radius:20px;font-size:12px;margin:2px 4px 2px 0;">${t.trim()}</span>`).join('')}</div></div>
+      </div>
+    `;
+  } else if (type === 'partner') {
+    item = (AdminApp.partnerAccounts || []).find(p => p.id === id);
+    if (!item) return;
+    title.innerHTML = `<i class="ri-shield-user-line"></i> Partner Account: ${item.name} (${item.role})`;
+    html = `
+      <div class="detail-item-grid">
+        <div class="detail-item-card"><span class="detail-label">Partner Workspace ID</span><div class="detail-value">#${item.id}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Partner Name</span><div class="detail-value">${item.name}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Login Role</span><div class="detail-value" style="text-transform:capitalize;color:var(--admin-accent-gold);">${item.role}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Login Identifier / Email</span><div class="detail-value">${item.email}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Contact Phone</span><div class="detail-value">${item.phone || '—'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Qualification</span><div class="detail-value">${item.qualification || '—'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Specialty Field</span><div class="detail-value">${item.specialty || '—'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Experience</span><div class="detail-value">${item.experience || '—'}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Rating</span><div class="detail-value"><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${item.rating || 4.8}</div></div>
+        <div class="detail-item-card"><span class="detail-label">Account Status</span><div class="detail-value" style="color:var(--admin-success);">Active</div></div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+  modal.classList.add('active');
+};
+
+window.closeAdminDetailView = () => {
+  const modal = document.getElementById('admin-detail-view-backdrop');
+  if (modal) modal.classList.remove('active');
+};
+
+// Also bind delete shortcuts to prevent undefined errors
+window.deleteDoctor = (id) => window.deleteDoctorCatalog(id);
+window.deleteTherapist = (id) => window.deleteTherapistCatalog(id);
+window.deleteProduct = (id) => window.deleteProductListing(id);
+
 // Auto-detect backend URL: use /api if served from Express (port 5000), else full URL
 const ADMIN_API = (function() {
   const BACKEND_PORT = 5000;
@@ -192,10 +331,19 @@ const AdminApp = {
       if (!res.ok) throw new Error();
       const stats = await res.json();
       
-      document.getElementById('stat-revenue').textContent = `â‚¹${stats.revenue.toLocaleString()}`;
-      document.getElementById('stat-orders').textContent = stats.ordersCount;
-      document.getElementById('stat-bookings').textContent = stats.bookingsCount;
-      document.getElementById('stat-therapist-bookings').textContent = stats.therapistBookingsCount;
+      document.getElementById('stat-revenue').textContent = '₹' + (stats.revenue || 0).toLocaleString();
+      if (document.getElementById('stat-orders-revenue')) {
+        document.getElementById('stat-orders-revenue').textContent = '₹' + (stats.ordersRevenue || 0).toLocaleString();
+      }
+      if (document.getElementById('stat-doctor-revenue')) {
+        document.getElementById('stat-doctor-revenue').textContent = '₹' + (stats.doctorRevenue || 0).toLocaleString();
+      }
+      if (document.getElementById('stat-therapist-revenue')) {
+        document.getElementById('stat-therapist-revenue').textContent = '₹' + (stats.therapistRevenue || 0).toLocaleString();
+      }
+      document.getElementById('stat-orders').textContent = stats.ordersCount || 0;
+      document.getElementById('stat-bookings').textContent = stats.bookingsCount || 0;
+      document.getElementById('stat-therapist-bookings').textContent = stats.therapistBookingsCount || 0;
     } catch (e) {
       console.error('Error fetching statistics:', e);
     }
@@ -248,10 +396,13 @@ const AdminApp = {
           <td><img src="${p.image}" alt="${p.name}" class="product-img-th" onerror="this.src='https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&q=80&w=100'"></td>
           <td><strong>${p.name}</strong>${p.isBestSeller ? ' <span style="font-size:10px;background:var(--admin-accent-gold);color:#000;padding:2px 6px;border-radius:4px;font-weight:700;">Best Seller</span>' : ''}</td>
           <td style="text-transform: capitalize;">${p.category}</td>
-          <td>â‚¹${p.price}</td>
-          <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${p.rating} (${p.reviewsCount})</td>
+          <td>₹${p.price}</td>
+          <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${p.rating} (${p.reviewsCount || 0})</td>
           <td>
-            <div class="action-buttons">
+            <div class="action-buttons" style="display:flex;align-items:center;gap:6px;">
+              <button class="btn-catalog-view-detail" title="View Full Details" onclick="viewCatalogItemDetails('product', ${p.id})">
+                <i class="ri-eye-line"></i> View
+              </button>
               <button class="btn-icon btn-edit" title="Edit details" onclick="openEditProductModal(${p.id})">
                 <i class="ri-pencil-line"></i>
               </button>
@@ -344,12 +495,15 @@ const AdminApp = {
           ? `<span title="${b.prescription}" style="display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--admin-success);font-size:12px;"><i class="ri-file-list-3-line"></i> ${b.prescription}</span>`
           : '<span style="color:var(--admin-text-muted);font-size:12px;">Pending</span>';
 
+        const payBadge = `<span style="background:rgba(22,163,74,0.15);color:#4ade80;border:1px solid rgba(22,163,74,0.3);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;"><i class="ri-checkbox-circle-fill"></i> ${b.paymentStatus || 'Paid'} (${b.paymentMethod || 'UPI Direct'})</span>`;
         return `
           <tr>
             <td><strong>#${b.id}</strong></td>
             <td><strong>${b.patientName}</strong><br><span style="font-size:11px;color:var(--admin-text-muted);">${b.patientEmail || ''}</span></td>
             <td>${b.doctorName}</td>
             <td>${b.date} &nbsp;<span style="color:var(--admin-accent-gold);font-weight:700;">${b.timeSlot}</span></td>
+            <td><strong style="color:var(--admin-success); font-size:14px;">₹${b.amount || 499}</strong></td>
+            <td>${payBadge}</td>
             <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${b.symptom}">${b.symptom}</td>
             <td>${statusBadge}</td>
             <td>${rxCell}</td>
@@ -515,6 +669,7 @@ const AdminApp = {
         return;
       }
 
+      this.doctors = docs;
       container.innerHTML = docs.map(d => `
         <tr>
           <td>#${d.id}</td>
@@ -526,7 +681,10 @@ const AdminApp = {
           <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${d.rating}</td>
           <td>${d.experience}</td>
           <td>
-            <div class="action-buttons">
+            <div class="action-buttons" style="display:flex;align-items:center;gap:6px;">
+              <button class="btn-catalog-view-detail" title="View Full Details" onclick="viewCatalogItemDetails('doctor', ${d.id})">
+                <i class="ri-eye-line"></i> View
+              </button>
               <button class="btn-icon btn-edit" title="Edit Doctor" onclick='openEditDoctorModal(${JSON.stringify(d).replace(/'/g, "&apos;")})'>
                 <i class="ri-pencil-line"></i>
               </button>
@@ -554,6 +712,7 @@ const AdminApp = {
         return;
       }
 
+      this.therapists = ths;
       container.innerHTML = ths.map(t => `
         <tr>
           <td>#${t.id}</td>
@@ -566,7 +725,10 @@ const AdminApp = {
           <td>${t.experience}</td>
           <td>${(t.therapies || []).map(th => `<span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${th}</span>`).join('')}</td>
           <td>
-            <div class="action-buttons">
+            <div class="action-buttons" style="display:flex;align-items:center;gap:6px;">
+              <button class="btn-catalog-view-detail" title="View Full Details" onclick="viewCatalogItemDetails('therapist', ${t.id})">
+                <i class="ri-eye-line"></i> View
+              </button>
               <button class="btn-icon btn-edit" title="Edit Therapist" onclick='openEditTherapistModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
                 <i class="ri-pencil-line"></i>
               </button>
@@ -594,6 +756,7 @@ const AdminApp = {
         return;
       }
 
+      this.partnerAccounts = accounts;
       container.innerHTML = accounts.map(a => `
         <tr>
           <td>#${a.id}</td>
@@ -606,7 +769,10 @@ const AdminApp = {
           <td>${a.experience}</td>
           <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${a.rating}</td>
           <td>
-            <div class="action-buttons" style="gap: 8px;">
+            <div class="action-buttons" style="display:flex;align-items:center;gap:6px;">
+              <button class="btn-catalog-view-detail" title="View Full Details" onclick="viewCatalogItemDetails('partner', ${a.id})">
+                <i class="ri-eye-line"></i> View
+              </button>
               <button class="btn-admin-secondary" style="padding:4px 8px; font-size:11px; white-space:nowrap; display:flex; align-items:center; gap:4px;" title="Reset Password to default 123456" onclick="resetPartnerPassword(${a.id})">
                 <i class="ri-key-line"></i> Reset Password
               </button>
@@ -1028,7 +1194,7 @@ AdminApp.renderConsultations = function(logs) {
   const tbody = document.getElementById('consultations-tbody');
   if (!tbody) return;
   if (!logs || logs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--admin-text-muted);">No AI consultations recorded yet. Consultations appear here after patients use the AI Doctor.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);">No AI consultations recorded yet. Consultations appear here in real-time when patients consult Charaka AI.</td></tr>`;
     return;
   }
   const doshaColors = { vata: '#8b5cf6', pitta: '#f59e0b', kapha: '#10b981' };
@@ -1037,17 +1203,116 @@ AdminApp.renderConsultations = function(logs) {
     const medicines = (log.medicines || []).slice(0, 2).join(', ');
     const moreMeds = (log.medicines || []).length > 2 ? ` +${(log.medicines||[]).length - 2} more` : '';
     const doshaColor = doshaColors[log.dominantDosha] || '#6b7280';
+    const logId = log.id || ('LOG-'+(i+1));
     return `<tr>
-      <td style="font-size:11px;color:var(--admin-text-muted);">${log.id || ('LOG-'+(i+1))}</td>
-      <td><strong>${log.name || 'Anonymous'}</strong><br><small style="color:var(--admin-text-muted);">${log.weight ? log.weight+'kg' : ''} ${log.height ? '/ '+log.height : ''}</small></td>
-      <td>${log.problem || '—'}<br><small style="color:var(--admin-text-muted);">${log.duration || ''}</small></td>
-      <td><span class="badge" style="background:rgba(99,102,241,0.2);color:#818cf8;text-transform:capitalize;">${log.category || 'general'}</span></td>
-      <td><span class="badge" style="background:${doshaColor}22;color:${doshaColor};text-transform:capitalize;">${log.dominantDosha || '—'}</span><br><small style="color:var(--admin-text-muted);">${log.scores ? 'V:'+log.scores.vata+' P:'+log.scores.pitta+' K:'+log.scores.kapha : ''}</small></td>
-      <td style="max-width:200px;font-size:12px;">${medicines}${moreMeds ? '<em style="color:var(--admin-text-muted)">'+moreMeds+'</em>' : ''}</td>
-      <td><span style="text-transform:uppercase;font-size:11px;">${log.language === 'hi' ? '🇮🇳 Hindi' : log.language === 'mr' ? '🟠 Marathi' : '🌐 English'}</span></td>
-      <td style="font-size:11px;color:var(--admin-text-muted);">${dt}</td>
+      <td><strong style="color:var(--admin-accent-gold); font-family:monospace;">#${logId}</strong></td>
+      <td>
+        <strong>${log.name || 'Anonymous'}</strong><br>
+        <small style="color:var(--admin-text-muted);">
+          ${log.gender ? log.gender.toUpperCase() : ''} ${log.age ? '| ' + log.age + ' yrs' : ''} 
+          ${log.weight ? '| ' + log.weight + 'kg' : ''}
+        </small>
+      </td>
+      <td style="max-width:240px; white-space:normal; line-height:1.4;">
+        <span style="font-weight:600; color:var(--admin-text-main);">${log.problem || 'General Checkup'}</span>
+        ${log.duration ? `<br><small style="color:var(--admin-text-muted);"><i class="ri-history-line"></i> Duration: ${log.duration}</small>` : ''}
+      </td>
+      <td>
+        <span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);text-transform:capitalize;">
+          ${log.category || 'general'}
+        </span>
+      </td>
+      <td>
+        <span class="badge" style="background:${doshaColor}22;color:${doshaColor};border:1px solid ${doshaColor}55;text-transform:capitalize;font-weight:700;">
+          <i class="ri-fire-line"></i> ${log.dominantDosha || 'Tridoshic'}
+        </span>
+        <br>
+        <small style="color:var(--admin-text-muted); font-size:10px;">
+          ${log.scores ? `V:${log.scores.vata || 0} | P:${log.scores.pitta || 0} | K:${log.scores.kapha || 0}` : ''}
+        </small>
+      </td>
+      <td style="max-width:260px; font-size:12px; white-space:normal; line-height:1.3;">
+        <span style="color:#22c55e; font-weight:600;">${medicines}</span>${moreMeds ? `<em style="color:var(--admin-text-muted); font-size:11px;">${moreMeds}</em>` : ''}
+      </td>
+      <td>
+        <span style="text-transform:uppercase;font-size:11px;font-weight:700;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;">
+          ${log.language === 'hi' ? '🇮🇳 Hindi' : log.language === 'mr' ? '🟠 Marathi' : '🌐 English'}
+        </span>
+      </td>
+      <td style="font-size:12px;color:var(--admin-text-muted);">${dt}</td>
+      <td>
+        <button class="btn-catalog-view-detail" title="View Full AI Diagnosis" onclick="viewAIConsultationDetail('${logId}')">
+          <i class="ri-eye-line"></i> View Report
+        </button>
+      </td>
     </tr>`;
   }).join('');
+};
+
+window.viewAIConsultationDetail = (logId) => {
+  const modal = document.getElementById('admin-detail-view-backdrop');
+  const title = document.getElementById('admin-detail-view-title');
+  const container = document.getElementById('admin-detail-view-content');
+  if (!modal || !container) return;
+
+  const log = (AdminApp._allConsultations || []).find(l => (l.id || '') === logId || ('LOG-' + ((AdminApp._allConsultations.indexOf(l) + 1))) === logId);
+  if (!log) return;
+
+  title.innerHTML = `<i class="ri-robot-2-line" style="color:var(--admin-accent-gold);"></i> Charaka AI Diagnostic Record: ${log.name || 'Anonymous'}`;
+
+  const medsHtml = (log.medicines || []).map(m => `<span style="display:inline-block;background:rgba(34,197,94,0.15);color:#4ade80;padding:4px 10px;border-radius:6px;font-size:12px;margin:2px 4px 2px 0;font-weight:600;"><i class="ri-capsule-line"></i> ${m}</span>`).join('') || '<span style="color:var(--admin-text-muted);">None prescribed</span>';
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+      <div>
+        <h4 style="margin:0 0 4px; font-size:18px; color:var(--admin-text-main);">${log.name || 'Anonymous Patient'}</h4>
+        <span style="font-size:12px; color:var(--admin-text-muted);">Age: ${log.age || 'N/A'} | Gender: ${log.gender || 'N/A'} | Weight: ${log.weight ? log.weight + ' kg' : 'N/A'} | Height: ${log.height || 'N/A'}</span>
+      </div>
+      <span class="badge" style="background:rgba(207,168,92,0.15); color:var(--admin-accent-gold); border:1px solid var(--admin-accent-gold); font-size:12px;">
+        ${log.id || logId}
+      </span>
+    </div>
+    <div class="detail-item-grid">
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Reported Health Concern / Symptoms</span>
+        <div class="detail-value" style="font-size:15px; color:#f0fdf4;">${log.problem || 'General Consultation'}</div>
+        ${log.duration ? `<div style="font-size:12px; color:var(--admin-text-muted); margin-top:4px;"><strong>Duration of problem:</strong> ${log.duration}</div>` : ''}
+      </div>
+      <div class="detail-item-card">
+        <span class="detail-label">Diagnostic Category</span>
+        <div class="detail-value" style="text-transform:capitalize; color:#818cf8;">${log.category || 'General Health'}</div>
+      </div>
+      <div class="detail-item-card">
+        <span class="detail-label">Dominant Dosha</span>
+        <div class="detail-value" style="text-transform:capitalize; color:var(--admin-accent-gold);">${log.dominantDosha || 'Tridoshic Balance'}</div>
+      </div>
+      <div class="detail-item-card">
+        <span class="detail-label">Dosha Imbalance Scores</span>
+        <div class="detail-value" style="font-size:12px;">
+          ${log.scores ? `Vata: <strong>${log.scores.vata || 0}</strong> | Pitta: <strong>${log.scores.pitta || 0}</strong> | Kapha: <strong>${log.scores.kapha || 0}</strong>` : 'N/A'}
+        </div>
+      </div>
+      <div class="detail-item-card">
+        <span class="detail-label">Consultation Language</span>
+        <div class="detail-value">${log.language === 'hi' ? 'Hindi (हिंदी)' : log.language === 'mr' ? 'Marathi (मराठी)' : 'English'}</div>
+      </div>
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Recommended Ayurvedic Remedies</span>
+        <div class="detail-value" style="margin-top:6px;">${medsHtml}</div>
+      </div>
+      ${log.advice ? `
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Charaka AI Clinical Advice &amp; Lifestyle Guidelines</span>
+        <div class="detail-value" style="font-size:13px; font-weight:400; line-height:1.5; color:#e2e8f0;">${log.advice.replace(/\n/g, '<br>')}</div>
+      </div>` : ''}
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Consultation Timestamp</span>
+        <div class="detail-value" style="font-size:12px; color:var(--admin-text-muted);">${log.timestamp ? new Date(log.timestamp).toLocaleString('en-IN') : 'N/A'}</div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
 };
 
 AdminApp.filterConsultations = function(query) {

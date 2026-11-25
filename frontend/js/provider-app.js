@@ -373,6 +373,38 @@ const ProviderApp = {
     }
 
     const roomName = `VedNidan_Consultation_${booking.id}`;
+    const directMeetLink = `https://meet.jit.si/${roomName}`;
+
+    // Add Direct Video Call Controls Bar above Jitsi frame
+    const controlsBar = document.createElement('div');
+    controlsBar.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #111a16;
+      border: 1px solid rgba(207,168,92,0.3);
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    `;
+    controlsBar.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display:inline-block; width:10px; height:10px; background:#22c55e; border-radius:50%; animation: pulse-gold 2s infinite;"></span>
+        <strong style="color: #4ade80;">HD Audio &amp; Video Connected</strong>
+        <span style="color: var(--text-muted);">| Room: #${booking.id}</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="${directMeetLink}" target="_blank" class="btn-primary" style="padding: 4px 12px; font-size: 12px; border-radius: 4px; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+          <i class="ri-external-link-line"></i> Open in Full Window
+        </a>
+      </div>
+    `;
+    container.appendChild(controlsBar);
+
+    const frameHolder = document.createElement('div');
+    frameHolder.style.cssText = 'width: 100%; height: 480px; border-radius: 8px; overflow: hidden; background: #000;';
+    container.appendChild(frameHolder);
     
     // Initialize Jitsi Meet Iframe Call
     try {
@@ -381,13 +413,22 @@ const ProviderApp = {
         roomName: roomName,
         width: '100%',
         height: '100%',
-        parentNode: container,
+        parentNode: frameHolder,
         userInfo: {
           displayName: this.provider.name
         },
         configOverwrite: {
           startWithAudioMuted: false,
-          startWithVideoMuted: false
+          startWithVideoMuted: false,
+          enableWelcomePage: false,
+          prejoinPageEnabled: false,
+          disableDeepLinking: true,
+          resolution: 720,
+          constraints: {
+            video: {
+              height: { ideal: 720, max: 1080, min: 360 }
+            }
+          }
         },
         interfaceConfigOverwrite: {
           TOOLBAR_BUTTONS: [
@@ -407,11 +448,11 @@ const ProviderApp = {
 
     } catch (e) {
       console.error('Error opening Jitsi Meet Room:', e);
-      container.innerHTML = `
+      frameHolder.innerHTML = `
         <div style="padding:40px; text-align:center; color: var(--danger); font-weight:700;">
           <i class="ri-alert-line" style="font-size:32px;"></i>
           <p>Failed to embed secure Video API. Please direct copy Jitsi Link below:</p>
-          <a href="https://meet.jit.si/${roomName}" target="_blank" class="btn-primary" style="display:inline-block; margin-top:10px;">Open in Jitsi Window</a>
+          <a href="${directMeetLink}" target="_blank" class="btn-primary" style="display:inline-block; margin-top:10px;">Open in Jitsi Window</a>
         </div>
       `;
     }
@@ -520,31 +561,57 @@ const ProviderApp = {
     badge.className = `status-indicator-badge ${status.toLowerCase().replace(' ', '')}`;
     badge.textContent = status;
 
+    const lockedAddressEl = document.getElementById('dispatch-address-locked');
+    const addressTextEl = document.getElementById('dispatch-address-text');
+
     if (status === 'Pending') {
       stepStart.style.display = 'block';
       routeLine.style.strokeDashoffset = '400'; // 0% progress
       marker.setAttribute('transform', 'translate(30, 90)');
-      etaText.textContent = 'Distance: 4.8 km | ETA: 12 mins';
+      etaText.textContent = 'Awaiting Confirmation | ETA: 15 mins';
+
+      // Address is locked until accepted
+      if (lockedAddressEl) lockedAddressEl.style.display = 'block';
+      if (addressTextEl) addressTextEl.style.display = 'none';
     } 
     else if (status === 'En Route') {
       stepArrived.style.display = 'block';
       routeLine.style.strokeDashoffset = '200'; // 50% progress
       marker.setAttribute('transform', 'translate(190, 90)');
       etaText.textContent = 'En Route: Navigating to Patient home... | ETA: 6 mins';
-      this.showToast('Routing timeline loaded. Ride started!');
+
+      // Unlock and display address
+      if (lockedAddressEl) lockedAddressEl.style.display = 'none';
+      if (addressTextEl) {
+        addressTextEl.style.display = 'block';
+        addressTextEl.textContent = this.activeBooking.address || 'Address on file';
+      }
+      this.showToast('Booking Accepted! Patient home address unlocked.', 'success');
     } 
     else if (status === 'Arrived') {
       stepOtp.style.display = 'block';
       routeLine.style.strokeDashoffset = '0'; // 100% progress
       marker.setAttribute('transform', 'translate(340, 90)');
       etaText.textContent = 'Arrived at Destination!';
-      this.showToast('You have arrived! Collect the OTP from the patient.');
+
+      if (lockedAddressEl) lockedAddressEl.style.display = 'none';
+      if (addressTextEl) {
+        addressTextEl.style.display = 'block';
+        addressTextEl.textContent = this.activeBooking.address || 'Address on file';
+      }
+      this.showToast('You have arrived! Collect the 4-digit OTP from the patient.');
     } 
     else if (status === 'In Progress') {
       stepActive.style.display = 'block';
       routeLine.style.strokeDashoffset = '0';
       marker.setAttribute('transform', 'translate(340, 90)');
       etaText.textContent = 'Therapy Session in Progress...';
+
+      if (lockedAddressEl) lockedAddressEl.style.display = 'none';
+      if (addressTextEl) {
+        addressTextEl.style.display = 'block';
+        addressTextEl.textContent = this.activeBooking.address || 'Address on file';
+      }
     }
   },
 

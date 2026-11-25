@@ -124,10 +124,13 @@ body.admin-body {
 .admin-main {
   margin-left: 260px;
   flex-grow: 1;
-  padding: 40px;
+  width: calc(100vw - 260px);
+  max-width: calc(100vw - 260px);
+  padding: 30px;
   min-height: 100vh;
   box-sizing: border-box;
   background: radial-gradient(circle at 10% 20%, rgba(20, 40, 32, 0.15) 0%, transparent 40%);
+  overflow-x: hidden;
 }
 
 .admin-header {
@@ -245,9 +248,13 @@ body.admin-body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--admin-border);
   border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 40px;
+  padding: 24px;
+  margin-bottom: 35px;
   box-shadow: var(--admin-shadow);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .admin-card-header {
@@ -270,38 +277,103 @@ body.admin-body {
   color: var(--admin-accent-gold);
 }
 
-/* Tables CSS */
+/* Tables CSS with Full Horizontal Swipe / Scroll */
 .table-responsive {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-accent-gold) rgba(255, 255, 255, 0.05);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--admin-accent-gold);
+  border-radius: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-accent-gold-hover);
+}
+
+.table-scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-accent-gold);
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  background: rgba(207, 168, 92, 0.08);
+  border-left: 3px solid var(--admin-accent-gold);
+  border-radius: 4px;
 }
 
 .admin-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 1200px; /* Generous width so nothing is cut off and table scrolls smoothly */
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
+  white-space: nowrap;
 }
 
 .admin-table th {
-  padding: 14px 18px;
+  padding: 16px 20px;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--admin-text-muted);
-  border-bottom: 1px solid rgba(207, 168, 92, 0.1);
+  background: rgba(16, 26, 22, 0.95);
+  border-bottom: 1px solid rgba(207, 168, 92, 0.2);
   letter-spacing: 0.5px;
 }
 
 .admin-table td {
-  padding: 16px 18px;
+  padding: 16px 20px;
   font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: var(--admin-text-main);
   vertical-align: middle;
+  background: rgba(20, 32, 27, 0.4);
 }
 
 .admin-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(207, 168, 92, 0.05);
+}
+
+/* Sticky Action Column (Pinned to the Right so it is ALWAYS visible and never cut off) */
+.admin-table th:last-child,
+.admin-table td:last-child {
+  position: sticky;
+  right: 0;
+  background: #101c17;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.45);
+  z-index: 5;
+  text-align: right;
+  min-width: 160px;
+}
+
+.admin-table tr:hover td:last-child {
+  background: #14241d;
 }
 
 /* Status Badges */
@@ -572,4 +644,120 @@ body.admin-body {
   border-radius: 8px;
   padding: 10px;
   margin-bottom: 8px;
+}
+
+/* Catalog Toolbar & Left-to-Right Controls */
+.catalog-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.catalog-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  flex: 1;
+  max-width: 380px;
+}
+
+.catalog-search-wrap i {
+  color: var(--admin-accent-gold);
+}
+
+.catalog-search-input {
+  background: transparent;
+  border: none;
+  color: var(--admin-text-main);
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+}
+
+.catalog-scroll-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-scroll-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(207, 168, 92, 0.12);
+  color: var(--admin-accent-gold);
+  border: 1px solid rgba(207, 168, 92, 0.3);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-scroll-nav:hover {
+  background: var(--admin-accent-gold);
+  color: #000000;
+}
+
+/* Catalog View Full Details Button */
+.btn-catalog-view-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.btn-catalog-view-detail:hover {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+/* Detail modal styles */
+.detail-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.detail-item-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.detail-item-card span.detail-label {
+  display: block;
+  font-size: 11px;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.detail-item-card div.detail-value {
+  font-size: 14px;
+  color: var(--admin-text-main);
+  font-weight: 600;
+  word-break: break-word;
 }

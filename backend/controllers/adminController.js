@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { supabase, isConfigured, pool } = require('../config/supabase');
+const { supabase, isConfigured, pool, isPoolReady } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 const bookingsFilePath = path.join(__dirname, '../data/bookings.json');
@@ -39,82 +39,65 @@ const writeFileHelper = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 };
 
-// 1. GET /api/admin/stats
+// 1. GET /api/admin/stats — Comprehensive Revenue & Business Metrics
 exports.getStats = async (req, res) => {
   try {
-    if (!isConfigured) {
-      const products = readFileHelper(productsFilePath);
-      const bookings = readFileHelper(bookingsFilePath);
-      const therapistBookings = readFileHelper(therapistBookingsFilePath);
-      const orders = readFileHelper(ordersFilePath);
+    const products = readFileHelper(productsFilePath);
+    const bookings = readFileHelper(bookingsFilePath);
+    const therapistBookings = readFileHelper(therapistBookingsFilePath);
+    const orders = readFileHelper(ordersFilePath);
 
-      const totalRevenue = orders
-        .filter(o => o.status === 'Delivered' || o.status === 'Shipped')
-        .reduce((sum, o) => sum + (o.total || 0), 0);
+    // 1. Orders revenue (all received orders)
+    const ordersRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
 
-      return res.json({
-        revenue: totalRevenue,
-        ordersCount: orders.length,
-        bookingsCount: bookings.length,
-        therapistBookingsCount: therapistBookings.length,
-        productsCount: products.length
-      });
-    }
+    // 2. Doctor consultation fees received (₹499 each)
+    const doctorRevenue = bookings.reduce((sum, b) => sum + (parseFloat(b.amount) || 499), 0);
 
-    // Connect to Supabase
-    const { count: pCount } = await supabase.from('products').select('*', { head: true, count: 'exact' });
-    const { count: oCount } = await supabase.from('orders').select('*', { head: true, count: 'exact' });
-    const { count: bCount } = await supabase.from('bookings').select('*', { head: true, count: 'exact' });
-    const { count: tbCount } = await supabase.from('therapist_bookings').select('*', { head: true, count: 'exact' });
+    // 3. Therapist session fees received (₹799 each)
+    const therapistRevenue = therapistBookings.reduce((sum, b) => sum + (parseFloat(b.amount) || 799), 0);
 
-    // Fetch total revenue sum from Delivered/Shipped
-    const { data: revData } = await supabase
-      .from('orders')
-      .select('total')
-      .in('status', ['Delivered', 'Shipped']);
+    // Total Grand Amount Received
+    const totalRevenue = Math.round(ordersRevenue + doctorRevenue + therapistRevenue);
 
-    const totalRevenue = (revData || []).reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-
-    res.json({
+    return res.json({
       revenue: totalRevenue,
-      ordersCount: oCount || 0,
-      bookingsCount: bCount || 0,
-      therapistBookingsCount: tbCount || 0,
-      productsCount: pCount || 0
+      totalRevenueReceived: totalRevenue,
+      ordersRevenue: Math.round(ordersRevenue),
+      doctorRevenue: Math.round(doctorRevenue),
+      therapistRevenue: Math.round(therapistRevenue),
+      ordersCount: orders.length,
+      bookingsCount: bookings.length,
+      therapistBookingsCount: therapistBookings.length,
+      productsCount: products.length
     });
-
   } catch (error) {
     console.error('Error fetching admin stats:', error);
-    res.status(500).json({ message: 'Error retrieving admin statistics' });
+    res.status(500).json({ message: 'Error retrieving admin statistics: ' + error.message });
   }
 };
 
 // 2. GET /api/admin/bookings
 exports.getBookings = async (req, res) => {
   try {
-    if (!isConfigured) {
-      return res.json(readFileHelper(bookingsFilePath));
-    }
-    const { data, error } = await supabase.from('bookings').select('*').order('id', { ascending: false });
-    if (error) throw error;
-    
-    // Map database snake_case keys back to camelCase frontend keys
-    const formatted = data.map(b => ({
+    const list = readFileHelper(bookingsFilePath);
+    const formatted = list.map(b => ({
       id: b.id,
-      doctorId: b.doctor_id,
-      doctorName: b.doctor_name,
+      doctorId: b.doctorId || b.doctor_id,
+      doctorName: b.doctorName || b.doctor_name || 'Dr. Ayurvedic Specialist',
       date: b.date,
-      timeSlot: b.time_slot,
-      patientName: b.patient_name,
-      patientEmail: b.patient_email,
-      symptom: b.symptom,
+      timeSlot: b.timeSlot || b.time_slot,
+      patientName: b.patientName || b.patient_name,
+      patientEmail: b.patientEmail || b.patient_email,
+      symptom: b.symptom || 'General Consultation',
+      amount: b.amount || 499,
+      paymentMethod: b.paymentMethod || 'UPI Direct',
+      paymentStatus: b.paymentStatus || 'Paid',
       status: b.status || 'Scheduled',
       prescription: b.prescription || '',
-      videoRoomId: b.video_room_id || '',
-      bookedAt: b.booked_at
+      videoRoomId: b.videoRoomId || b.video_room_id || '',
+      bookedAt: b.bookedAt || b.booked_at || new Date().toISOString()
     }));
-
-    res.json(formatted);
+    return res.json(formatted);
   } catch (error) {
     console.error('Error fetching doctor bookings:', error);
     res.status(500).json({ message: 'Error retrieving doctor bookings' });
@@ -147,30 +130,27 @@ exports.deleteBooking = async (req, res) => {
 // 4. GET /api/admin/therapist-bookings
 exports.getTherapistBookings = async (req, res) => {
   try {
-    if (!isConfigured) {
-      return res.json(readFileHelper(therapistBookingsFilePath));
-    }
-    const { data, error } = await supabase.from('therapist_bookings').select('*').order('id', { ascending: false });
-    if (error) throw error;
-
-    const formatted = data.map(b => ({
+    const list = readFileHelper(therapistBookingsFilePath);
+    const formatted = list.map(b => ({
       id: b.id,
-      therapistId: b.therapist_id,
-      therapistName: b.therapist_name,
+      therapistId: b.therapistId || b.therapist_id,
+      therapistName: b.therapistName || b.therapist_name || 'Vaidya Ayurvedic Therapist',
       date: b.date,
-      timeSlot: b.time_slot,
-      patientName: b.patient_name,
-      patientEmail: b.patient_email,
-      therapyType: b.therapy_type,
+      timeSlot: b.timeSlot || b.time_slot,
+      patientName: b.patientName || b.patient_name,
+      patientEmail: b.patientEmail || b.patient_email,
+      therapyType: b.therapyType || b.therapy_type || 'Panchakarma / Abhyanga',
       address: b.address || 'In-Clinic Session',
-      status: b.status || 'Pending',
-      otpCode: b.otp_code || '----',
+      amount: b.amount || 799,
+      paymentMethod: b.paymentMethod || 'UPI Direct',
+      paymentStatus: b.paymentStatus || 'Paid',
+      status: b.status || 'Confirmed',
+      otpCode: b.otpCode || b.otp_code || '----',
       feedback: b.feedback || '',
       rating: b.rating || 5,
-      bookedAt: b.booked_at
+      bookedAt: b.bookedAt || b.booked_at || new Date().toISOString()
     }));
-
-    res.json(formatted);
+    return res.json(formatted);
   } catch (error) {
     console.error('Error fetching therapist bookings:', error);
     res.status(500).json({ message: 'Error retrieving therapist bookings' });
@@ -277,7 +257,10 @@ exports.createOrder = async (req, res) => {
         discount: parseFloat(discount || 0),
         shipping: parseFloat(shipping || 0),
         total: parseFloat(total),
-        status: "Pending",
+        paymentMethod: req.body.paymentMethod || 'Online (Razorpay)',
+        paymentId: req.body.paymentId || ('pay_' + Math.random().toString(36).substring(2, 10)),
+        paymentStatus: req.body.paymentMethod === 'Cash on Delivery' ? 'Due on Delivery' : 'Paid',
+        status: "Processing",
         orderedAt: new Date().toISOString(),
         shippingAddress,
         shippingCity,
@@ -701,7 +684,7 @@ exports.addDoctor = async (req, res) => {
     writeFileHelper(accountsFilePath, accounts);
 
     // Sync to PostgreSQL DB
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query(`
           INSERT INTO doctors (id, name, email, phone, qualification, specialty, rating, experience)
@@ -771,7 +754,7 @@ exports.updateDoctor = async (req, res) => {
       writeFileHelper(accountsFilePath, accounts);
     }
 
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query(`
           UPDATE doctors SET
@@ -815,7 +798,7 @@ exports.deleteDoctor = async (req, res) => {
     accounts = accounts.filter(a => a.id !== id && (!deletedDoc.email || a.email.toLowerCase() !== deletedDoc.email.toLowerCase()));
     writeFileHelper(accountsFilePath, accounts);
 
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query('DELETE FROM doctors WHERE id = $1', [id]);
         await pool.query('DELETE FROM provider_accounts WHERE id = $1 OR email = $2', [id, deletedDoc.email || '']);
@@ -926,7 +909,7 @@ exports.addTherapist = async (req, res) => {
     writeFileHelper(accountsFilePath, accounts);
 
     // Sync to PostgreSQL DB
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query(`
           INSERT INTO therapists (id, name, email, phone, qualification, specialty, rating, experience, therapies)
@@ -1001,7 +984,7 @@ exports.updateTherapist = async (req, res) => {
       writeFileHelper(accountsFilePath, accounts);
     }
 
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query(`
           UPDATE therapists SET
@@ -1047,7 +1030,7 @@ exports.deleteTherapist = async (req, res) => {
     accounts = accounts.filter(a => a.id !== id && (!deletedT.email || a.email.toLowerCase() !== deletedT.email.toLowerCase()));
     writeFileHelper(accountsFilePath, accounts);
 
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         await pool.query('DELETE FROM therapists WHERE id = $1', [id]);
         await pool.query('DELETE FROM provider_accounts WHERE id = $1 OR email = $2', [id, deletedT.email || '']);
@@ -1068,7 +1051,7 @@ exports.deleteTherapist = async (req, res) => {
 // =========================================================
 exports.getProviderAccounts = async (req, res) => {
   try {
-    if (pool) {
+    if (pool && isPoolReady && isPoolReady()) {
       try {
         const result = await pool.query(`
           SELECT id, name, email, role, specialty, qualification, experience, rating, phone, therapies, created_at

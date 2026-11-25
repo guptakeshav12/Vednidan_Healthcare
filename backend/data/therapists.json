@@ -14,7 +14,8 @@
       "Virechana",
       "Basti"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 202,
@@ -31,7 +32,8 @@
       "Pizhichil",
       "Elakizhi"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 203,
@@ -48,7 +50,8 @@
       "Meditation",
       "Marma Chikitsa"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 204,
@@ -65,7 +68,8 @@
       "Raktamokshana",
       "Agni Karma"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 205,
@@ -82,7 +86,8 @@
       "Greeva Basti",
       "Pinda Sweda"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 206,
@@ -99,7 +104,8 @@
       "Shirovasti",
       "Thalam"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 207,
@@ -116,7 +122,8 @@
       "Anjana",
       "Aschotana"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 208,
@@ -133,7 +140,8 @@
       "Udvartana",
       "Sthanika Basti"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 601,
@@ -149,7 +157,8 @@
       "Abhyanga",
       "Takradhara"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 1788519506401,
@@ -165,7 +174,8 @@
       "Shirodhara",
       "Kati Basti"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 1788519829378,
@@ -181,7 +191,8 @@
       "basti",
       "panchkarma therapy"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   },
   {
     "id": 1789548466278,
@@ -197,6 +208,7 @@
       "BASTI",
       "SHIRODHARA"
     ],
-    "avatar": "assets/doctor_avatar.png"
+    "avatar": "assets/doctor_avatar.png",
+    "fee": 799
   }
 ]

@@ -418,6 +418,15 @@ const Tracking = {
       document.getElementById('track-session-feedback-notes').textContent = booking.feedback || 'None provided.';
       document.getElementById('track-session-rating-val').textContent = `Health Index Score: ${'★'.repeat(booking.rating || 5)}`;
 
+      // Show Patient Feedback input form if not yet submitted
+      const patientFeedbackBox = document.getElementById('patient-feedback-form-box');
+      if (patientFeedbackBox) {
+        patientFeedbackBox.style.display = 'block';
+        this.currentPatientRating = 5;
+        this.setupPatientRatingStars();
+        this.trackedTherapistBooking = booking;
+      }
+
       // Stop any live refresh when completed
       this.stopLiveRefresh();
       return;
@@ -425,6 +434,76 @@ const Tracking = {
 
     // Start live auto-refresh so patient sees therapist status updates in real-time
     this.startLiveRefresh(booking.id);
+  },
+
+  trackedTherapistBooking: null,
+  currentPatientRating: 5,
+
+  setupPatientRatingStars() {
+    const container = document.getElementById('patient-rating-stars-container');
+    if (!container) return;
+    const stars = container.querySelectorAll('.p-star');
+    stars.forEach(star => {
+      star.onclick = () => {
+        const val = parseInt(star.getAttribute('data-rating')) || 5;
+        this.currentPatientRating = val;
+        stars.forEach(s => {
+          const sVal = parseInt(s.getAttribute('data-rating')) || 5;
+          if (sVal <= val) {
+            s.className = 'ri-star-fill p-star';
+            s.style.color = '#f59e0b';
+          } else {
+            s.className = 'ri-star-line p-star';
+            s.style.color = '#cbd5e1';
+          }
+        });
+      };
+    });
+  },
+
+  async submitPatientFeedback() {
+    if (!this.trackedTherapistBooking) return;
+    const btn = document.getElementById('btn-submit-patient-feedback');
+    const txt = document.getElementById('patient-feedback-text-input');
+    const msg = document.getElementById('patient-feedback-success-msg');
+    const feedbackVal = txt ? txt.value.trim() : '';
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ri-loader-4-line ri-spin"></i> Submitting...`;
+    }
+
+    try {
+      const res = await fetch((window.API_BASE || '/api') + '/therapist-booking/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: this.trackedTherapistBooking.id,
+          rating: this.currentPatientRating,
+          feedback: feedbackVal
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error submitting review');
+
+      if (msg) msg.style.display = 'block';
+      if (btn) btn.style.display = 'none';
+      if (txt) txt.disabled = true;
+
+      if (typeof showToast === 'function') {
+        showToast('Thank you! Your feedback has been sent to the clinic.', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      if (typeof showToast === 'function') {
+        showToast(err.message || 'Failed to submit review.', 'error');
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ri-send-plane-fill"></i> Retry Submit`;
+      }
+    }
   },
 
   // ── Live Polling for Therapist Tracker ──────────────────────────
