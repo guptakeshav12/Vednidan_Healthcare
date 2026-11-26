@@ -1,0 +1,267 @@
+/* Naadi Parikshan Quiz & B2B Hospital Consultancy Styles */
+
+.naadi-hero,
+.b2b-hero {
+  background: linear-gradient(135deg, #0d3b26 0%, #165a3c 55%, #1d704b 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 32px rgba(13, 59, 38, 0.22);
+}
+
+.naadi-hero-badge,
+.b2b-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fde68a;
+  padding: 5px 14px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.naadi-hero h2,
+.b2b-hero h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.naadi-hero p,
+.b2b-hero p {
+  margin: 0;
+  color: #d1fae5;
+  font-size: 15px;
+  max-width: 680px;
+  line-height: 1.55;
+}
+
+.section-brand-seal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0d3b26;
+  padding: 12px 18px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+.section-brand-seal img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+/* Naadi Quiz Card */
+.naadi-quiz-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+.naadi-question-card {
+  background: #f8faf9;
+  border: 1px solid #d1e7dd;
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+}
+
+.naadi-question-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0d3b26;
+  margin: 0 0 14px;
+}
+
+.naadi-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.naadi-option-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e293b;
+  line-height: 1.45;
+  transition: all 0.2s ease;
+}
+
+.naadi-option-label:hover {
+  border-color: #165a3c;
+  background: #f0fdf4;
+}
+
+.naadi-option-label input[type="radio"] {
+  margin-top: 3px;
+  accent-color: #165a3c;
+  cursor: pointer;
+}
+
+.naadi-option-label.selected {
+  border-color: #165a3c;
+  background: #ecfdf5;
+  box-shadow: 0 3px 10px rgba(22, 90, 60, 0.12);
+  font-weight: 600;
+}
+
+/* Result Box */
+.naadi-result-card {
+  display: none;
+  margin-top: 28px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #fefce8 100%);
+  border: 2px solid #165a3c;
+  border-radius: 18px;
+  padding: 28px;
+}
+
+.naadi-result-card.active {
+  display: block;
+}
+
+.dosha-bars-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.dosha-bar-box {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.dosha-bar-track {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.dosha-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+/* B2B Services Grid */
+.b2b-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 36px;
+}
+
+.b2b-service-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.b2b-service-card:hover {
+  transform: translateY(-3px);
+  border-color: #165a3c;
+}
+
+.b2b-service-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  color: #165a3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+
+.b2b-service-card h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0d3b26;
+}
+
+.b2b-service-card p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.b2b-form-card {
+  background: #ffffff;
+  border: 2px solid #d1e7dd;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(13, 59, 38, 0.08);
+}
+
+.b2b-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.b2b-input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d3b26;
+  margin-bottom: 6px;
+}
+
+.b2b-input-group input,
+.b2b-input-group select,
+.b2b-input-group textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.b2b-input-group input:focus,
+.b2b-input-group select:focus,
+.b2b-input-group textarea:focus {
+  border-color: #165a3c;
+}

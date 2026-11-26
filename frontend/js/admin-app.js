@@ -264,6 +264,10 @@ const AdminApp = {
         titleEl.textContent = 'AI Doctor Consultation Logs';
         descEl.textContent = 'Review all AI Doctor consultations — patient details, dosha analysis, and prescribed Ayurvedic treatments.';
         break;
+      case 'b2b-inquiries':
+        titleEl.textContent = 'B2B Hospital & Consultancy Inquiries';
+        descEl.textContent = 'Manage hospital growth, NABH, GIC/TPA, E-Aushadhi, FSSAI & Digital Marketing consultation requests.';
+        break;
       case 'settings':
         titleEl.textContent = 'System Settings & Credentials';
         descEl.textContent = 'View default login credentials, system status, and VedNidan Healthcare platform configuration.';
@@ -274,7 +278,7 @@ const AdminApp = {
   loadActiveTab() {
     // Read hash if available, else load dashboard
     const hash = window.location.hash.replace('#', '');
-    if (['dashboard', 'products', 'orders', 'bookings', 'therapist-bookings', 'analytics', 'users', 'doctors', 'therapists', 'partner-accounts', 'ai-consultations', 'settings'].includes(hash)) {
+    if (['dashboard', 'products', 'orders', 'bookings', 'therapist-bookings', 'analytics', 'users', 'doctors', 'therapists', 'partner-accounts', 'ai-consultations', 'b2b-inquiries', 'settings'].includes(hash)) {
       this.switchTab(hash);
     } else {
       this.switchTab('dashboard');
@@ -316,6 +320,9 @@ const AdminApp = {
         break;
       case 'ai-consultations':
         await this.fetchConsultationLogs();
+        break;
+      case 'b2b-inquiries':
+        await this.fetchB2BInquiries();
         break;
       case 'settings':
         await this.fetchSettings();
@@ -1827,6 +1834,62 @@ function initProductImageUpload() {
     }
   };
 }
+
+// ===== B2B HOSPITAL & CONSULTANCY INQUIRIES =====
+AdminApp.fetchB2BInquiries = async function() {
+  const tbody = document.getElementById('b2b-inquiries-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;"><i class="ri-loader-4-line ri-spin"></i> Loading B2B inquiries...</td></tr>`;
+  try {
+    const res = await fetch(`${ADMIN_API}/b2b/inquiries`);
+    const list = await res.json();
+    if (!Array.isArray(list) || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);">No B2B Hospital / Consultancy inquiries received yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(inq => {
+      const dt = inq.createdAt ? new Date(inq.createdAt).toLocaleString('en-IN') : 'N/A';
+      return `
+        <tr>
+          <td><strong style="color:var(--admin-accent-gold);font-family:monospace;">#${inq.id}</strong></td>
+          <td><strong>${inq.contactName}</strong>${inq.email ? `<br><small style="color:var(--admin-text-muted);">${inq.email}</small>` : ''}</td>
+          <td><strong>${inq.organizationName}</strong></td>
+          <td>
+            <a href="tel:${inq.phone}" style="color:#4ade80;text-decoration:none;font-weight:700;">${inq.phone}</a>
+            ${inq.city ? `<br><small style="color:var(--admin-text-muted);">${inq.city}</small>` : ''}
+          </td>
+          <td><span class="badge" style="background:rgba(207,168,92,0.16);color:var(--admin-accent-gold);border:1px solid rgba(207,168,92,0.35);">${inq.service}</span></td>
+          <td style="max-width:220px;white-space:normal;font-size:12px;color:var(--admin-text-muted);">${inq.requirements || '—'}</td>
+          <td><span class="badge badge-${(inq.status || 'new').toLowerCase() === 'closed' ? 'delivered' : 'pending'}">${inq.status || 'New'}</span></td>
+          <td style="font-size:12px;color:var(--admin-text-muted);">${dt}</td>
+          <td>
+            <select class="status-select" onchange="updateB2BInquiryStatus('${inq.id}', this.value)">
+              <option value="New" ${inq.status === 'New' ? 'selected' : ''}>New</option>
+              <option value="Contacted" ${inq.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
+              <option value="In Progress" ${inq.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Closed" ${inq.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#e74c3c;">Failed to load B2B inquiries.</td></tr>`;
+  }
+};
+
+window.updateB2BInquiryStatus = async (id, status) => {
+  try {
+    await fetch(`${ADMIN_API}/b2b/inquiries/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    AdminApp.fetchB2BInquiries();
+  } catch (e) {
+    alert('Failed to update B2B inquiry status.');
+  }
+};
 
 // ===== ADMIN CREDENTIALS, CONTROLS & AUTH GATE =====
 window.updateAdminCredentialsForm = async (e) => {

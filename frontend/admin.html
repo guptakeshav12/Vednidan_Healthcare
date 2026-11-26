@@ -60,6 +60,9 @@
       <li class="admin-menu-item" data-tab="ai-consultations">
         <a href="#ai-consultations"><i class="ri-robot-2-line"></i> AI Consultations</a>
       </li>
+      <li class="admin-menu-item" data-tab="b2b-inquiries">
+        <a href="#b2b-inquiries"><i class="ri-building-2-line"></i> B2B Inquiries</a>
+      </li>
       <li class="admin-menu-item" data-tab="settings">
         <a href="#settings"><i class="ri-settings-4-line"></i> System Settings</a>
       </li>
@@ -593,7 +596,47 @@
       </div>
     </section>
 
-    <!-- ===== VIEW 12: SYSTEM SETTINGS TAB ===== -->
+    <!-- ===== VIEW 12: B2B HOSPITAL & CONSULTANCY INQUIRIES ===== -->
+    <section id="view-b2b-inquiries" class="admin-view">
+      <div class="admin-card">
+        <div class="catalog-toolbar">
+          <div class="catalog-search-wrap">
+            <i class="ri-search-line"></i>
+            <input type="text" class="catalog-search-input" id="search-b2b-input" placeholder="Search by hospital, contact name, phone, service..." oninput="filterCatalogTable('b2b-inquiries-tbody', this.value)">
+          </div>
+          <div class="catalog-scroll-controls">
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('b2b-table-wrapper', -300)">
+              <i class="ri-arrow-left-line"></i> Move Left
+            </button>
+            <button type="button" class="btn-scroll-nav" onclick="scrollAdminTable('b2b-table-wrapper', 300)">
+              Move Right <i class="ri-arrow-right-line"></i>
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive" id="b2b-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Inquiry ID</th>
+                <th>Contact Name</th>
+                <th>Hospital / Firm</th>
+                <th>Phone &amp; City</th>
+                <th>Service Requested</th>
+                <th>Requirements</th>
+                <th>Status</th>
+                <th>Submitted At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="b2b-inquiries-tbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--admin-text-muted);">Loading B2B inquiries...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW 13: SYSTEM SETTINGS TAB ===== -->
     <section id="view-settings" class="admin-view">
       <div class="admin-settings-grid" id="settings-container">
         <div style="text-align:center;padding:60px;color:var(--admin-text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size:32px;"></i><p>Loading system settings...</p></div>
@@ -911,6 +954,6 @@
   </div>
 
   <!-- Javascript Modules -->
-  <script src="js/admin-app.js?v=20261126_03"></script>
+  <script src="js/admin-app.js?v=20261126_04"></script>
 </body>
 </html>

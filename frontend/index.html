@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/booking.css">
   <link rel="stylesheet" href="css/therapist-booking.css">
+  <link rel="stylesheet" href="css/naadi-b2b.css?v=20261126_04">
   <link rel="icon" type="image/png" href="assets/vednidan-logo-transparent.png">
   <!-- jsPDF for Prescription PDF Download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -51,6 +52,8 @@
           <li><a href="#" class="nav-link" data-target="reader-page" id="nav-reader"><i class="ri-file-list-3-line"></i> Upload Prescription</a></li>
           <li><a href="#" class="nav-link" data-target="booking-page" id="nav-booking" onclick="switchUnifiedBookingTab('doctor')"><i class="ri-calendar-todo-line"></i> Book Doctor</a></li>
           <li><a href="#" class="nav-link" data-target="booking-page" id="nav-therapist" onclick="switchUnifiedBookingTab('therapist')"><i class="ri-hand-heart-line"></i> Book Therapist</a></li>
+          <li><a href="#" class="nav-link" data-target="naadi-quiz-page" id="nav-naadi"><i class="ri-heart-pulse-line"></i> Naadi Parikshan</a></li>
+          <li><a href="#" class="nav-link" data-target="b2b-page" id="nav-b2b"><i class="ri-hospital-line"></i> Hospital &amp; B2B</a></li>
           <li><a href="#" class="nav-link" data-target="track-page" id="nav-track"><i class="ri-map-pin-line"></i> Track Order</a></li>
         </ul>
       </nav>
@@ -898,6 +901,222 @@
       </div>
     </section>
 
+    <!-- 7. NAADI PARIKSHAN & TRIDOSHA PRAKRITI QUIZ PAGE -->
+    <section id="naadi-quiz-page" class="page-section fade-in">
+      <div class="naadi-hero">
+        <div>
+          <div class="naadi-hero-badge"><i class="ri-heart-pulse-line"></i> AI AYURVEDIC DIAGNOSTICS &amp; PRAKRITI</div>
+          <h2>नाड़ी परीक्षण एवं त्रिदोष प्रकृति क्विज़ (Naadi Parikshan &amp; Dosha Quiz)</h2>
+          <p>7 आसान प्रश्नों में अपनी नाड़ी की प्रकृति (वात-पित्त-कफ) और शरीर का दोष संतुलन जानें — परिणाम के आधार पर AI वैद्य आपको उचित दिनचर्या, पथ्य-अपथ्य और वेदनिदान की सटीक औषधियाँ सुझाएगा।</p>
+        </div>
+        <div class="section-brand-seal">
+          <img src="assets/vednidan-logo-clean.png" alt="VedNidan Healthcare">
+          <div>
+            <div style="font-weight:800;font-size:15px;">VedNidan Healthcare</div>
+            <div style="font-size:11px;color:#475569;">Authentic Naadi &amp; Prakriti</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="naadi-quiz-container">
+        <div id="naadi-questions-container"></div>
+        <div style="text-align:center;margin-top:24px;">
+          <button type="button" class="btn-primary" onclick="NaadiQuiz.analyze()" style="padding:14px 34px;font-size:16px;border-radius:12px;">
+            <i class="ri-pulse-line"></i> मेरी प्रकृति देखें (Analyze My Naadi &amp; Dosha)
+          </button>
+        </div>
+
+        <div id="naadi-result-card" class="naadi-result-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#165a3c;text-transform:uppercase;">आपकी प्रमुख नाड़ी प्रकृति (Dominant Prakriti)</div>
+              <h3 id="naadi-dominant-title" style="margin:4px 0 0;font-size:24px;color:#0d3b26;">—</h3>
+            </div>
+            <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="height:44px;width:auto;">
+          </div>
+
+          <div class="dosha-bars-wrap">
+            <div class="dosha-bar-box">
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;color:#6d28d9;">
+                <span>वात (Vata)</span><span id="naadi-vata-pct">0%</span>
+              </div>
+              <div class="dosha-bar-track"><div id="naadi-vata-bar" class="dosha-bar-fill" style="width:0%;background:#8b5cf6;"></div></div>
+            </div>
+            <div class="dosha-bar-box">
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;color:#b45309;">
+                <span>पित्त (Pitta)</span><span id="naadi-pitta-pct">0%</span>
+              </div>
+              <div class="dosha-bar-track"><div id="naadi-pitta-bar" class="dosha-bar-fill" style="width:0%;background:#f59e0b;"></div></div>
+            </div>
+            <div class="dosha-bar-box">
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;color:#047857;">
+                <span>कफ (Kapha)</span><span id="naadi-kapha-pct">0%</span>
+              </div>
+              <div class="dosha-bar-track"><div id="naadi-kapha-bar" class="dosha-bar-fill" style="width:0%;background:#10b981;"></div></div>
+            </div>
+          </div>
+
+          <p id="naadi-advice-text" style="font-size:14px;color:#1e293b;line-height:1.6;background:#fff;padding:14px 18px;border-radius:10px;border:1px solid #d1e7dd;margin-bottom:18px;"></p>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button type="button" class="btn-primary" onclick="NaadiQuiz.consultAiWithResult()" style="padding:12px 24px;border-radius:10px;">
+              <i class="ri-robot-2-line"></i> इस प्रकृति के अनुसार AI वैद्य से पूछें <i class="ri-arrow-right-line"></i>
+            </button>
+            <button type="button" class="btn-secondary" onclick="switchUnifiedBookingTab('doctor')" style="padding:12px 22px;border-radius:10px;">
+              <i class="ri-stethoscope-line"></i> Book Ayurvedic Doctor
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. B2B INSTITUTIONAL & HOSPITAL CONSULTANCY DIVISION (VEDNIDAN HEALTHCARE SOLUTIONS) -->
+    <section id="b2b-page" class="page-section fade-in">
+      <div class="b2b-hero">
+        <div>
+          <div class="b2b-hero-badge"><i class="ri-building-2-line"></i> B2B INSTITUTIONAL &amp; HOSPITAL CONSULTANCY DIVISION</div>
+          <h2>VedNidan Healthcare Solutions — हॉस्पिटल ग्रोथ एवं NABH सपोर्ट</h2>
+          <p>अपने हॉस्पिटल, नर्सिंग होम या आयुर्वेदिक फार्मा ब्रांड को नई ऊँचाइयों पर ले जाएँ। हमारी विशेषज्ञ टीम प्रोजेक्ट प्लानिंग, NABH एक्रेडिटेशन, GIC/TPA कैशलेस इम्पैनलमेंट, E-Aushadhi और लाइसेंसिंग में संपूर्ण सहयोग प्रदान करती है।</p>
+          <div style="margin-top:14px;display:inline-flex;align-items:center;gap:12px;background:rgba(0,0,0,0.22);padding:8px 16px;border-radius:10px;font-size:13px;">
+            <span><strong>B2B Direct Desk (Kota, Rajasthan):</strong></span>
+            <a href="tel:+918000108726" style="color:#fde68a;font-weight:800;text-decoration:none;"><i class="ri-phone-fill"></i> +91 80001 08726</a>
+          </div>
+        </div>
+        <div class="section-brand-seal">
+          <img src="assets/vednidan-logo-clean.png" alt="VedNidan Healthcare Solutions">
+          <div>
+            <div style="font-weight:800;font-size:15px;">VedNidan Solutions</div>
+            <div style="font-size:11px;color:#475569;">Hospital &amp; Pharma Advisory</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="b2b-services-grid">
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-line-chart-line"></i></div>
+            <h4>1. Hospital Growth Management</h4>
+            <p>नए हॉस्पिटल की प्रोजेक्ट रिपोर्ट, बेड कैपेसिटी प्लानिंग, OPD/IPD वर्कफ़्लो ऑप्टिमाइज़ेशन, स्टाफिंग मॉडल और ब्रांड पोजिशनिंग।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('Hospital Growth Management')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-award-line"></i></div>
+            <h4>2. NABH Accreditation &amp; Documentation</h4>
+            <p>Entry-Level एवं Full NABH के लिए संपूर्ण SOPs, क्वालिटी मैनुअल, इन्फेक्शन कंट्रोल प्रोटोकॉल, स्टाफ ट्रेनिंग और फाइनल ऑडिट तैयारी।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('NABH Accreditation & Documentation')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-shield-check-line"></i></div>
+            <h4>3. GIC, TPA &amp; Cashless Insurance</h4>
+            <p>सरकारी व निजी बीमा कंपनियों (GIC, SBI General, Star Health आदि) एवं TPAs के साथ हॉस्पिटल इम्पैनलमेंट और क्लेम डेस्क सेटअप।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('GIC, TPA & Cashless Insurance')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-flask-line"></i></div>
+            <h4>4. Pharma Licensing &amp; E-Aushadhi (EOC)</h4>
+            <p>आयुर्वेदिक मैन्युफैक्चरिंग व लोन लाइसेंस, E-Aushadhi पोर्टल रजिस्ट्रेशन, GMP कम्प्लायंस और प्रोडक्ट अप्रूवल डॉक्यूमेंटेशन।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('Pharma Licensing & E-Aushadhi (EOC)')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-megaphone-line"></i></div>
+            <h4>5. Healthcare Digital Marketing</h4>
+            <p>हॉस्पिटल्स व डॉक्टर्स के लिए YouTube/Instagram एजुकेशनल रील्स, Google My Business (GMB) लोकल रैंकिंग और पेशेंट अवेयरनेस कैंपेन।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('Healthcare Digital Marketing')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+
+        <div class="b2b-service-card">
+          <div>
+            <div class="b2b-service-icon"><i class="ri-file-shield-2-line"></i></div>
+            <h4>6. FSSAI &amp; Packaging Compliance</h4>
+            <p>हर्बल व न्यूट्रास्युटिकल उत्पादों के लिए FSSAI लाइसेंस, लेबलिंग नॉर्म्स, बारकोड एवं प्रीमियम पैकेजिंग कम्प्लायंस गाइडेंस।</p>
+          </div>
+          <button type="button" class="btn-primary" onclick="B2BConsultancy.selectService('FSSAI & Packaging Compliance')" style="width:100%;justify-content:center;">
+            कंसल्टेशन बुक करें / Enquire Now <i class="ri-arrow-right-line"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- B2B Consultation Booking Form -->
+      <div class="b2b-form-card" id="b2b-inquiry-form-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+          <div>
+            <h3 style="margin:0 0 6px;font-size:22px;color:#0d3b26;">अपने हॉस्पिटल या फार्मा प्रोजेक्ट के लिए कंसल्टेशन बुक करें</h3>
+            <p style="margin:0;font-size:13px;color:#475569;">फॉर्म सबमिट करते ही आपकी जानकारी सीधे <strong>VedNidan Healthcare Solutions Owner &amp; Admin Desk (+91 80001 08726)</strong> के पास पहुँच जाएगी।</p>
+          </div>
+          <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="height:44px;">
+        </div>
+
+        <form id="b2b-inquiry-form" onsubmit="B2BConsultancy.submitInquiry(event)">
+          <div class="b2b-form-grid">
+            <div class="b2b-input-group">
+              <label>आपका नाम / डॉ. का नाम (Name) *</label>
+              <input type="text" id="b2b-contact-name" required placeholder="e.g. Dr. Rajesh Sharma">
+            </div>
+            <div class="b2b-input-group">
+              <label>हॉस्पिटल / फर्म का नाम (Hospital / Firm Name) *</label>
+              <input type="text" id="b2b-org-name" required placeholder="e.g. Aarogya Hospital / Herbal Pvt Ltd">
+            </div>
+            <div class="b2b-input-group">
+              <label>मोबाइल नंबर (Mobile Number) *</label>
+              <input type="tel" id="b2b-phone" required placeholder="+91 XXXXX XXXXX">
+            </div>
+            <div class="b2b-input-group">
+              <label>शहर व राज्य (City &amp; State) *</label>
+              <input type="text" id="b2b-city" required placeholder="e.g. Kota, Rajasthan">
+            </div>
+            <div class="b2b-input-group">
+              <label>ईमेल (Email Address)</label>
+              <input type="email" id="b2b-email" placeholder="hospital@email.com">
+            </div>
+            <div class="b2b-input-group">
+              <label>आवश्यक सेवा चुनें (Select Service) *</label>
+              <select id="b2b-service-select" required>
+                <option value="Hospital Growth Management">1. Hospital Growth Management</option>
+                <option value="NABH Accreditation & Documentation">2. NABH Accreditation &amp; Documentation</option>
+                <option value="GIC, TPA & Cashless Insurance">3. GIC, TPA &amp; Cashless Insurance</option>
+                <option value="Pharma Licensing & E-Aushadhi (EOC)">4. Pharma Licensing &amp; E-Aushadhi (EOC)</option>
+                <option value="Healthcare Digital Marketing">5. Healthcare Digital Marketing</option>
+                <option value="FSSAI & Packaging Compliance">6. FSSAI &amp; Packaging Compliance</option>
+                <option value="Multiple / Complete Hospital & Licensing Package">7. Multiple / Complete Package</option>
+              </select>
+            </div>
+          </div>
+          <div class="b2b-input-group" style="margin-bottom:18px;">
+            <label>विस्तृत आवश्यकता (Project / License / Bed Capacity Details)</label>
+            <textarea id="b2b-requirements" rows="3" placeholder="Mention bed count, NABH stage, TPA list, or license details..."></textarea>
+          </div>
+          <button type="submit" id="b2b-submit-btn" class="btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px;border-radius:12px;">
+            <i class="ri-send-plane-fill"></i> Submit Consultation Request to Owner Desk
+          </button>
+        </form>
+
+        <div id="b2b-success-box" style="display:none;margin-top:18px;background:#f0fdf4;border:1.5px solid #22c55e;border-radius:12px;padding:16px 20px;"></div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Global Footer with Direct Links to Provider & Admin Portals -->
@@ -1453,18 +1672,20 @@
         <h4>Explore</h4>
         <ul class="footer-links">
           <li><a href="#" onclick="document.getElementById('nav-shop').click(); return false;">Shop Remedies</a></li>
-          <li><a href="#" onclick="document.getElementById('nav-doctor').click(); return false;">AI doctor Consult</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-doctor').click(); return false;">AI Doctor Consult</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-naadi').click(); return false;">Naadi Parikshan Quiz</a></li>
+          <li><a href="#" onclick="document.getElementById('nav-b2b').click(); return false;">Hospital &amp; B2B Solutions</a></li>
           <li><a href="#" onclick="document.getElementById('nav-reader').click(); return false;">Upload Prescription</a></li>
           <li><a href="#" onclick="document.getElementById('nav-booking').click(); return false;">Book Doctor</a></li>
           <li><a href="#" onclick="document.getElementById('nav-therapist').click(); return false;">Book Therapist</a></li>
         </ul>
       </div>
       <div class="footer-links-col">
-        <h4>Support</h4>
+        <h4>Contact Us</h4>
         <ul class="footer-links">
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms & Conditions</a></li>
-          <li><a href="#">Shipping & Returns</a></li>
+          <li><i class="ri-map-pin-2-line" style="color:#4ade80;"></i> 285 A, Shreenathpuram, Kota, Rajasthan, India</li>
+          <li><a href="tel:+919772915042"><i class="ri-whatsapp-line" style="color:#4ade80;"></i> Pharmacy &amp; Orders: +91 97729 15042</a></li>
+          <li><a href="tel:+918000108726"><i class="ri-hospital-line" style="color:#f59e0b;"></i> Hospital &amp; NABH Desk: +91 80001 08726</a></li>
         </ul>
       </div>
       <div class="footer-newsletter">
@@ -1647,6 +1868,7 @@
   <script src="js/booking.js?v=20261122_01"></script>
   <script src="js/therapist-booking.js?v=20261122_01"></script>
   <script src="js/tracking.js?v=20261122_01"></script>
+  <script src="js/naadi-b2b.js?v=20261126_04"></script>
   <script src="js/app.js?v=20261122_01"></script>
 </body>
 </html>

@@ -17,6 +17,7 @@ const therapyRoutes = require('./routes/therapyRoutes');
 const therapistBookingRoutes = require('./routes/therapistBookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const providerRoutes = require('./routes/providerRoutes');
+const b2bRoutes = require('./routes/b2bRoutes');
 // RAZORPAY_DISABLED: Uncomment line below to re-enable Razorpay payment routes in future
 // const paymentRoutes = require('./routes/paymentRoutes');
 
@@ -51,6 +52,7 @@ app.use('/api/therapies', therapyRoutes);
 app.use('/api/therapist-booking', therapistBookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/provider', providerRoutes);
+app.use('/api/b2b', b2bRoutes);
 // RAZORPAY_DISABLED: Uncomment line below to re-enable Razorpay API endpoint in future
 // app.use('/api/payment', paymentRoutes);
 
