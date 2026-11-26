@@ -80,6 +80,19 @@ exports.getProductCategories = async (req, res) => {
     const categoryMap = new Map();
     DEFAULT_CATEGORIES.forEach(c => categoryMap.set(c.slug, c.label));
 
+    // Merge custom categories saved by Admin
+    const customCatPath = path.join(__dirname, '../data/categories.json');
+    try {
+      if (fs.existsSync(customCatPath)) {
+        const customCats = JSON.parse(fs.readFileSync(customCatPath, 'utf-8'));
+        if (Array.isArray(customCats)) {
+          customCats.forEach(c => {
+            if (c && c.slug) categoryMap.set(c.slug.toLowerCase().trim(), c.label || formatCategoryLabel(c.slug));
+          });
+        }
+      }
+    } catch (e) {}
+
     let productsList = [];
     if (pool) {
       try {

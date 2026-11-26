@@ -83,5 +83,8 @@ router.get('/consultation-logs', adminController.getConsultationLogs);
 // NEW: System Settings & Default Credentials
 router.get('/settings', adminController.getSystemSettings);
 
+// NEW: Custom Product Categories
+router.post('/categories', adminController.addProductCategory);
+
 module.exports = router;
 

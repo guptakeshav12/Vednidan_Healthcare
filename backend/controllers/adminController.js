@@ -1184,3 +1184,27 @@ exports.getSystemSettings = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving system settings' });
   }
 };
+
+// POST /api/admin/categories - Save a new custom product category
+exports.addProductCategory = async (req, res) => {
+  try {
+    const { label, slug } = req.body || {};
+    const cleanLabel = String(label || '').trim();
+    const cleanSlug = (slug || cleanLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')).trim();
+    if (!cleanLabel || !cleanSlug) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+
+    const categoriesFilePath = path.join(__dirname, '../data/categories.json');
+    const existing = readFileHelper(categoriesFilePath, []);
+    if (!existing.some(c => c.slug === cleanSlug)) {
+      existing.push({ slug: cleanSlug, label: cleanLabel });
+      writeFileHelper(categoriesFilePath, existing);
+    }
+
+    res.status(201).json({ success: true, category: { slug: cleanSlug, label: cleanLabel }, categories: existing });
+  } catch (error) {
+    console.error('Error adding product category:', error);
+    res.status(500).json({ message: 'Error saving custom category' });
+  }
+};

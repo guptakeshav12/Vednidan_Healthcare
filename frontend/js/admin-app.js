@@ -899,7 +899,22 @@ window.syncSelectedProductCategories = () => {
   });
 };
 
-window.addCustomProductCategory = () => {
+window.loadAdminCategories = async () => {
+  try {
+    const res = await fetch(ADMIN_API + '/products/categories');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (Array.isArray(data.categories)) {
+      data.categories.forEach(c => {
+        if (c && c.slug && !PRODUCT_CATEGORIES_CATALOG.some(x => x.slug === c.slug)) {
+          PRODUCT_CATEGORIES_CATALOG.push({ slug: c.slug, label: c.label || c.slug });
+        }
+      });
+    }
+  } catch (e) {}
+};
+
+window.addCustomProductCategory = async () => {
   const input = document.getElementById('custom-category-input');
   if (!input) return;
   const raw = input.value.trim();
@@ -907,6 +922,14 @@ window.addCustomProductCategory = () => {
 
   const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   if (!slug) return;
+
+  try {
+    await fetch(ADMIN_API + '/admin/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: raw, slug })
+    });
+  } catch (e) {}
 
   const currentVal = document.getElementById('product-category').value;
   const currentList = currentVal ? currentVal.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -919,10 +942,11 @@ window.addCustomProductCategory = () => {
   renderProductCategoryPills(currentList.join(', '));
 };
 
-window.openAddProductModal = () => {
+window.openAddProductModal = async () => {
   document.getElementById('product-modal-title').textContent = 'Add New Product';
   document.getElementById('product-form-id').value = '';
   document.getElementById('product-form').reset();
+  await loadAdminCategories();
   renderProductCategoryPills('healthcare');
   if (typeof resetProductImageUpload === 'function') resetProductImageUpload('');
   document.getElementById('product-modal-backdrop').classList.add('active');
@@ -932,10 +956,11 @@ window.closeProductModal = () => {
   document.getElementById('product-modal-backdrop').classList.remove('active');
 };
 
-window.openEditProductModal = (id) => {
+window.openEditProductModal = async (id) => {
   const p = AdminApp.products.find(prod => prod.id === id);
   if (!p) return;
 
+  await loadAdminCategories();
   document.getElementById('product-modal-title').textContent = 'Edit Product Details';
   document.getElementById('product-form-id').value = p.id;
   document.getElementById('product-name').value = p.name;
