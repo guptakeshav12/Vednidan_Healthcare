@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('../config/supabase');
+const { pool, supabase, isConfigured } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 
@@ -157,7 +157,7 @@ exports.getAllProducts = async (req, res) => {
         }
 
         const offset = (page - 1) * limit;
-        dataQuery += ` ORDER BY id ASC LIMIT $${idx} OFFSET $${idx + 1}`;
+        dataQuery += ` ORDER BY id DESC LIMIT $${idx} OFFSET $${idx + 1}`;
         const dataVals = [...vals, limit, offset];
 
         const [countRes, dataRes] = await Promise.all([
@@ -197,7 +197,54 @@ exports.getAllProducts = async (req, res) => {
       }
     }
 
-    // Fallback: local JSON file
+    // Fallback 2: Supabase JS REST API if pool failed
+    if (isConfigured && supabase) {
+      try {
+        const { data: sbRows, error: sbErr } = await supabase
+          .from('products')
+          .select('*')
+          .order('id', { ascending: false });
+        if (!sbErr && Array.isArray(sbRows) && sbRows.length > 0) {
+          let mapped = sbRows.map(p => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: parseFloat(p.price),
+            image: p.image,
+            rating: parseFloat(p.rating || 4.5),
+            reviewsCount: p.reviews_count || 0,
+            shortDescription: p.short_description || '',
+            longDescription: p.long_description || '',
+            isBestSeller: p.is_bestseller,
+            benefits: p.benefits || [],
+            usageDirections: p.usage_directions || '',
+            ingredients: p.ingredients || []
+          }));
+          if (category !== 'all') {
+            mapped = mapped.filter(p => parseCategoriesList(p.category).includes(category));
+          }
+          if (productType !== 'all') {
+            mapped = mapped.filter(p => (p.name || '').toLowerCase().includes(productType));
+          }
+          if (searchQuery) {
+            mapped = mapped.filter(p =>
+              (p.name || '').toLowerCase().includes(searchQuery) ||
+              (p.shortDescription || '').toLowerCase().includes(searchQuery) ||
+              (p.category || '').toLowerCase().includes(searchQuery)
+            );
+          }
+          const totalProducts = mapped.length;
+          const totalPages = Math.ceil(totalProducts / limit) || 1;
+          const safePage = Math.max(1, Math.min(page, totalPages));
+          const paginatedProducts = mapped.slice((safePage - 1) * limit, safePage * limit);
+          return res.json({ products: paginatedProducts, page: safePage, limit, totalProducts, totalPages });
+        }
+      } catch (sbCatchErr) {
+        console.error('[Products Supabase Error]', sbCatchErr.message);
+      }
+    }
+
+    // Fallback 3: local JSON file
     return serveFromLocal(res, params);
 
   } catch (error) {

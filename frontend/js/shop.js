@@ -149,9 +149,14 @@ const Shop = {
                 ${hasOriginal ? `<span class="original-price">₹${product.originalPrice}</span>` : ''}
                 <span class="current-price">₹${product.price} ${discountPercent > 0 ? `<span style="font-size: 11px; color: var(--success); font-weight: 700;">(${discountPercent}% OFF)</span>` : ''}</span>
               </div>
-              <button class="add-cart-btn" onclick="Cart.addItem(${product.id}, 1)" aria-label="Add ${product.name} to Cart">
-                <i class="ri-add-line"></i>
-              </button>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <button class="btn-primary" onclick="Cart.buyNow(${product.id})" style="padding:7px 11px;font-size:11px;border-radius:8px;white-space:nowrap;">
+                  Buy Now
+                </button>
+                <button class="add-cart-btn" onclick="Cart.addItem(${product.id}, 1)" aria-label="Add ${product.name} to Cart" title="Add to Cart">
+                  <i class="ri-shopping-bag-3-line"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -92,9 +92,11 @@
           <div class="hero-badge">Authentic Ayurveda for Modern Life</div>
           <h2 class="hero-title">Your Path to <span>Holistic Healing</span> & Vitality</h2>
           <p class="hero-desc">Experience 100% natural, scientifically validated Ayurvedic formulations. Buy products directly, consult our AI Ayurvedic doctor, or upload your prescription to shop instantly.</p>
-          <div class="hero-ctas">
+          <div class="hero-ctas" style="flex-wrap:wrap;gap:10px;">
             <button class="btn-primary" id="hero-consult-btn">Consult AI Doctor <i class="ri-arrow-right-line"></i></button>
             <button class="btn-secondary" id="hero-upload-btn">Upload Prescription</button>
+            <button class="btn-secondary" onclick="document.getElementById('home-naadi-quiz')?.scrollIntoView({behavior:'smooth'})" style="border-color:#165a3c;color:#165a3c;"><i class="ri-heart-pulse-line"></i> Naadi Parikshan</button>
+            <button class="btn-secondary" onclick="document.getElementById('home-b2b-solutions')?.scrollIntoView({behavior:'smooth'})" style="border-color:#b45309;color:#b45309;"><i class="ri-hospital-line"></i> Hospital &amp; B2B</button>
           </div>
         </div>
         <div class="hero-image-panel">
@@ -107,9 +109,14 @@
         </div>
       </div>
 
-      <!-- Categories Navigation -->
-      <div class="section-header">
-        <h3 class="section-title">Shop by Category</h3>
+      <!-- Categories Navigation & Medicine Search -->
+      <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+        <h3 class="section-title" style="margin:0;">Shop by Category</h3>
+        <div style="display:flex;align-items:center;gap:8px;background:#ffffff;border:1.5px solid #cbd5e1;border-radius:12px;padding:6px 12px;min-width:260px;flex:1;max-width:420px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <i class="ri-search-line" style="color:#165a3c;font-size:18px;"></i>
+          <input type="text" id="shop-medicine-search" placeholder="Search medicine name, disease or ingredient..." oninput="Shop.setSearchQuery(this.value)" style="border:none;outline:none;width:100%;font-size:14px;background:transparent;color:#0f172a;">
+          <button type="button" onclick="Shop.setSearchQuery(document.getElementById('shop-medicine-search').value)" class="btn-primary" style="padding:6px 14px;font-size:12px;border-radius:8px;white-space:nowrap;">Search</button>
+        </div>
       </div>
       
       <div class="category-slider" id="category-list">
@@ -1863,9 +1870,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <!-- Modular Frontend Scripts -->
-  <script src="js/api.js?v=20261126_01"></script>
-  <script src="js/shop.js?v=20261126_01"></script>
-  <script src="js/cart.js?v=20261126_01"></script>
+  <script src="js/api.js?v=20261126_05"></script>
+  <script src="js/shop.js?v=20261126_05"></script>
+  <script src="js/cart.js?v=20261126_05"></script>
   <script src="js/booking-payment.js?v=20261124_01"></script>
   <script src="js/doctor.js?v=20261126_01"></script>
   <script src="js/reader.js?v=20261122_01"></script>

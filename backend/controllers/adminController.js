@@ -371,7 +371,7 @@ exports.createProduct = async (req, res) => {
         name, category, price: parseFloat(price), image, rating: parseFloat(rating || 4.5), reviewsCount: parseInt(reviewsCount || 10),
         shortDescription, longDescription, isBestSeller: !!isBestSeller, benefits: benefits || [], usageDirections, ingredients: ingredients || []
       };
-      products.push(newProduct);
+      products.unshift(newProduct);
       writeFileHelper(productsFilePath, products);
       return res.status(201).json({ success: true, product: newProduct });
     }
@@ -396,6 +396,27 @@ exports.createProduct = async (req, res) => {
 
     const { data: dbProduct, error } = await supabase.from('products').insert(newProduct).select('*').single();
     if (error) throw error;
+
+    // Also mirror into local products.json so any JSON fallback stays synced
+    try {
+      const localProducts = readFileHelper(productsFilePath, []);
+      localProducts.unshift({
+        id: dbProduct.id,
+        name: dbProduct.name,
+        category: dbProduct.category,
+        price: parseFloat(dbProduct.price),
+        image: dbProduct.image,
+        rating: parseFloat(dbProduct.rating || 4.5),
+        reviewsCount: dbProduct.reviews_count || 10,
+        shortDescription: dbProduct.short_description || '',
+        longDescription: dbProduct.long_description || '',
+        isBestSeller: !!dbProduct.is_bestseller,
+        benefits: dbProduct.benefits || [],
+        usageDirections: dbProduct.usage_directions || '',
+        ingredients: dbProduct.ingredients || []
+      });
+      writeFileHelper(productsFilePath, localProducts);
+    } catch (syncErr) {}
 
     res.status(201).json({ success: true, message: 'Product added successfully', product: dbProduct });
   } catch (error) {

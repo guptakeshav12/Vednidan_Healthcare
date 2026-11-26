@@ -193,6 +193,15 @@ const Cart = {
     this.toggleCart(true);
   },
 
+  async buyNow(productId) {
+    await this.addItem(productId, 1);
+    this.toggleCart(false);
+    if (typeof App !== 'undefined' && App.navigateTo) {
+      App.navigateTo('checkout-page');
+      this.renderCheckout();
+    }
+  },
+
   updateQty(productId, newQty) {
     if (newQty < 1) {
       this.removeItem(productId);
