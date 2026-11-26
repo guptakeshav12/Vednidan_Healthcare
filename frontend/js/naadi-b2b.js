@@ -175,7 +175,7 @@ const NaadiQuiz = {
 const B2BConsultancy = {
   selectService(serviceName) {
     if (typeof App !== 'undefined' && App.navigateTo) {
-      App.navigateTo('b2b-page');
+      App.navigateTo('shop-page');
     }
     setTimeout(() => {
       const sel = document.getElementById('b2b-service-select');
