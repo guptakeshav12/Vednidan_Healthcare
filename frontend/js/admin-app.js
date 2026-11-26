@@ -395,7 +395,11 @@ const AdminApp = {
         <tr>
           <td><img src="${p.image}" alt="${p.name}" class="product-img-th" onerror="this.src='https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&q=80&w=100'"></td>
           <td><strong>${p.name}</strong>${p.isBestSeller ? ' <span style="font-size:10px;background:var(--admin-accent-gold);color:#000;padding:2px 6px;border-radius:4px;font-weight:700;">Best Seller</span>' : ''}</td>
-          <td style="text-transform: capitalize;">${p.category}</td>
+          <td style="text-transform: capitalize;">
+            ${String(p.category || '').split(',').map(c => c.trim()).filter(Boolean).map(c =>
+              `<span style="display:inline-block;background:rgba(207,168,92,0.14);color:var(--admin-accent-gold);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;margin:2px 4px 2px 0;">${c}</span>`
+            ).join('')}
+          </td>
           <td>₹${p.price}</td>
           <td><i class="ri-star-fill" style="color:var(--admin-accent-gold);"></i> ${p.rating} (${p.reviewsCount || 0})</td>
           <td>
@@ -821,10 +825,105 @@ window.switchTab = (tabName) => {
   AdminApp.switchTab(tabName);
 };
 
+const PRODUCT_CATEGORIES_CATALOG = [
+  { slug: 'vitality', label: 'Vitality & Energy' },
+  { slug: 'digestion', label: 'Gut & Digestion' },
+  { slug: 'skincare', label: 'Skin Problems' },
+  { slug: 'haircare', label: 'Hair Problems' },
+  { slug: 'immunity', label: 'Immunity Boosters' },
+  { slug: 'brain', label: 'Brain & Memory' },
+  { slug: 'heart', label: 'Heart & Cardiac Care' },
+  { slug: 'pain', label: 'Joint & Pain Relief' },
+  { slug: 'detox', label: 'Detox & Cleanse' },
+  { slug: 'diabetes', label: 'Diabetes & Sugar Care' },
+  { slug: 'respiratory', label: 'Respiratory & Lung Care' },
+  { slug: 'stress', label: 'Stress & Sleep' },
+  { slug: 'womens-health', label: "Women's Health" },
+  { slug: 'healthcare', label: 'General Healthcare' }
+];
+
+window.renderProductCategoryPills = (selectedStr = '') => {
+  const grid = document.getElementById('product-categories-grid');
+  if (!grid) return;
+
+  const selected = new Set(
+    String(selectedStr || '')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  // Merge any custom categories from existing products or selected list
+  const catMap = new Map();
+  PRODUCT_CATEGORIES_CATALOG.forEach(c => catMap.set(c.slug, c.label));
+  (AdminApp.products || []).forEach(p => {
+    String(p.category || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean).forEach(slug => {
+      if (!catMap.has(slug)) {
+        const label = slug.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        catMap.set(slug, label);
+      }
+    });
+  });
+  selected.forEach(slug => {
+    if (!catMap.has(slug)) {
+      const label = slug.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      catMap.set(slug, label);
+    }
+  });
+
+  grid.innerHTML = Array.from(catMap.entries()).map(([slug, label]) => {
+    const isChecked = selected.has(slug);
+    return `
+      <label class="cat-multi-pill" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid ${isChecked ? 'var(--admin-accent-gold)' : 'rgba(255,255,255,0.15)'};background:${isChecked ? 'rgba(207,168,92,0.2)' : 'rgba(255,255,255,0.04)'};color:${isChecked ? 'var(--admin-accent-gold)' : 'var(--admin-text-muted)'};transition:all 0.2s;">
+        <input type="checkbox" class="product-cat-checkbox" value="${slug}" ${isChecked ? 'checked' : ''} onchange="syncSelectedProductCategories()" style="accent-color:var(--admin-accent-gold);cursor:pointer;">
+        <span>${label}</span>
+      </label>
+    `;
+  }).join('');
+
+  syncSelectedProductCategories();
+};
+
+window.syncSelectedProductCategories = () => {
+  const checked = Array.from(document.querySelectorAll('.product-cat-checkbox:checked')).map(cb => cb.value);
+  const hidden = document.getElementById('product-category');
+  if (hidden) hidden.value = checked.join(', ');
+
+  // Update visual highlight on pill labels
+  document.querySelectorAll('.cat-multi-pill').forEach(lbl => {
+    const cb = lbl.querySelector('input');
+    const active = cb && cb.checked;
+    lbl.style.borderColor = active ? 'var(--admin-accent-gold)' : 'rgba(255,255,255,0.15)';
+    lbl.style.background = active ? 'rgba(207,168,92,0.2)' : 'rgba(255,255,255,0.04)';
+    lbl.style.color = active ? 'var(--admin-accent-gold)' : 'var(--admin-text-muted)';
+  });
+};
+
+window.addCustomProductCategory = () => {
+  const input = document.getElementById('custom-category-input');
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const slug = raw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (!slug) return;
+
+  const currentVal = document.getElementById('product-category').value;
+  const currentList = currentVal ? currentVal.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (!currentList.includes(slug)) currentList.push(slug);
+
+  if (!PRODUCT_CATEGORIES_CATALOG.some(c => c.slug === slug)) {
+    PRODUCT_CATEGORIES_CATALOG.push({ slug, label: raw });
+  }
+  input.value = '';
+  renderProductCategoryPills(currentList.join(', '));
+};
+
 window.openAddProductModal = () => {
   document.getElementById('product-modal-title').textContent = 'Add New Product';
   document.getElementById('product-form-id').value = '';
   document.getElementById('product-form').reset();
+  renderProductCategoryPills('healthcare');
   if (typeof resetProductImageUpload === 'function') resetProductImageUpload('');
   document.getElementById('product-modal-backdrop').classList.add('active');
 };
@@ -840,7 +939,7 @@ window.openEditProductModal = (id) => {
   document.getElementById('product-modal-title').textContent = 'Edit Product Details';
   document.getElementById('product-form-id').value = p.id;
   document.getElementById('product-name').value = p.name;
-  document.getElementById('product-category').value = p.category;
+  renderProductCategoryPills(p.category || '');
   document.getElementById('product-price').value = p.price;
   document.getElementById('product-image').value = p.image || '';
   document.getElementById('product-short-desc').value = p.shortDescription || '';
@@ -865,7 +964,12 @@ window.handleProductFormSubmit = async (event) => {
 
   const id = document.getElementById('product-form-id').value;
   const name = document.getElementById('product-name').value;
-  const category = document.getElementById('product-category').value;
+  syncSelectedProductCategories();
+  const category = document.getElementById('product-category').value.trim();
+  if (!category) {
+    alert('Please select at least one disease/health category for this product.');
+    return;
+  }
   const price = document.getElementById('product-price').value;
   const image = document.getElementById('product-image').value;
   const shortDescription = document.getElementById('product-short-desc').value;

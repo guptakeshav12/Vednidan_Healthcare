@@ -4,25 +4,57 @@ const { pool } = require('../config/supabase');
 
 const productsFilePath = path.join(__dirname, '../data/products.json');
 
-let _localCache = null;
+const DEFAULT_CATEGORIES = [
+  { slug: 'vitality', label: 'Vitality & Energy' },
+  { slug: 'digestion', label: 'Gut & Digestion' },
+  { slug: 'skincare', label: 'Skin Problems' },
+  { slug: 'haircare', label: 'Hair Problems' },
+  { slug: 'immunity', label: 'Immunity Boosters' },
+  { slug: 'brain', label: 'Brain & Memory' },
+  { slug: 'heart', label: 'Heart & Cardiac Care' },
+  { slug: 'pain', label: 'Joint & Pain Relief' },
+  { slug: 'detox', label: 'Detox & Cleanse' },
+  { slug: 'diabetes', label: 'Diabetes & Sugar Care' },
+  { slug: 'respiratory', label: 'Respiratory & Lung Care' },
+  { slug: 'stress', label: 'Stress & Sleep' },
+  { slug: 'womens-health', label: "Women's Health" },
+  { slug: 'healthcare', label: 'General Healthcare' }
+];
+
+// Always read fresh from products.json so admin additions/edits appear immediately
 const getLocalProducts = () => {
-  if (_localCache) return _localCache;
   try {
     const jsonData = fs.readFileSync(productsFilePath, 'utf-8');
-    _localCache = JSON.parse(jsonData);
-    return _localCache;
+    return JSON.parse(jsonData);
   } catch (e) {
     console.error('[Products] Error reading products.json:', e.message);
     return [];
   }
 };
 
+function parseCategoriesList(catStr) {
+  return String(catStr || '')
+    .split(',')
+    .map(c => c.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function formatCategoryLabel(slug) {
+  const found = DEFAULT_CATEGORIES.find(c => c.slug === slug.toLowerCase());
+  if (found) return found.label;
+  return slug
+    .split(/[-_\s]+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 // Helper: serve from local JSON file with filtering + pagination
 function serveFromLocal(res, { page, limit, category, searchQuery, productType }) {
   let filtered = getLocalProducts();
 
   if (category !== 'all') {
-    filtered = filtered.filter(p => p.category === category);
+    const target = category.toLowerCase().trim();
+    filtered = filtered.filter(p => parseCategoriesList(p.category).includes(target));
   }
   if (productType !== 'all') {
     filtered = filtered.filter(p => (p.name || '').toLowerCase().includes(productType));
@@ -43,11 +75,44 @@ function serveFromLocal(res, { page, limit, category, searchQuery, productType }
   return res.json({ products: paginatedProducts, page: safePage, limit, totalProducts, totalPages });
 }
 
+exports.getProductCategories = async (req, res) => {
+  try {
+    const categoryMap = new Map();
+    DEFAULT_CATEGORIES.forEach(c => categoryMap.set(c.slug, c.label));
+
+    let productsList = [];
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT DISTINCT category FROM products');
+        productsList = result.rows;
+      } catch (e) {
+        productsList = getLocalProducts();
+      }
+    } else {
+      productsList = getLocalProducts();
+    }
+
+    productsList.forEach(p => {
+      parseCategoriesList(p.category).forEach(slug => {
+        if (!categoryMap.has(slug)) {
+          categoryMap.set(slug, formatCategoryLabel(slug));
+        }
+      });
+    });
+
+    const categories = Array.from(categoryMap.entries()).map(([slug, label]) => ({ slug, label }));
+    res.json({ categories });
+  } catch (error) {
+    console.error('[Product Categories] Error:', error);
+    res.json({ categories: DEFAULT_CATEGORIES });
+  }
+};
+
 exports.getAllProducts = async (req, res) => {
   try {
     let page = parseInt(req.query.page) || 1;
     let limit = parseInt(req.query.limit) || 12;
-    const category = req.query.category || 'all';
+    const category = (req.query.category || 'all').toLowerCase().trim();
     const searchQuery = (req.query.search || '').toLowerCase().trim();
     const productType = (req.query.type || 'all').toLowerCase().trim();
 
@@ -62,8 +127,9 @@ exports.getAllProducts = async (req, res) => {
         let idx = 1;
 
         if (category !== 'all') {
-          countQuery += ` AND category = $${idx}`;
-          dataQuery  += ` AND category = $${idx}`;
+          const catCondition = `EXISTS (SELECT 1 FROM unnest(string_to_array(LOWER(category), ',')) AS c WHERE TRIM(c) = $${idx})`;
+          countQuery += ` AND ${catCondition}`;
+          dataQuery  += ` AND ${catCondition}`;
           vals.push(category); idx++;
         }
         if (productType !== 'all') {

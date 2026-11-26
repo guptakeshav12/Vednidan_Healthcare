@@ -11,7 +11,7 @@
   <!-- Remix Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
   <!-- Custom Stylesheets -->
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin.css?v=20261126_01">
   <link rel="icon" type="image/jpeg" href="assets/vednidan-logo.jpg">
 </head>
 <body class="admin-body">
@@ -599,22 +599,23 @@
           <input type="text" class="admin-form-input" id="product-name" required placeholder="e.g. Organic Chyawanprash Rasayana">
         </div>
 
-        <div class="admin-form-row">
-          <div class="admin-form-group">
-            <label class="admin-form-label">Category</label>
-            <select class="admin-form-select" id="product-category" required>
-              <option value="vitality">Vitality & Energy</option>
-              <option value="digestion">Gut & Digestion</option>
-              <option value="skincare">Skincare</option>
-              <option value="haircare">Haircare</option>
-              <option value="immunity">Immunity Boosters</option>
-              <option value="brain">Brain & Memory</option>
-            </select>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Disease &amp; Health Categories (Select One or Multiple)</label>
+          <input type="hidden" id="product-category">
+          <div id="product-categories-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:12px;background:rgba(0,0,0,0.22);border:1px solid var(--admin-border);border-radius:10px;">
+            <!-- Category pills populated dynamically by admin-app.js -->
           </div>
-          <div class="admin-form-group">
-            <label class="admin-form-label">Price (₹)</label>
-            <input type="number" class="admin-form-input" id="product-price" required min="1" placeholder="e.g. 350">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" class="admin-form-input" id="custom-category-input" placeholder="Add custom disease/category (e.g. Thyroid Care, Liver Care)" style="flex:1;padding:8px 12px;font-size:13px;">
+            <button type="button" class="btn-admin-secondary" onclick="addCustomProductCategory()" style="padding:8px 14px;font-size:12px;white-space:nowrap;">
+              <i class="ri-add-line"></i> Add Category
+            </button>
           </div>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Price (₹)</label>
+          <input type="number" class="admin-form-input" id="product-price" required min="1" placeholder="e.g. 350">
         </div>
 
         <div class="admin-form-group">
@@ -866,6 +867,6 @@
   </div>
 
   <!-- Javascript Modules -->
-  <script src="js/admin-app.js"></script>
+  <script src="js/admin-app.js?v=20261126_01"></script>
 </body>
 </html>

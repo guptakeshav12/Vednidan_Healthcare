@@ -22,6 +22,18 @@
 })();
 
 const Api = {
+  // Fetch all available product categories (predefined + custom)
+  async getCategories() {
+    try {
+      const response = await fetch(`${window.API_BASE}/products/categories`);
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      return await response.json();
+    } catch (error) {
+      console.error('API Error (getCategories):', error);
+      return { categories: [] };
+    }
+  },
+
   // Fetch products with pagination parameters
   async getProducts(page = 1, limit = 12, category = 'all', search = '') {
     try {

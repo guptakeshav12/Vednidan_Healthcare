@@ -161,12 +161,23 @@ const Cart = {
     }
   },
 
-  addItem(productId, quantity = 1) {
-    // Find the product details from the shop catalog
-    const product = Shop.products.find(p => p.id === productId);
-    if (!product) return;
+  async addItem(productId, quantity = 1) {
+    // Find the product details from the shop catalog (handle string/number IDs safely)
+    let product = (typeof Shop !== 'undefined' && Array.isArray(Shop.products))
+      ? Shop.products.find(p => String(p.id) === String(productId))
+      : null;
 
-    const existingItem = this.items.find(item => item.product.id === productId);
+    // Fallback: fetch from backend API if not in the currently loaded page slice
+    if (!product && typeof Api !== 'undefined' && Api.getProductById) {
+      product = await Api.getProductById(productId);
+    }
+
+    if (!product) {
+      if (typeof showToast === 'function') showToast('Unable to add product to cart. Please try again.', 'error');
+      return;
+    }
+
+    const existingItem = this.items.find(item => String(item.product.id) === String(productId));
 
     if (existingItem) {
       existingItem.quantity += quantity;

@@ -326,7 +326,31 @@ const Doctor = {
   // ─────────────────────────────────────────────────────────────────
   // PRESCRIPTION PDF GENERATOR
   // ─────────────────────────────────────────────────────────────────
-  generatePrescriptionPDF() {
+  async loadLogoDataUrl() {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || 200;
+          canvas.height = img.naturalHeight || 200;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (e) {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = 'assets/vednidan-logo-clean.png';
+      setTimeout(() => resolve(null), 2500);
+    });
+  },
+
+  async generatePrescriptionPDF() {
     if (typeof window.jspdf === 'undefined') {
       alert('PDF generator is loading. Please try again in a moment.');
       return;
@@ -334,6 +358,7 @@ const Doctor = {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const logoDataUrl = await this.loadLogoDataUrl();
 
     const state = this.lastChatState || this.chatState;
     const tx = this.lastTreatment;
@@ -343,6 +368,7 @@ const Doctor = {
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
     const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     const margin = 18;
     let y = 0;
 
@@ -352,14 +378,21 @@ const Doctor = {
       doc.rect(x, yPos, w, h, 'F');
     };
 
+    const checkPageBreak = (needed = 20) => {
+      if (y + needed > pageH - 18) {
+        doc.addPage();
+        y = 20;
+      }
+    };
+
     const addText = (text, x, yPos, opts = {}) => {
       doc.setFontSize(opts.size || 10);
       doc.setFont('helvetica', opts.style || 'normal');
       doc.setTextColor(...(opts.color || [30, 30, 30]));
       if (opts.align) {
-        doc.text(text, x, yPos, { align: opts.align });
+        doc.text(String(text || ''), x, yPos, { align: opts.align });
       } else {
-        doc.text(text, x, yPos);
+        doc.text(String(text || ''), x, yPos);
       }
     };
 
@@ -367,18 +400,26 @@ const Doctor = {
       doc.setFontSize(opts.size || 9);
       doc.setFont('helvetica', opts.style || 'normal');
       doc.setTextColor(...(opts.color || [60, 60, 60]));
-      const lines = doc.splitTextToSize(text, maxW);
+      const lines = doc.splitTextToSize(String(text || ''), maxW);
       doc.text(lines, x, yPos);
-      return lines.length * ((opts.size || 9) * 0.4);
+      return lines.length * ((opts.size || 9) * 0.42);
     };
 
-    // ── HEADER BANNER ─────────────────────────────────────────────
-    drawRect(0, 0, pageW, 42, [22, 90, 60]);
-    addText('🌿 VedNidan Healthcare', margin, 14, { size: 18, style: 'bold', color: [255, 255, 255] });
-    addText('AI Ayurvedic Consultation & Prescription Report', margin, 22, { size: 10, color: [180, 230, 200] });
-    addText(`Date: ${dateStr}  |  Time: ${timeStr}`, margin, 30, { size: 9, color: [200, 240, 220] });
-    addText('www.vednidan.healthcare', pageW - margin, 22, { size: 9, color: [180, 230, 200], align: 'right' });
-    y = 50;
+    // ── HEADER BANNER WITH LOGO ──────────────────────────────────
+    drawRect(0, 0, pageW, 44, [22, 90, 60]);
+    let textStartX = margin;
+    if (logoDataUrl) {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(margin, 7, 30, 30, 3, 3, 'F');
+      doc.addImage(logoDataUrl, 'PNG', margin + 1.5, 8.5, 27, 27);
+      textStartX = margin + 35;
+    }
+    addText('VedNidan Healthcare', textStartX, 16, { size: 18, style: 'bold', color: [255, 255, 255] });
+    addText('AI Ayurvedic Consultation & Prescription Report', textStartX, 23, { size: 10, color: [180, 230, 200] });
+    addText(`Date: ${dateStr}  |  Time: ${timeStr}`, textStartX, 31, { size: 9, color: [215, 245, 228] });
+    addText('www.vednidan.healthcare', pageW - margin, 16, { size: 9, style: 'bold', color: [215, 245, 228], align: 'right' });
+    addText('Ayurvedic Telehealth & Clinic', pageW - margin, 23, { size: 8, color: [180, 230, 200], align: 'right' });
+    y = 52;
 
     // ── PATIENT INFO BOX ──────────────────────────────────────────
     drawRect(margin, y, pageW - margin * 2, 36, [240, 248, 244]);
@@ -401,40 +442,46 @@ const Doctor = {
 
     // ── DIAGNOSIS ─────────────────────────────────────────────────
     if (tx && tx.diagnosis) {
+      checkPageBreak(28);
       addText('CLASSICAL AYURVEDIC DIAGNOSIS', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
-      y += 5;
+      y += 4;
       doc.setDrawColor(22, 90, 60);
       doc.setLineWidth(0.4);
       doc.line(margin, y, pageW - margin, y);
-      y += 5;
+      y += 6;
       const diagHeight = addWrappedText(tx.diagnosis.replace(/\*\*/g, ''), margin, y, pageW - margin * 2, { size: 9 });
       y += diagHeight + 8;
     }
 
     // ── MEDICINES ─────────────────────────────────────────────────
     if (tx && tx.medicines && tx.medicines.length > 0) {
-      addText('💊 PRESCRIBED CLASSICAL MEDICINES (SHASTRA-OKTA AUSHADHI)', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
-      y += 5;
+      checkPageBreak(30);
+      addText('PRESCRIBED CLASSICAL MEDICINES (SHASTRA-OKTA AUSHADHI)', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
+      y += 4;
       doc.setDrawColor(22, 90, 60);
       doc.line(margin, y, pageW - margin, y);
-      y += 5;
+      y += 6;
       tx.medicines.forEach((med, i) => {
+        checkPageBreak(14);
         const medText = `${i + 1}. ${med.replace(/\*\*/g, '')}`;
         const h = addWrappedText(medText, margin + 4, y, pageW - margin * 2 - 4, { size: 9 });
         y += h + 4;
       });
-      addText('⚠ Consult a registered Vaidya before starting classical formulations.', margin, y, { size: 8, style: 'italic', color: [180, 80, 0] });
+      checkPageBreak(12);
+      addText('Note: Consult a registered Vaidya before starting classical formulations.', margin, y, { size: 8, style: 'italic', color: [180, 80, 0] });
       y += 10;
     }
 
     // ── HOME REMEDIES ─────────────────────────────────────────────
     if (tx && tx.homeRemedies && tx.homeRemedies.length > 0) {
-      addText('🏡 AUTHENTIC HOME REMEDIES (GRIHYA CHIKITSA)', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
-      y += 5;
+      checkPageBreak(28);
+      addText('AUTHENTIC HOME REMEDIES (GRIHYA CHIKITSA)', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
+      y += 4;
       doc.setDrawColor(22, 90, 60);
       doc.line(margin, y, pageW - margin, y);
-      y += 5;
+      y += 6;
       tx.homeRemedies.forEach((rem, i) => {
+        checkPageBreak(16);
         const h = addWrappedText(`${i + 1}. ${rem.replace(/\*\*/g, '')}`, margin + 4, y, pageW - margin * 2 - 4, { size: 9 });
         y += h + 4;
       });
@@ -443,17 +490,14 @@ const Doctor = {
 
     // ── THERAPIES ─────────────────────────────────────────────────
     if (tx && tx.therapies && tx.therapies.length > 0) {
-      // Start new page if not enough space
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-      addText('🧘 PANCHAKARMA & THERAPY PRESCRIPTION', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
-      y += 5;
+      checkPageBreak(30);
+      addText('PANCHAKARMA & THERAPY PRESCRIPTION', margin, y, { size: 9, style: 'bold', color: [22, 90, 60] });
+      y += 4;
       doc.setDrawColor(22, 90, 60);
       doc.line(margin, y, pageW - margin, y);
-      y += 5;
+      y += 6;
       tx.therapies.forEach((th, i) => {
+        checkPageBreak(16);
         const h = addWrappedText(`${i + 1}. ${th.replace(/\*\*/g, '')}`, margin + 4, y, pageW - margin * 2 - 4, { size: 9 });
         y += h + 4;
       });
@@ -461,19 +505,20 @@ const Doctor = {
     }
 
     // ── FOLLOW-UP ─────────────────────────────────────────────────
-    if (y > 250) { doc.addPage(); y = 20; }
+    checkPageBreak(32);
     drawRect(margin, y, pageW - margin * 2, 22, [240, 248, 244]);
-    addText('📅 FOLLOW-UP: Follow this protocol for minimum 21 days.', margin + 5, y + 8, { size: 9, style: 'bold', color: [22, 90, 60] });
+    addText('FOLLOW-UP: Follow this protocol for minimum 21 days.', margin + 5, y + 8, { size: 9, style: 'bold', color: [22, 90, 60] });
     addText('Book in-clinic Panchakarma via the Book Therapist section on VedNidan Healthcare.', margin + 5, y + 16, { size: 8, color: [60, 60, 60] });
     y += 30;
 
     // ── SIGNATURE FOOTER ──────────────────────────────────────────
+    checkPageBreak(25);
     doc.setDrawColor(200, 200, 200);
     doc.line(margin, y, pageW - margin, y);
     y += 8;
-    addText('VedNidan AI Doctor — Charak Consultation Engine', margin, y, { size: 8, style: 'italic', color: [120, 120, 120] });
+    addText('VedNidan AI Doctor - Charak Consultation Engine', margin, y, { size: 8, style: 'italic', color: [120, 120, 120] });
     addText('This is an AI-generated Ayurvedic consultation report. Not a substitute for professional medical advice.', margin, y + 6, { size: 7, color: [150, 150, 150] });
-    addText('May you be blessed with Swastha — Ayu, Aarogya, Sukha. 🙏', pageW / 2, y + 14, { size: 8, style: 'bold', color: [22, 90, 60], align: 'center' });
+    addText('May you be blessed with Swastha - Ayu, Aarogya, Sukha.', pageW / 2, y + 14, { size: 8, style: 'bold', color: [22, 90, 60], align: 'center' });
 
     // Save
     const safeName = (patientName || 'Patient').replace(/[^a-zA-Z0-9]/g, '_');

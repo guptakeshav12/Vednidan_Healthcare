@@ -9,8 +9,26 @@ const Shop = {
   limit: 12,
 
   async init() {
-    await this.fetchProducts();
     this.setupListeners();
+    await this.loadCategories();
+    await this.fetchProducts();
+  },
+
+  async loadCategories() {
+    const categoryContainer = document.getElementById('category-list');
+    if (!categoryContainer || typeof Api.getCategories !== 'function') return;
+
+    const data = await Api.getCategories();
+    if (!data || !Array.isArray(data.categories) || data.categories.length === 0) return;
+
+    const pillsHtml = [
+      `<div class="category-pill ${this.currentCategory === 'all' ? 'active' : ''}" data-category="all">All Remedies</div>`,
+      ...data.categories.map(cat =>
+        `<div class="category-pill ${this.currentCategory === cat.slug ? 'active' : ''}" data-category="${cat.slug}">${cat.label}</div>`
+      )
+    ].join('');
+
+    categoryContainer.innerHTML = pillsHtml;
   },
 
   setupListeners() {
@@ -102,9 +120,16 @@ const Shop = {
 
     // Render product cards
     let htmlContent = this.products.map(product => {
-      // Calculate discount percentage
-      const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-      
+      const hasOriginal = product.originalPrice && product.originalPrice > product.price;
+      const discountPercent = hasOriginal
+        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+        : 0;
+      const categoryDisplay = String(product.category || 'healthcare')
+        .split(',')
+        .map(c => c.trim())
+        .filter(Boolean)
+        .join(' • ');
+
       return `
         <div class="product-card fade-in">
           ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
@@ -112,17 +137,17 @@ const Shop = {
             <img src="${product.image}" alt="${product.name}" onerror="this.src='https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&q=80&w=300'">
           </div>
           <div class="product-info">
-            <span class="product-category">${product.category}</span>
+            <span class="product-category">${categoryDisplay}</span>
             <h4 class="product-name" onclick="Shop.openProductModal(${product.id})">${product.name}</h4>
             <div class="product-rating">
-              <span class="star-rating">${this.renderStars(product.rating)}</span>
-              <span>(${product.reviewsCount})</span>
+              <span class="star-rating">${this.renderStars(product.rating || 4.5)}</span>
+              <span>(${product.reviewsCount || 0})</span>
             </div>
-            <p class="product-desc">${product.shortDescription}</p>
+            <p class="product-desc">${product.shortDescription || ''}</p>
             <div class="product-price-row">
               <div class="price-container">
-                <span class="original-price">₹${product.originalPrice}</span>
-                <span class="current-price">₹${product.price} <span style="font-size: 11px; color: var(--success); font-weight: 700;">(${discountPercent}% OFF)</span></span>
+                ${hasOriginal ? `<span class="original-price">₹${product.originalPrice}</span>` : ''}
+                <span class="current-price">₹${product.price} ${discountPercent > 0 ? `<span style="font-size: 11px; color: var(--success); font-weight: 700;">(${discountPercent}% OFF)</span>` : ''}</span>
               </div>
               <button class="add-cart-btn" onclick="Cart.addItem(${product.id}, 1)" aria-label="Add ${product.name} to Cart">
                 <i class="ri-add-line"></i>
@@ -188,22 +213,22 @@ const Shop = {
         </div>
         <div class="modal-price-row">
           <span class="current">₹${product.price}</span>
-          <span class="original">₹${product.originalPrice}</span>
+          ${product.originalPrice && product.originalPrice > product.price ? `<span class="original">₹${product.originalPrice}</span>` : ''}
         </div>
-        <p class="modal-desc">${product.longDescription}</p>
+        <p class="modal-desc">${product.longDescription || product.shortDescription || ''}</p>
         
         <div class="modal-dosha-tag">
-          <i class="ri-sparkling-fill"></i> Dosha: ${product.dosha}
+          <i class="ri-sparkling-fill"></i> Dosha: ${product.dosha || 'Tridosha Balancing'}
         </div>
 
         <div class="modal-meta-section">
           <h4 class="modal-meta-title">Key Ingredients</h4>
-          <p class="modal-meta-content">${product.ingredients.join(', ')}</p>
+          <p class="modal-meta-content">${(product.ingredients && product.ingredients.length > 0) ? product.ingredients.join(', ') : 'Classical Ayurvedic Botanicals'}</p>
         </div>
 
         <div class="modal-meta-section">
           <h4 class="modal-meta-title">Directions for Use</h4>
-          <p class="modal-meta-content">${product.usage}</p>
+          <p class="modal-meta-content">${product.usage || product.usageDirections || 'Take twice daily after meals or as directed by an Ayurvedic physician.'}</p>
         </div>
 
         <div class="modal-actions">
