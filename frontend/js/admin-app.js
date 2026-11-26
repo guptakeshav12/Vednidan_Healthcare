@@ -1320,6 +1320,12 @@ AdminApp.fetchConsultationLogs = async function() {
 };
 
 AdminApp.renderConsultations = function(logs) {
+  const countEl = document.getElementById('ai-consult-total-count');
+  if (countEl) {
+    const total = (AdminApp._allConsultations || []).length;
+    countEl.textContent = `${total} Patient${total === 1 ? '' : 's'} Consulted`;
+  }
+
   const tbody = document.getElementById('consultations-tbody');
   if (!tbody) return;
   if (!logs || logs.length === 0) {
@@ -1338,9 +1344,12 @@ AdminApp.renderConsultations = function(logs) {
       <td>
         <strong>${log.name || 'Anonymous'}</strong><br>
         <small style="color:var(--admin-text-muted);">
-          ${log.gender ? log.gender.toUpperCase() : ''} ${log.age ? '| ' + log.age + ' yrs' : ''} 
-          ${log.weight ? '| ' + log.weight + 'kg' : ''}
+          ${log.age ? 'Age: ' + log.age + ' yrs' : 'Age: N/A'}${log.gender ? ' | ' + log.gender.toUpperCase() : ''}${log.weight ? ' | ' + log.weight + 'kg' : ''}
         </small>
+      </td>
+      <td style="max-width:170px; white-space:normal; font-size:12px; color:var(--admin-text-muted);">
+        <i class="ri-map-pin-line" style="color:var(--admin-accent-gold);"></i> ${log.address || 'Online Tele-Consult'}<br>
+        <span style="font-size:10px;opacity:0.8;">${log.language === 'hi' ? 'Hindi' : log.language === 'mr' ? 'Marathi' : 'English'}</span>
       </td>
       <td style="max-width:240px; white-space:normal; line-height:1.4;">
         <span style="font-weight:600; color:var(--admin-text-main);">${log.problem || 'General Checkup'}</span>
@@ -1361,17 +1370,12 @@ AdminApp.renderConsultations = function(logs) {
         </small>
       </td>
       <td style="max-width:260px; font-size:12px; white-space:normal; line-height:1.3;">
-        <span style="color:#22c55e; font-weight:600;">${medicines}</span>${moreMeds ? `<em style="color:var(--admin-text-muted); font-size:11px;">${moreMeds}</em>` : ''}
-      </td>
-      <td>
-        <span style="text-transform:uppercase;font-size:11px;font-weight:700;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;">
-          ${log.language === 'hi' ? '🇮🇳 Hindi' : log.language === 'mr' ? '🟠 Marathi' : '🌐 English'}
-        </span>
+        <span style="color:#22c55e; font-weight:600;">${medicines || 'View full report'}</span>${moreMeds ? `<em style="color:var(--admin-text-muted); font-size:11px;">${moreMeds}</em>` : ''}
       </td>
       <td style="font-size:12px;color:var(--admin-text-muted);">${dt}</td>
       <td>
-        <button class="btn-catalog-view-detail" title="View Full AI Diagnosis" onclick="viewAIConsultationDetail('${logId}')">
-          <i class="ri-eye-line"></i> View Report
+        <button class="btn-catalog-view-detail" title="View Full AI Prescription & Diagnosis" onclick="viewAIConsultationDetail('${logId}')">
+          <i class="ri-file-text-line"></i> View Prescription
         </button>
       </td>
     </tr>`;
@@ -1387,15 +1391,20 @@ window.viewAIConsultationDetail = (logId) => {
   const log = (AdminApp._allConsultations || []).find(l => (l.id || '') === logId || ('LOG-' + ((AdminApp._allConsultations.indexOf(l) + 1))) === logId);
   if (!log) return;
 
-  title.innerHTML = `<i class="ri-robot-2-line" style="color:var(--admin-accent-gold);"></i> Charaka AI Diagnostic Record: ${log.name || 'Anonymous'}`;
+  title.innerHTML = `<i class="ri-file-list-3-line" style="color:var(--admin-accent-gold);"></i> AI Prescription &amp; Diagnosis Audit: ${log.name || 'Anonymous'}`;
 
-  const medsHtml = (log.medicines || []).map(m => `<span style="display:inline-block;background:rgba(34,197,94,0.15);color:#4ade80;padding:4px 10px;border-radius:6px;font-size:12px;margin:2px 4px 2px 0;font-weight:600;"><i class="ri-capsule-line"></i> ${m}</span>`).join('') || '<span style="color:var(--admin-text-muted);">None prescribed</span>';
+  const medsHtml = (log.medicines || []).map((m, idx) => `<div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);color:#4ade80;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;font-weight:600;">${idx + 1}. ${m}</div>`).join('') || '<span style="color:var(--admin-text-muted);">None prescribed</span>';
+  const remediesHtml = (log.homeRemedies || []).map((r, idx) => `<div style="background:rgba(207,168,92,0.1);border:1px solid rgba(207,168,92,0.25);color:#fde68a;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">${idx + 1}. ${r}</div>`).join('');
+  const therapiesHtml = (log.therapies || []).map((t, idx) => `<div style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);color:#c4b5fd;padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;">${idx + 1}. ${t}</div>`).join('');
 
   container.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
       <div>
         <h4 style="margin:0 0 4px; font-size:18px; color:var(--admin-text-main);">${log.name || 'Anonymous Patient'}</h4>
-        <span style="font-size:12px; color:var(--admin-text-muted);">Age: ${log.age || 'N/A'} | Gender: ${log.gender || 'N/A'} | Weight: ${log.weight ? log.weight + ' kg' : 'N/A'} | Height: ${log.height || 'N/A'}</span>
+        <span style="font-size:12px; color:var(--admin-text-muted);">
+          Age: ${log.age || 'N/A'} | Gender: ${log.gender || 'N/A'} | Weight: ${log.weight ? log.weight + ' kg' : 'N/A'} | Height: ${log.height || 'N/A'}<br>
+          Address / Location: ${log.address || 'Online Tele-Consult'}
+        </span>
       </div>
       <span class="badge" style="background:rgba(207,168,92,0.15); color:var(--admin-accent-gold); border:1px solid var(--admin-accent-gold); font-size:12px;">
         ${log.id || logId}
@@ -1405,30 +1414,37 @@ window.viewAIConsultationDetail = (logId) => {
       <div class="detail-item-card" style="grid-column: 1/-1;">
         <span class="detail-label">Reported Health Concern / Symptoms</span>
         <div class="detail-value" style="font-size:15px; color:#f0fdf4;">${log.problem || 'General Consultation'}</div>
-        ${log.duration ? `<div style="font-size:12px; color:var(--admin-text-muted); margin-top:4px;"><strong>Duration of problem:</strong> ${log.duration}</div>` : ''}
+        ${log.duration ? `<div style="font-size:12px; color:var(--admin-text-muted); margin-top:4px;"><strong>Duration:</strong> ${log.duration}</div>` : ''}
       </div>
       <div class="detail-item-card">
         <span class="detail-label">Diagnostic Category</span>
         <div class="detail-value" style="text-transform:capitalize; color:#818cf8;">${log.category || 'General Health'}</div>
       </div>
       <div class="detail-item-card">
-        <span class="detail-label">Dominant Dosha</span>
-        <div class="detail-value" style="text-transform:capitalize; color:var(--admin-accent-gold);">${log.dominantDosha || 'Tridoshic Balance'}</div>
-      </div>
-      <div class="detail-item-card">
-        <span class="detail-label">Dosha Imbalance Scores</span>
-        <div class="detail-value" style="font-size:12px;">
-          ${log.scores ? `Vata: <strong>${log.scores.vata || 0}</strong> | Pitta: <strong>${log.scores.pitta || 0}</strong> | Kapha: <strong>${log.scores.kapha || 0}</strong>` : 'N/A'}
+        <span class="detail-label">Dominant Dosha &amp; Scores</span>
+        <div class="detail-value" style="text-transform:capitalize; color:var(--admin-accent-gold);">
+          ${log.dominantDosha || 'Tridoshic'} (${log.scores ? `V:${log.scores.vata || 0} P:${log.scores.pitta || 0} K:${log.scores.kapha || 0}` : 'N/A'})
         </div>
       </div>
-      <div class="detail-item-card">
-        <span class="detail-label">Consultation Language</span>
-        <div class="detail-value">${log.language === 'hi' ? 'Hindi (हिंदी)' : log.language === 'mr' ? 'Marathi (मराठी)' : 'English'}</div>
-      </div>
+      ${log.diagnosis ? `
       <div class="detail-item-card" style="grid-column: 1/-1;">
-        <span class="detail-label">Recommended Ayurvedic Remedies</span>
+        <span class="detail-label">AI Classical Ayurvedic Diagnosis</span>
+        <div class="detail-value" style="font-size:13px; font-weight:400; line-height:1.5; color:#e2e8f0;">${String(log.diagnosis).replace(/\*\*/g, '')}</div>
+      </div>` : ''}
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Prescribed Classical Medicines</span>
         <div class="detail-value" style="margin-top:6px;">${medsHtml}</div>
       </div>
+      ${remediesHtml ? `
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Prescribed Home Remedies (Grihya Chikitsa)</span>
+        <div class="detail-value" style="margin-top:6px;">${remediesHtml}</div>
+      </div>` : ''}
+      ${therapiesHtml ? `
+      <div class="detail-item-card" style="grid-column: 1/-1;">
+        <span class="detail-label">Recommended Panchakarma Therapies</span>
+        <div class="detail-value" style="margin-top:6px;">${therapiesHtml}</div>
+      </div>` : ''}
       ${log.advice ? `
       <div class="detail-item-card" style="grid-column: 1/-1;">
         <span class="detail-label">Charaka AI Clinical Advice &amp; Lifestyle Guidelines</span>
@@ -1484,6 +1500,92 @@ AdminApp.fetchSettings = async function() {
             <a href="/index.html" target="_blank" class="btn-admin-secondary" style="display:flex;align-items:center;gap:6px;text-decoration:none;">
               <i class="ri-home-4-line"></i> Main Website <i class="ri-external-link-line" style="font-size:12px;"></i>
             </a>
+          </div>
+        </div>
+
+        <!-- Admin Credentials & Panel Controls Row -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;">
+
+          <!-- Card A: Change Admin Login ID & Password -->
+          <div class="admin-card" style="border:1px solid rgba(207,168,92,0.3);border-radius:16px;padding:24px;">
+            <h3 style="color:var(--admin-accent-gold);margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:16px;">
+              <i class="ri-key-2-line"></i> Admin Login ID &amp; Password Control
+            </h3>
+            <p style="font-size:12px;color:var(--admin-text-muted);margin:0 0 16px;">Modify your Admin Panel Login ID and Password directly.</p>
+            <form onsubmit="updateAdminCredentialsForm(event)">
+              <div class="admin-form-group" style="margin-bottom:12px;">
+                <label class="admin-form-label" style="font-size:12px;">Admin Login ID</label>
+                <input type="text" class="admin-form-input" id="settings-admin-id" value="${data.adminId || 'admin'}" required>
+              </div>
+              <div class="admin-form-group" style="margin-bottom:12px;">
+                <label class="admin-form-label" style="font-size:12px;">Current Password (if changing)</label>
+                <input type="password" class="admin-form-input" id="settings-current-pass" placeholder="Leave blank or enter current password">
+              </div>
+              <div class="admin-form-group" style="margin-bottom:14px;">
+                <label class="admin-form-label" style="font-size:12px;">New Admin Password</label>
+                <input type="password" class="admin-form-input" id="settings-new-pass" required placeholder="Enter new strong password">
+              </div>
+              <button type="submit" class="btn-admin-primary" style="width:100%;justify-content:center;padding:10px;">
+                <i class="ri-save-3-line"></i> Update Admin ID &amp; Password
+              </button>
+            </form>
+          </div>
+
+          <!-- Card B: Master Panel & Platform Controls -->
+          <div class="admin-card" style="border:1px solid rgba(16,185,129,0.28);border-radius:16px;padding:24px;">
+            <h3 style="color:#4ade80;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:16px;">
+              <i class="ri-sliders-line"></i> Master Website &amp; Panel Controls
+            </h3>
+            <p style="font-size:12px;color:var(--admin-text-muted);margin:0 0 14px;">Control all live website modules and payment UPI configuration.</p>
+            <form onsubmit="saveSystemControlsForm(event)">
+              <div class="admin-form-group" style="margin-bottom:10px;">
+                <label class="admin-form-label" style="font-size:12px;">Platform / Clinic Title</label>
+                <input type="text" class="admin-form-input" id="ctrl-clinic-name" value="${data.systemName || 'VedNidan Healthcare Control Center'}">
+              </div>
+              <div class="admin-form-group" style="margin-bottom:12px;">
+                <label class="admin-form-label" style="font-size:12px;">Merchant UPI VPA ID</label>
+                <input type="text" class="admin-form-input" id="ctrl-upi-id" value="${data.upiId || '9772915042icici@ybl'}">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;">
+                  <input type="checkbox" id="ctrl-ai-doctor" ${data.controls?.aiDoctorEnabled !== false ? 'checked' : ''}> AI Doctor Active
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;">
+                  <input type="checkbox" id="ctrl-store-orders" ${data.controls?.storeOrdersEnabled !== false ? 'checked' : ''}> Store Orders Active
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;">
+                  <input type="checkbox" id="ctrl-doc-booking" ${data.controls?.doctorBookingEnabled !== false ? 'checked' : ''}> Doctor Booking
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;">
+                  <input type="checkbox" id="ctrl-ther-booking" ${data.controls?.therapistBookingEnabled !== false ? 'checked' : ''}> Therapist Booking
+                </label>
+              </div>
+              <button type="submit" class="btn-admin-primary" style="width:100%;justify-content:center;padding:10px;">
+                <i class="ri-check-double-line"></i> Save Master Controls
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- All Admin Panel Modules Quick-Control Hub -->
+        <div class="admin-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px;">
+          <h3 style="color:var(--admin-accent-gold);margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:16px;">
+            <i class="ri-apps-2-line"></i> Control All Admin Panel Sections
+          </h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;">
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('dashboard')"><i class="ri-dashboard-3-line"></i> Dashboard</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('products')"><i class="ri-bubble-chart-line"></i> Products Catalog</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('orders')"><i class="ri-shopping-bag-3-line"></i> Store Orders</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('bookings')"><i class="ri-calendar-todo-line"></i> Doctor Bookings</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('therapist-bookings')"><i class="ri-hand-heart-line"></i> Therapist Bookings</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('analytics')"><i class="ri-bar-chart-box-line"></i> Analytics</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('users')"><i class="ri-user-group-line"></i> Customers</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('doctors')"><i class="ri-nurse-line"></i> Doctors Catalog</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('therapists')"><i class="ri-user-star-line"></i> Therapists Catalog</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('partner-accounts')"><i class="ri-shield-user-line"></i> Partner Accounts</button>
+            <button type="button" class="btn-admin-secondary" onclick="AdminApp.switchTab('ai-consultations')"><i class="ri-robot-2-line"></i> AI Consultations</button>
+            <button type="button" class="btn-admin-secondary" onclick="logoutAdmin()"><i class="ri-lock-2-line"></i> Lock Admin Panel</button>
           </div>
         </div>
 
@@ -1726,8 +1828,97 @@ function initProductImageUpload() {
   };
 }
 
+// ===== ADMIN CREDENTIALS, CONTROLS & AUTH GATE =====
+window.updateAdminCredentialsForm = async (e) => {
+  e.preventDefault();
+  const newAdminId = document.getElementById('settings-admin-id').value.trim();
+  const currentPassword = document.getElementById('settings-current-pass').value;
+  const newPassword = document.getElementById('settings-new-pass').value.trim();
+
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/settings/credentials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newAdminId, newPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Update failed');
+    alert('Admin Login ID & Password updated successfully!');
+    AdminApp.fetchSettings();
+  } catch (err) {
+    alert(err.message || 'Could not update credentials');
+  }
+};
+
+window.saveSystemControlsForm = async (e) => {
+  e.preventDefault();
+  const clinicName = document.getElementById('ctrl-clinic-name').value.trim();
+  const upiId = document.getElementById('ctrl-upi-id').value.trim();
+  const controls = {
+    aiDoctorEnabled: document.getElementById('ctrl-ai-doctor').checked,
+    storeOrdersEnabled: document.getElementById('ctrl-store-orders').checked,
+    doctorBookingEnabled: document.getElementById('ctrl-doc-booking').checked,
+    therapistBookingEnabled: document.getElementById('ctrl-ther-booking').checked
+  };
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/settings/controls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clinicName, upiId, controls })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Save failed');
+    alert('Master control settings saved successfully!');
+    AdminApp.fetchSettings();
+  } catch (err) {
+    alert(err.message || 'Error saving controls');
+  }
+};
+
+window.handleAdminLogin = async (e) => {
+  e.preventDefault();
+  const adminId = document.getElementById('admin-login-id').value.trim();
+  const password = document.getElementById('admin-login-password').value;
+  const errEl = document.getElementById('admin-login-error');
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${ADMIN_API}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminId, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (errEl) {
+        errEl.textContent = data.message || 'Invalid Admin ID or Password';
+        errEl.style.display = 'block';
+      }
+      return;
+    }
+    sessionStorage.setItem('vednidan_admin_auth', '1');
+    const overlay = document.getElementById('admin-login-overlay');
+    if (overlay) overlay.style.display = 'none';
+  } catch (err) {
+    if (errEl) {
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.style.display = 'block';
+    }
+  }
+};
+
+window.logoutAdmin = () => {
+  sessionStorage.removeItem('vednidan_admin_auth');
+  const overlay = document.getElementById('admin-login-overlay');
+  if (overlay) overlay.style.display = 'flex';
+};
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('vednidan_admin_auth') !== '1') {
+    const overlay = document.getElementById('admin-login-overlay');
+    if (overlay) overlay.style.display = 'flex';
+  }
   AdminApp.init();
   initProductImageUpload();
 });

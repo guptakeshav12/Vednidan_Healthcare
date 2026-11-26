@@ -1157,20 +1157,106 @@ exports.getConsultationLogs = async (req, res) => {
   }
 };
 
+const adminConfigFilePath = path.join(__dirname, '../data/admin_config.json');
+
+function getAdminConfig() {
+  const defaultConfig = {
+    adminId: 'admin',
+    adminPassword: 'admin',
+    clinicName: 'VedNidan Healthcare Control Center',
+    upiId: '9772915042icici@ybl',
+    controls: {
+      aiDoctorEnabled: true,
+      storeOrdersEnabled: true,
+      doctorBookingEnabled: true,
+      therapistBookingEnabled: true,
+      maintenanceMode: false
+    }
+  };
+  const saved = readFileHelper(adminConfigFilePath, null);
+  if (!saved || typeof saved !== 'object') return defaultConfig;
+  return {
+    ...defaultConfig,
+    ...saved,
+    controls: { ...defaultConfig.controls, ...(saved.controls || {}) }
+  };
+}
+
+// POST /api/admin/login
+exports.adminLogin = async (req, res) => {
+  try {
+    const { adminId, password } = req.body || {};
+    const cfg = getAdminConfig();
+    if (String(adminId || '').trim() === cfg.adminId && String(password || '') === cfg.adminPassword) {
+      return res.json({ success: true, adminId: cfg.adminId });
+    }
+    return res.status(401).json({ success: false, message: 'Invalid Admin Login ID or Password' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Login verification error' });
+  }
+};
+
+// POST /api/admin/settings/credentials
+exports.updateAdminCredentials = async (req, res) => {
+  try {
+    const { currentPassword, newAdminId, newPassword } = req.body || {};
+    const cfg = getAdminConfig();
+
+    if (currentPassword !== undefined && currentPassword !== '' && currentPassword !== cfg.adminPassword) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    }
+    const cleanId = String(newAdminId || '').trim();
+    const cleanPass = String(newPassword || '').trim();
+    if (!cleanId || !cleanPass) {
+      return res.status(400).json({ success: false, message: 'New Admin Login ID and Password are required' });
+    }
+
+    cfg.adminId = cleanId;
+    cfg.adminPassword = cleanPass;
+    writeFileHelper(adminConfigFilePath, cfg);
+    res.json({ success: true, message: 'Admin credentials updated successfully!', adminId: cfg.adminId });
+  } catch (error) {
+    console.error('Error updating admin credentials:', error);
+    res.status(500).json({ success: false, message: 'Failed to update admin credentials' });
+  }
+};
+
+// POST /api/admin/settings/controls
+exports.updateSystemControls = async (req, res) => {
+  try {
+    const { clinicName, upiId, controls } = req.body || {};
+    const cfg = getAdminConfig();
+    if (clinicName) cfg.clinicName = String(clinicName).trim();
+    if (upiId) cfg.upiId = String(upiId).trim();
+    if (controls && typeof controls === 'object') {
+      cfg.controls = { ...cfg.controls, ...controls };
+    }
+    writeFileHelper(adminConfigFilePath, cfg);
+    res.json({ success: true, message: 'System control settings saved!', config: { clinicName: cfg.clinicName, upiId: cfg.upiId, controls: cfg.controls } });
+  } catch (error) {
+    console.error('Error updating system controls:', error);
+    res.status(500).json({ success: false, message: 'Failed to update system controls' });
+  }
+};
+
 // GET /api/admin/settings
 exports.getSystemSettings = async (req, res) => {
   try {
     const accounts = readFileHelper(accountsFilePath, []);
     const products = readFileHelper(productsFilePath, []);
     const consultationLogs = readFileHelper(path.join(__dirname, '../data/consultation_logs.json'), []);
+    const cfg = getAdminConfig();
 
     res.json({
-      systemName: "VedNidan Healthcare Control Center",
-      version: "v2.5.0-production",
+      systemName: cfg.clinicName || "VedNidan Healthcare Control Center",
+      version: "v2.6.0-production",
       environment: process.env.NODE_ENV || "development",
       databaseStatus: isConfigured ? "Connected (Supabase Cloud PostgreSQL)" : "Active (Local JSON Persistence Engine)",
+      adminId: cfg.adminId,
+      upiId: cfg.upiId,
+      controls: cfg.controls,
       defaultCredentials: [
-        { role: "Super Admin", portal: "/admin.html", defaultId: "admin", defaultPassword: "admin", notes: "Full system administration & metrics control" },
+        { role: "Super Admin (Active)", portal: "/admin.html", defaultId: cfg.adminId, defaultPassword: cfg.adminPassword, notes: "Editable from System Settings above" },
         { role: "Ayurvedic Doctor (Default)", portal: "/provider.html", defaultId: "dr.vasudev@vednidan.com / 9876543210", defaultPassword: "Password123", notes: "Doctor portal diagnosis & appointment management" },
         { role: "Ayurvedic Therapist (Default)", portal: "/provider.html", defaultId: "therapist.meera@vednidan.com / 9876543212", defaultPassword: "Password123", notes: "Therapist portal Panchakarma & session management" }
       ],

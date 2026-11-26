@@ -11,18 +11,18 @@
   <!-- Remix Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
   <!-- Custom Stylesheets -->
-  <link rel="stylesheet" href="css/admin.css?v=20261126_02">
+  <link rel="stylesheet" href="css/admin.css?v=20261126_03">
   <link rel="icon" type="image/jpeg" href="assets/vednidan-logo.jpg">
 </head>
 <body class="admin-body">
 
   <!-- ===== SIDEBAR NAVIGATION ===== -->
   <aside class="admin-sidebar">
-    <div class="admin-logo" style="display:flex; align-items:center; gap:10px; padding:20px 24px;">
-      <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="width:40px; height:auto; object-fit:contain; background:white; padding:2px; border-radius:6px;">
-      <div style="line-height:1.2;">
-        <div style="font-weight:800; font-size:16px; font-family:sans-serif;"><span style="color:#4ade80;">Ved</span><span style="color:#fbbf24;">nidan</span></div>
-        <div style="font-size:9px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; font-weight:700;">Healthcare Control</div>
+    <div class="admin-logo">
+      <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="width:34px; height:auto; object-fit:contain; background:white; padding:2px; border-radius:6px;">
+      <div style="line-height:1.15;">
+        <div style="font-weight:800; font-size:15px; font-family:sans-serif;"><span style="color:#4ade80;">Ved</span><span style="color:#fbbf24;">nidan</span></div>
+        <div style="font-size:8px; color:#94a3b8; letter-spacing:1px; text-transform:uppercase; font-weight:700;">Healthcare Control</div>
       </div>
     </div>
     
@@ -66,9 +66,12 @@
     </ul>
 
     <div class="admin-sidebar-footer">
-      <a href="/index.html" class="btn-admin-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:12px;">
+      <a href="/index.html" class="btn-admin-secondary" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:6px;padding:8px 12px;font-size:12px;">
         <i class="ri-external-link-line"></i> View Main Website
       </a>
+      <button type="button" class="btn-logout" onclick="logoutAdmin()" style="padding:8px 12px;font-size:12px;">
+        <i class="ri-lock-2-line"></i> Lock / Logout
+      </button>
     </div>
   </aside>
 
@@ -535,6 +538,22 @@
 
     <!-- ===== VIEW 11: AI CONSULTATIONS TAB ===== -->
     <section id="view-ai-consultations" class="admin-view">
+      <!-- Highlight Count & Verification Banner -->
+      <div class="admin-card" style="margin-bottom:18px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border:1px solid rgba(207,168,92,0.3);background:linear-gradient(135deg, rgba(207,168,92,0.08), rgba(16,185,129,0.05));">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(207,168,92,0.16);display:flex;align-items:center;justify-content:center;color:var(--admin-accent-gold);font-size:22px;">
+            <i class="ri-robot-2-line"></i>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Total AI Doctor Consultations</div>
+            <div style="font-size:22px;font-weight:800;color:var(--admin-accent-gold);" id="ai-consult-total-count">0 Patients Consulted</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--admin-text-muted);max-width:440px;">
+          Audit every patient's symptoms, age, location, Dosha score, and click <strong style="color:var(--admin-accent-gold);">View Prescription</strong> to verify AI Doctor accuracy.
+        </div>
+      </div>
+
       <div class="admin-card">
         <div class="catalog-toolbar">
           <div class="catalog-search-wrap">
@@ -556,14 +575,14 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Patient Profile</th>
-                <th>Health Concern / Symptoms</th>
+                <th>Patient Name &amp; Age</th>
+                <th>Address / Location</th>
+                <th>Health Problem &amp; Duration</th>
                 <th>Category</th>
                 <th>Dominant Dosha &amp; Score</th>
                 <th>Prescribed Remedies</th>
-                <th>Language</th>
                 <th>Consultation Time</th>
-                <th>Actions</th>
+                <th>Prescription</th>
               </tr>
             </thead>
             <tbody id="consultations-tbody">
@@ -866,7 +885,32 @@
     </div>
   </div>
 
+  <!-- ===== ADMIN LOGIN GATE OVERLAY ===== -->
+  <div id="admin-login-overlay" style="display:none;position:fixed;inset:0;background:rgba(6,12,9,0.94);backdrop-filter:blur(12px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#101d17;border:1px solid rgba(207,168,92,0.35);border-radius:18px;padding:34px 30px;width:100%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+      <div style="text-align:center;margin-bottom:22px;">
+        <img src="assets/vednidan-logo-transparent.png" alt="VedNidan" style="width:54px;height:auto;background:#fff;padding:4px;border-radius:10px;margin-bottom:10px;">
+        <h3 style="margin:0 0 4px;color:var(--admin-accent-gold);font-size:20px;">Admin Control Login</h3>
+        <p style="margin:0;font-size:12px;color:var(--admin-text-muted);">Enter your Admin Login ID &amp; Password</p>
+      </div>
+      <form onsubmit="handleAdminLogin(event)">
+        <div class="admin-form-group">
+          <label class="admin-form-label">Admin Login ID</label>
+          <input type="text" class="admin-form-input" id="admin-login-id" required placeholder="e.g. admin">
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Admin Password</label>
+          <input type="password" class="admin-form-input" id="admin-login-password" required placeholder="Enter password">
+        </div>
+        <div id="admin-login-error" style="display:none;color:#f87171;font-size:12px;margin-bottom:12px;text-align:center;"></div>
+        <button type="submit" class="btn-admin-primary" style="width:100%;justify-content:center;">
+          <i class="ri-login-box-line"></i> Unlock Admin Panel
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Javascript Modules -->
-  <script src="js/admin-app.js?v=20261126_02"></script>
+  <script src="js/admin-app.js?v=20261126_03"></script>
 </body>
 </html>

@@ -34,7 +34,7 @@ body.admin-body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--admin-border);
-  padding: 18px 14px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -49,10 +49,11 @@ body.admin-body {
 }
 
 .admin-logo {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--admin-accent-gold);
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -61,16 +62,16 @@ body.admin-body {
 }
 
 .admin-logo i {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .admin-menu {
   list-style: none;
-  padding: 0 4px 12px 0;
+  padding: 0 4px 8px 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -100,12 +101,12 @@ body.admin-body {
 .admin-menu-item a {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 7px 12px;
   color: var(--admin-text-muted);
   text-decoration: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
